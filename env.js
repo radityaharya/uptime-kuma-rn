@@ -41,7 +41,7 @@ const client = z.object({
 const buildTime = z.object({
   EXPO_ACCOUNT_OWNER: z.string(),
   EAS_PROJECT_ID: z.string(),
-  SECRET_KEY: z.string(),
+  // SECRET_KEY: z.string(),
 });
 
 /**
@@ -56,9 +56,9 @@ const _clientEnv = {
   VERSION: packageJSON.version,
 
   // ADD YOUR ENV VARS HERE TOO
-  API_URL: process.env.API_URL,
-  VAR_NUMBER: Number(process.env.VAR_NUMBER),
-  VAR_BOOL: process.env.VAR_BOOL === 'true',
+  // API_URL: process.env.API_URL,
+  // VAR_NUMBER: Number(process.env.VAR_NUMBER),
+  // VAR_BOOL: process.env.VAR_BOOL === 'true',
 };
 
 /**
@@ -68,7 +68,7 @@ const _buildTimeEnv = {
   EXPO_ACCOUNT_OWNER,
   EAS_PROJECT_ID,
   // ADD YOUR ENV VARS HERE TOO
-  SECRET_KEY: process.env.SECRET_KEY,
+  // SECRET_KEY: process.env.SECRET_KEY,
 };
 
 
