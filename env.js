@@ -33,9 +33,9 @@ const client = z.object({
   PACKAGE: z.string(),
   VERSION: z.string(),
 
-  API_URL: z.string(),
-  VAR_NUMBER: z.number(),
-  VAR_BOOL: z.boolean(),
+  // API_URL: z.string(),
+  // VAR_NUMBER: z.number(),
+  // VAR_BOOL: z.boolean(),
 });
 
 const buildTime = z.object({
