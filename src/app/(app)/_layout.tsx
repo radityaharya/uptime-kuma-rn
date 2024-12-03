@@ -31,7 +31,7 @@ const CustomHeader = ({ route }: CustomHeaderProps) => {
             colorScheme === 'dark' ? 'text-white' : 'text-black'
           }`}
         >
-          {route.name === 'home' ? 'Chat' : 'Settings'}
+          {route.name === 'index' ? 'Monitors' : 'Settings'}
         </Text>
       </View>
     </SafeAreaView>
@@ -70,7 +70,7 @@ const CustomTabBar = ({ state, navigation }: BottomTabBarProps) => {
         const inactiveColor = colorScheme === 'dark' ? '#666' : '#999';
 
         const icon =
-          route.name === 'home' ? (
+          route.name === 'index' ? (
             <FeedIcon color={isFocused ? activeColor : inactiveColor} />
           ) : (
             <SettingsIcon color={isFocused ? activeColor : inactiveColor} />
@@ -104,12 +104,6 @@ export default function TabLayout() {
     }
   }, [hideSplash, status]);
 
-  if (isFirstTime) {
-    return <Redirect href="/onboarding" />;
-  }
-  if (status === 'signOut') {
-    return <Redirect href="/login" />;
-  }
   return (
     <Tabs
       tabBar={(props) => <CustomTabBar {...props} />}
@@ -119,10 +113,10 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
-        name="home"
+        name="index"
         options={{
           title: 'Chat',
-          tabBarButtonTestID: 'home-tab',
+          tabBarButtonTestID: 'index-tab',
         }}
       />
       <Tabs.Screen

@@ -14,7 +14,7 @@ const DarkTheme: Theme = {
   colors: {
     ..._DarkTheme.colors,
     primary: colors.primary[200],
-    background: colors.charcoal[950],
+    background: colors.background.dark,
     text: colors.charcoal[100],
     border: colors.charcoal[500],
     card: colors.charcoal[850],
@@ -35,7 +35,7 @@ export function useThemeConfig() {
 
   useEffect(() => {
     NavigationBar.setBackgroundColorAsync(
-      colorScheme === 'dark' ? colors.black : colors.white,
+      colorScheme === 'dark' ? colors.background.dark : colors.white,
     );
   }, [colorScheme]);
 

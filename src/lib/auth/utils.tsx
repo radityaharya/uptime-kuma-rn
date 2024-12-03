@@ -2,11 +2,12 @@ import { getItem, removeItem, setItem } from '@/lib/storage';
 
 const TOKEN = 'token';
 
-export type TokenType = {
-  access: string;
-  refresh: string;
+export type AuthCredentials = {
+  host: string;
+  username: string;
+  password: string;
 };
 
-export const getToken = () => getItem<TokenType>(TOKEN);
+export const getToken = () => getItem<AuthCredentials>(TOKEN);
 export const removeToken = () => removeItem(TOKEN);
-export const setToken = (value: TokenType) => setItem<TokenType>(TOKEN, value);
+export const setToken = (value: AuthCredentials) => setItem<AuthCredentials>(TOKEN, value);

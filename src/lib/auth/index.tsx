@@ -1,27 +1,27 @@
 import { create } from 'zustand';
 
 import { createSelectors } from '../utils';
-import type { TokenType } from './utils';
+import type { AuthCredentials } from './utils';
 import { getToken, removeToken, setToken } from './utils';
 
 interface AuthState {
-  token: TokenType | null;
-  status: 'idle' | 'signOut' | 'signIn';
-  signIn: (data: TokenType) => void;
+  credentials: AuthCredentials | null;
+  status: 'idle' | 'unauthenticated' | 'authenticated';
+  signIn: (data: AuthCredentials) => void;
   signOut: () => void;
   hydrate: () => void;
 }
 
 const _useAuth = create<AuthState>((set, get) => ({
   status: 'idle',
-  token: null,
-  signIn: (token) => {
-    setToken(token);
-    set({ status: 'signIn', token });
+  credentials: null,
+  signIn: (credentials) => {
+    setToken(credentials);
+    set({ status: 'authenticated', credentials });
   },
   signOut: () => {
     removeToken();
-    set({ status: 'signOut', token: null });
+    set({ status: 'unauthenticated', credentials: null });
   },
   hydrate: () => {
     try {
@@ -41,5 +41,5 @@ const _useAuth = create<AuthState>((set, get) => ({
 export const useAuth = createSelectors(_useAuth);
 
 export const signOut = () => _useAuth.getState().signOut();
-export const signIn = (token: TokenType) => _useAuth.getState().signIn(token);
+export const signIn = (token: AuthCredentials) => _useAuth.getState().signIn(token);
 export const hydrateAuth = () => _useAuth.getState().hydrate();

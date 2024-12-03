@@ -1,6 +1,10 @@
 module.exports = {
   white: '#ffffff',
   black: '#000000',
+  background: {
+    dark: '#09090b',
+    light: '#F9F9F9',
+  },
   charcoal: {
     50: '#F2F2F2',
     100: '#E5E5E5',

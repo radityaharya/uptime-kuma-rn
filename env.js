@@ -15,7 +15,7 @@ const BUNDLE_ID = 'com.uptime_kuma_rn'; // ios bundle id
 const PACKAGE = 'com.uptime_kuma_rn'; // android package name
 const NAME = 'uptime_kuma_rn'; // app name
 const EXPO_ACCOUNT_OWNER = 'radityaharya'; // expo account owner
-const EAS_PROJECT_ID = ''; // eas project id
+const EAS_PROJECT_ID = '5a4a75b1-5ff3-4613-be1f-f78c422ac5fa'; // eas project id
 const SCHEME = 'uptime_kuma_rn'; // app scheme
 
 

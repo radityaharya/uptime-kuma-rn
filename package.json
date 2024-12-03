@@ -24,9 +24,12 @@
     "ios": "expo run:ios"
   },
   "dependencies": {
+    "@gorhom/bottom-sheet": "^5",
     "@hookform/resolvers": "^3.9.0",
     "@react-native-async-storage/async-storage": "1.23.1",
     "@rn-primitives/avatar": "^1.1.0",
+    "@rn-primitives/slot": "^1.1.0",
+    "@rn-primitives/types": "^1.1.0",
     "@shopify/flash-list": "1.7.1",
     "@tanstack/react-query": "^5.52.1",
     "app-icon-badge": "^0.1.2",
@@ -70,6 +73,7 @@
     "react-native-svg": "~15.8.0",
     "react-native-web": "~0.19.13",
     "react-query-kit": "^3.3.0",
+    "socket.io-client": "^4.8.1",
     "tailwind-merge": "^2.5.4",
     "tailwind-variants": "^0.2.1",
     "tailwindcss-animate": "^1.0.7",

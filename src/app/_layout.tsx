@@ -1,6 +1,6 @@
-// Import  global CSS file
 import '../../global.css';
 
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -10,7 +10,6 @@ import FlashMessage from 'react-native-flash-message';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 
-import { APIProvider } from '@/api';
 import { hydrateAuth, loadSelectedTheme } from '@/lib';
 import { useThemeConfig } from '@/lib/use-theme-config';
 
@@ -49,10 +48,10 @@ function Providers({ children }: { children: React.ReactNode }) {
     >
       <KeyboardProvider>
         <ThemeProvider value={theme}>
-          <APIProvider>
+          <BottomSheetModalProvider>
             {children}
             <FlashMessage position="top" />
-          </APIProvider>
+          </BottomSheetModalProvider>
         </ThemeProvider>
       </KeyboardProvider>
     </GestureHandlerRootView>

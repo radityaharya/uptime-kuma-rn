@@ -14,13 +14,6 @@ module.exports = {
     project: './tsconfig.json',
   },
   rules: {
-    'unicorn/filename-case': [
-      'error',
-      {
-        case: 'kebabCase',
-        ignore: ['/android', '/ios'],
-      },
-    ],
     'max-params': ['error', 5], 
     'react/display-name': 'off',
     'react/no-inline-styles': 'off',
