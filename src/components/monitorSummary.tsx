@@ -75,11 +75,11 @@ export function MonitorSummaryStats() {
           />
         </View>
       </View>
-      <View className="mt-6 items-center">
-        <Text className="text-2xl font-bold text-white">
+      <View className="mt-20 items-center">
+        <Text className="text-2xl font-bold text-foreground">
           {isAllUp ? 'All Systems Up' : `${numOfDownMonitors} Monitors Down`}
         </Text>
-        <Text className="mt-2 text-sm text-gray-400">
+        <Text className="mt-2 text-sm text-foreground/90">
           {isAllUp ? 'Everything is running smoothly' : 'Attention required'}
         </Text>
       </View>

@@ -1,7 +1,7 @@
 /* eslint-disable unused-imports/no-unused-vars */
+import { FlashList } from '@shopify/flash-list';
 import { Redirect } from 'expo-router';
 import * as React from 'react';
-import { FlatList } from 'react-native';
 import { RefreshControl } from 'react-native';
 
 import { MonitorCard } from '@/components/monitorCard';
@@ -30,6 +30,8 @@ const ErrorMessage = React.memo(({ error }: { error: string }) => (
     <Text className="text-red-500">{error}</Text>
   </View>
 ));
+
+const MemoizedMonitorCard = React.memo(MonitorCard);
 
 export default function Index() {
   const [refreshing, setRefreshing] = React.useState(false);
@@ -64,14 +66,17 @@ export default function Index() {
   return (
     <View className="bg-background flex-1">
       <FocusAwareStatusBar />
-      <FlatList
+      <FlashList
         data={hasMonitors ? monitors : []}
         renderItem={({ item: monitor }) => (
-          <MonitorCard key={monitor.id} monitor={monitor} />
+          <MemoizedMonitorCard key={monitor.id} monitor={monitor} />
         )}
+        estimatedItemSize={100}
+        drawDistance={100}
+        estimatedFirstItemOffset={40}
+        ItemSeparatorComponent={() => <View className="h-0.5" />}
         keyExtractor={(monitor) => String(monitor.id)}
         contentContainerStyle={{ paddingHorizontal: 16 }}
-        ItemSeparatorComponent={() => <View className="h-0.5" />}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }

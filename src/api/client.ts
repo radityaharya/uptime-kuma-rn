@@ -1,6 +1,7 @@
 import { EventEmitter as ExpoEventEmitter } from 'expo-modules-core';
 import io, { type Socket } from 'socket.io-client';
 
+import { logger } from '@/lib/log';
 import { infoStore } from '@/store/infoStore';
 import { monitorStore } from '@/store/monitorContext';
 
@@ -131,7 +132,7 @@ export class UptimeKumaClient {
   }
 
   private setMonitorList(data: Record<string, Monitor>): void {
-    console.debug('Setting monitor list', Object.keys(data).length, 'monitors');
+    logger.debug('Setting monitor list', Object.keys(data).length);
 
     if (!this.monitorsInitialized) {
       this.monitors = Object.values(data).map((monitor) => ({
@@ -145,7 +146,7 @@ export class UptimeKumaClient {
         },
       }));
       this.monitorsInitialized = true;
-      console.debug(
+      logger.debug(
         'Monitors initialized:',
         this.monitors.map((m) => m.id),
       );
@@ -188,7 +189,7 @@ export class UptimeKumaClient {
     monitorId: number,
     data: HeartBeat[] | [HeartBeat[], boolean],
   ): void {
-    console.debug('Setting heartbeat for monitor:', monitorId);
+    logger.debug('Setting heartbeat for monitor:', monitorId);
     const numericId = Number(monitorId);
     if (!Number.isInteger(numericId)) {
       throw new Error(`Invalid monitor ID: ${monitorId}`);
@@ -208,7 +209,7 @@ export class UptimeKumaClient {
   }
 
   private addHeartBeat(monitorId: number, heartBeat: HeartBeat): void {
-    console.debug('Adding heartbeat for monitor:', monitorId);
+    logger.debug('Adding heartbeat for monitor:', monitorId);
     const monitor = this.getMonitor(monitorId);
     if (!monitor) return;
 
@@ -219,11 +220,9 @@ export class UptimeKumaClient {
   }
 
   private setAvgPing(monitorId: number, avgPing: number | null): void {
-    console.debug(
+    logger.debug(
       'Setting avgPing for monitor:',
       monitorId,
-      'avgPing:',
-      avgPing,
     );
     if (avgPing !== null) {
       monitorStore.updateMonitor(monitorId, { avgPing });
@@ -235,13 +234,13 @@ export class UptimeKumaClient {
     period: number,
     uptime: number,
   ): void {
-    console.debug(
+    logger.debug(
       'Setting uptime for monitor:',
-      monitorId,
-      'period:',
-      period,
-      'uptime:',
-      uptime,
+      {
+        monitorId,
+        period,
+        uptime,
+      }
     );
     const monitor = this.getMonitor(monitorId);
     if (!monitor) return;
@@ -259,7 +258,7 @@ export class UptimeKumaClient {
 
   public setupListeners(): void {
     this.socket?.on('monitorList', (data) => {
-      console.debug('Processing monitor list event');
+      logger.debug('Processing monitor list event');
       this.setMonitorList(data);
     });
 
@@ -280,7 +279,7 @@ export class UptimeKumaClient {
   }
 
   public async getMonitors(): Promise<void> {
-    console.debug('Fetching monitors');
+    logger.debug('Fetching monitors');
     return new Promise((resolve, reject) => {
       if (!this.socket?.connected) {
         reject(new Error('Socket not connected'));
@@ -302,7 +301,7 @@ export class UptimeKumaClient {
     monitorId: number,
     period?: number,
   ): Promise<void> {
-    console.debug('Getting beats for monitor:', monitorId);
+    logger.debug('Getting beats for monitor:', monitorId);
     return new Promise((resolve, reject) => {
       if (!this.socket?.connected) {
         reject(new Error('Socket not connected'));

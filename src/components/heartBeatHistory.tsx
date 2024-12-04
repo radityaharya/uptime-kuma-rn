@@ -58,7 +58,7 @@ export function HeartbeatHistory({
 
   return (
     <View className={`${className}`}>
-      <View className="flex-1 flex-row justify-center px-2">
+      <View className="flex-1 flex-row justify-between p-2">
         {dots.map((item, index) => (
           <React.Fragment key={index}>
             {item ? <HeartbeatDot status={item.status} /> : <PlaceholderDot />}

@@ -32,7 +32,7 @@ const MonitorTags: React.FC<{ tags: Tag[] }> = ({ tags }) => {
       {tags.map((tag) => (
         <View
           key={tag.id}
-          className="rounded-full bg-gray-700/60 px-3 py-1.5 backdrop-blur-sm"
+          className="rounded-full text-foreground/80 px-3 py-1.5 backdrop-blur-sm"
           style={{ backgroundColor: tag.color ?? 'gray' }}
         >
           <Text className="text-sm font-medium text-gray-200">{tag.name}</Text>
@@ -78,13 +78,13 @@ export function MonitorCard({ monitor }: MonitorCardProps) {
       <View className="flex-row justify-between p-4 pb-3">
         <View className="flex-row items-center space-x-3">
           <StatusIndicator active={isUp} />
-          <Text className="text-xl font-bold tracking-tight text-white">
+          <Text className="text-xl font-bold tracking-tight text-foreground">
             {monitor.name}
           </Text>
         </View>
         {uptime && (
           <View className="px-3 py-1.5 backdrop-blur-sm">
-            <Text className="font-medium text-gray-200">{uptime}%</Text>
+            <Text className="font-medium text-foreground">{uptime}%</Text>
           </View>
         )}
       </View>
