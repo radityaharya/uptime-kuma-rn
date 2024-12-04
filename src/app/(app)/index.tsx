@@ -41,21 +41,21 @@ export default function Index() {
     monitors,
     error,
     isLoading,
-    refreshMonitors: refreshMonitor,
     reconnectClient,
+    refreshMonitors
   } = useMonitors();
 
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
     try {
-      await reconnectClient();
-      // await refreshMonitor();
+      // await reconnectClient();
+      await refreshMonitors();
     } catch (err) {
       // Handle error if needed
     } finally {
       setRefreshing(false);
     }
-  }, [reconnectClient]);
+  }, []);
 
   const authStatus = useAuth.use.status();
 

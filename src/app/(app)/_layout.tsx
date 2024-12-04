@@ -15,7 +15,7 @@ import {
   Feed as FeedIcon,
   Settings as SettingsIcon,
 } from '@/components/ui/icons';
-import { useAuth, useIsFirstTime } from '@/lib';
+import { useAuth } from '@/lib';
 
 interface CustomHeaderProps {
   route: Route<string>;
@@ -25,7 +25,7 @@ const CustomHeader = ({ route }: CustomHeaderProps) => {
   const { colorScheme } = useColorScheme();
   return (
     <SafeAreaView>
-      <View className="flex h-24 flex-row justify-between bg-background px-4 pt-12">
+      <View className="bg-background flex h-24 flex-row justify-between px-4 pt-12">
         <Text
           className={`text-xl font-semibold ${
             colorScheme === 'dark' ? 'text-white' : 'text-black'
@@ -57,7 +57,7 @@ const CustomTabBar = ({ state, navigation }: BottomTabBarProps) => {
   });
 
   return (
-    <View className="h-20 flex-row bg-background">
+    <View className="bg-background h-20 flex-row">
       <Animated.View
         className={`absolute top-3 size-14 rounded-2xl ${
           colorScheme === 'dark' ? 'bg-white/10' : 'bg-black/10'
@@ -92,7 +92,9 @@ const CustomTabBar = ({ state, navigation }: BottomTabBarProps) => {
 
 export default function TabLayout() {
   const status = useAuth.use.status();
-  const [isFirstTime] = useIsFirstTime();
+  // const [isFirstTime] = useIsFirstTime();
+
+  
   const hideSplash = useCallback(async () => {
     await SplashScreen.hideAsync();
   }, []);
@@ -103,6 +105,13 @@ export default function TabLayout() {
       }, 1000);
     }
   }, [hideSplash, status]);
+
+
+  const authStatus = useAuth.use.status();
+
+  if (authStatus === 'unauthenticated') {
+    return <Redirect href="/login" />;
+  }
 
   return (
     <Tabs

@@ -10,11 +10,6 @@ export const useMonitors = () => {
   const [isReconnecting, setIsReconnecting] = useState(false);
   const clientRef = useRef<UptimeKumaClient | null>(null);
 
-  const token = getToken();
-  if (!token) {
-    throw new Error('Token not found.');
-  }
-
   const { monitors } = monitorStore();
 
   const refreshMonitors = useCallback(async () => {
@@ -30,7 +25,15 @@ export const useMonitors = () => {
   }, []);
 
   const initializeClient = useCallback(async () => {
+    if (clientRef.current) return; // Prevent reinitializing if client exists
+    
     console.log('initializeClient called');
+    const token = getToken();
+    if (!token) {
+      setError('Token not found.');
+      return;
+    }
+
     const client = new UptimeKumaClient(token.host, {
       autoReconnect: true,
       reconnectionAttempts: 3,
@@ -42,27 +45,25 @@ export const useMonitors = () => {
     try {
       await client.authenticate(token.username, token.password);
       client.socket && refreshMonitors();
-
       await clientRef.current.getMonitors();
       await clientRef.current.getHeartbeats();
-      
     } catch {
       setError('Authentication failed. Please check your credentials.');
     } finally {
       setIsLoading(false);
     }
-  }, [token.host, token.password, token.username]);
+  }, [refreshMonitors]); // Only depend on refreshMonitors
 
   const reconnectClient = useCallback(async () => {
+    setError(null);
     console.log('reconnectClient called');
     if (!clientRef.current) return;
     setIsReconnecting(true);
-    setError(null);
 
     try {
       await clientRef.current.reconnect();
-    } catch {
-      setError('Reconnection failed. Please try again.');
+    } catch (err) {
+      setError('Reconnection failed. Please try again.' + err);
     } finally {
       setIsReconnecting(false);
     }
