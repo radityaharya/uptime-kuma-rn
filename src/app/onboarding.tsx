@@ -1,6 +1,7 @@
-import React from 'react';
-import { Text, View, Button } from '@/components/ui';
 import { useRouter } from 'expo-router';
+import React from 'react';
+
+import { Button,Text, View } from '@/components/ui';
 
 export default function Onboarding() {
   const router = useRouter();
@@ -10,7 +11,7 @@ export default function Onboarding() {
   };
 
   return (
-    <View className="flex h-full items-center justify-center bg-background">
+    <View className="bg-background flex h-full items-center justify-center">
       <Text className="text-5xl font-bold text-foreground">onboarding</Text>
       <Button onPress={goToHome}>
         <Text>Go to Home</Text>

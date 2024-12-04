@@ -39,6 +39,7 @@ export function MonitorSummaryStats() {
     ]);
 
     Animated.loop(pulse).start();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const isAllUp = stats.downMonitors.length === 0;

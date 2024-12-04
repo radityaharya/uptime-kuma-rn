@@ -19,7 +19,7 @@ export default function Settings() {
     colorScheme === 'dark' ? colors.neutral[400] : colors.neutral[500];
 
   return (
-    <View className="flex-1 bg-background pt-24">
+    <View className="bg-background flex-1 pt-24">
       <FocusAwareStatusBar />
       <ScrollView className="flex-1">
         <View className="flex-1 px-4">

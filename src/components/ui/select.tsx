@@ -27,7 +27,7 @@ const selectTv = tv({
     container: 'mb-2',
     label: 'mb-1.5 text-sm font-medium text-foreground',
     input:
-      'flex-row items-center justify-between rounded-lg border border-neutral-200 bg-background px-4 py-2.5 dark:border-neutral-800',
+      'bg-background flex-row items-center justify-between rounded-lg border border-neutral-200 px-4 py-2.5 dark:border-neutral-800',
     inputValue: 'text-base text-foreground',
   },
 
@@ -123,7 +123,7 @@ const Option = React.memo(
   }) => {
     return (
       <Pressable
-        className="flex-row items-center border-b border-neutral-100 bg-background px-4 py-3 active:bg-neutral-100 dark:border-neutral-800 dark:active:bg-neutral-800"
+        className="bg-background flex-row items-center border-b border-neutral-100 px-4 py-3 active:bg-neutral-100 dark:border-neutral-800 dark:active:bg-neutral-800"
         {...props}
       >
         <Text className="flex-1 text-base text-foreground">{label}</Text>
