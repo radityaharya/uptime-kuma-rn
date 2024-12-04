@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { UptimeKumaClient } from '@/api/client';
 import { getToken } from '@/lib/auth/utils';
-import { monitorStore } from '@/store/monitorStore';
+import { useMonitorsStore } from '@/store/monitorContext';
 
 export const useMonitors = () => {
   const [error, setError] = useState<string | null>(null);
@@ -10,7 +10,7 @@ export const useMonitors = () => {
   const [isReconnecting, setIsReconnecting] = useState(false);
   const clientRef = useRef<UptimeKumaClient | null>(null);
 
-  const { monitors } = monitorStore();
+  const monitors = useMonitorsStore();
 
   const refreshMonitors = useCallback(async () => {
     console.log('refreshMonitors called');
@@ -25,7 +25,7 @@ export const useMonitors = () => {
   }, []);
 
   const initializeClient = useCallback(async () => {
-    if (clientRef.current) return; // Prevent reinitializing if client exists
+    if (clientRef.current) return;
     
     console.log('initializeClient called');
     const token = getToken();
@@ -50,9 +50,10 @@ export const useMonitors = () => {
     } catch {
       setError('Authentication failed. Please check your credentials.');
     } finally {
+      
       setIsLoading(false);
     }
-  }, [refreshMonitors]); // Only depend on refreshMonitors
+  }, [refreshMonitors]);
 
   const reconnectClient = useCallback(async () => {
     setError(null);

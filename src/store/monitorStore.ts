@@ -10,7 +10,7 @@ interface MonitorStoreInterface {
   getMonitor: () => Monitor[] | null
 }
 
-export const monitorStore = create<MonitorStoreInterface>((set, get) => ({
+const _monitorStore = create<MonitorStoreInterface>((set, get) => ({
   monitors: null,
 
   setMonitor: (monitors: Monitor[]) => set({ monitors }),

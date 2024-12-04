@@ -31,7 +31,7 @@ const CustomHeader = ({ route }: CustomHeaderProps) => {
             colorScheme === 'dark' ? 'text-white' : 'text-black'
           }`}
         >
-          {route.name === 'index' ? 'Monitors' : 'Settings'}
+          {route.name === 'index' ? '' : 'Settings'}
         </Text>
       </View>
     </SafeAreaView>

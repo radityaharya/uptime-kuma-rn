@@ -2,7 +2,7 @@ import { EventEmitter as ExpoEventEmitter } from 'expo-modules-core';
 import io, { type Socket } from 'socket.io-client';
 
 import { infoStore } from '@/store/infoStore';
-import { monitorStore } from '@/store/monitorStore';
+import { monitorStore } from '@/store/monitorContext';
 
 import {
   type EventPayloads,
@@ -30,15 +30,6 @@ interface Credentials {
   password: string;
 }
 
-interface MonitorUpdate {
-  heartBeatList?: HeartBeat[];
-  avgPing?: number;
-  uptime: {
-    day: number;
-    month: number;
-  };
-}
-
 class CustomEventEmitter extends ExpoEventEmitter<EventPayloads> {
   on<T extends UptimeKumaEvent>(
     event: T,
@@ -56,9 +47,6 @@ export class UptimeKumaClient {
   private readonly connectionOptions: UptimeKumaOptions;
   private reconnectAttempts = 0;
   private readonly DEFAULT_TIMEOUT = 10000;
-  private tempHeartbeats: Record<number, HeartBeat[]> = {};
-  private tempUptime: Record<number, { period: number; uptime: number }[]> = [];
-  private tempAvgPing: Record<number, number | null> = {};
 
   private static readonly DEFAULT_OPTIONS: UptimeKumaOptions = {
     autoReconnect: true,
@@ -82,11 +70,11 @@ export class UptimeKumaClient {
   }
 
   private get monitors(): Monitor[] {
-    return monitorStore.getState().monitors ?? [];
+    return monitorStore.getMonitors();
   }
 
   private set monitors(value: Monitor[]) {
-    monitorStore.getState().setMonitor(value);
+    monitorStore.setMonitors(value);
   }
 
   public async authenticate(username: string, password: string): Promise<void> {
@@ -142,31 +130,6 @@ export class UptimeKumaClient {
     infoStore.setState({ info: data });
   }
 
-  private updateMonitor(id: number, update: Partial<MonitorUpdate>): void {
-    const monitors = this.monitors;
-    const index = monitors.findIndex(m => Number(m.id) === Number(id));
-    if (index === -1) {
-      console.warn(`Monitor ${id} not found. Current monitors:`, monitors.map(m => m.id));
-      return;
-    }
-
-    const currentUptime = monitors[index].uptime || { day: 0, month: 0 };
-    const updatedUptime = update.uptime 
-      ? { 
-          day: update.uptime.day ?? currentUptime.day ?? 0,
-          month: update.uptime.month ?? currentUptime.month ?? 0
-        }
-      : currentUptime;
-
-    monitors[index] = {
-      ...monitors[index],
-      ...update,
-      uptime: updatedUptime
-    };
-
-    monitorStore.getState().setMonitor(monitors);
-  }
-
   private setMonitorList(data: Record<string, Monitor>): void {
     console.debug('Setting monitor list', Object.keys(data).length, 'monitors');
     
@@ -183,24 +146,6 @@ export class UptimeKumaClient {
       }));
       this.monitorsInitialized = true;
       console.debug('Monitors initialized:', this.monitors.map(m => m.id));
-
-      Object.keys(this.tempHeartbeats).forEach(monitorId => {
-        this.setHeartBeat(Number(monitorId), this.tempHeartbeats[Number(monitorId)]);
-      });
-      this.tempHeartbeats = {};
-
-      Object.keys(this.tempUptime).forEach(monitorId => {
-        this.tempUptime[Number(monitorId)].forEach(({ period, uptime }: { period: number; uptime: number }) => {
-          this.setMonitorUptime(Number(monitorId), period, uptime);
-        });
-      });
-      this.tempUptime = {};
-
-      Object.keys(this.tempAvgPing).forEach(monitorId => {
-        this.setAvgPing(Number(monitorId), this.tempAvgPing[Number(monitorId)]);
-      });
-      this.tempAvgPing = {};
-
       return;
     }
 
@@ -238,12 +183,6 @@ export class UptimeKumaClient {
     data: HeartBeat[] | [HeartBeat[], boolean],
   ): void {
     console.debug('Setting heartbeat for monitor:', monitorId);
-    if (!this.monitorsInitialized) {
-      this.tempHeartbeats[monitorId] = Array.isArray(data[0])
-        ? (data as [HeartBeat[], boolean])[0]
-        : (data as HeartBeat[]);
-      return;
-    }
     const numericId = Number(monitorId);
     if (!Number.isInteger(numericId)) {
       throw new Error(`Invalid monitor ID: ${monitorId}`);
@@ -257,7 +196,9 @@ export class UptimeKumaClient {
       throw new Error('Invalid heartbeat data: not an array');
     }
 
-    this.updateMonitor(monitorId, { heartBeatList: heartbeats });
+    const maxHeartbeats = 100;
+    heartbeats.splice(maxHeartbeats);
+    monitorStore.updateMonitor(monitorId, { heartBeatList: heartbeats });
   }
 
   private addHeartBeat(monitorId: number, heartBeat: HeartBeat): void {
@@ -266,46 +207,31 @@ export class UptimeKumaClient {
     if (!monitor) return;
 
     const heartBeatList = monitor.heartBeatList || [];
-    this.updateMonitor(monitorId, {
+    monitorStore.updateMonitor(monitorId, {
       heartBeatList: [heartBeat, ...heartBeatList],
     });
   }
 
   private setAvgPing(monitorId: number, avgPing: number | null): void {
     console.debug('Setting avgPing for monitor:', monitorId, 'avgPing:', avgPing);
-    if (!this.monitorsInitialized) {
-      this.tempAvgPing[monitorId] = avgPing;
-      return;
-    }
     if (avgPing !== null) {
-      this.updateMonitor(monitorId, { avgPing });
+      monitorStore.updateMonitor(monitorId, { avgPing });
     }
   }
 
   private setMonitorUptime(monitorId: number, period: number, uptime: number): void {
     console.debug('Setting uptime for monitor:', monitorId, 'period:', period, 'uptime:', uptime);
-    const updateUptime = () => {
-      const monitor = this.getMonitor(monitorId);
-      if (!monitor) return;
+    const monitor = this.getMonitor(monitorId);
+    if (!monitor) return;
 
-      const currentUptime = monitor.uptime || { day: 0, month: 0 };
-      const uptimeUpdate = period === 24
-        ? { ...currentUptime, day: uptime }
-        : period === 720
-          ? { ...currentUptime, month: uptime }
-          : currentUptime;
+    const currentUptime = monitor.uptime || { day: 0, month: 0 };
+    const uptimeUpdate = period === 24
+      ? { ...currentUptime, day: uptime }
+      : period === 720
+        ? { ...currentUptime, month: uptime }
+        : currentUptime;
 
-      this.updateMonitor(monitorId, { uptime: uptimeUpdate });
-    };
-
-    if (!this.monitorsInitialized) {
-      if (!this.tempUptime[monitorId]) {
-        this.tempUptime[monitorId] = [];
-      }
-      this.tempUptime[monitorId].push({ period, uptime });
-    } else {
-      updateUptime();
-    }
+    monitorStore.updateMonitor(monitorId, { uptime: uptimeUpdate });
   }
 
   public setupListeners(): void {

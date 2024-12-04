@@ -1,21 +1,26 @@
 /* eslint-disable unused-imports/no-unused-vars */
 import { Redirect } from 'expo-router';
 import * as React from 'react';
-import { RefreshControl, ScrollView } from 'react-native';
+import { FlatList } from 'react-native';
+import { RefreshControl } from 'react-native';
 
 import { MonitorCard } from '@/components/monitorCard';
+import { MonitorSummaryStats } from '@/components/monitorSummary';
 import { FocusAwareStatusBar, Text, View } from '@/components/ui';
 import { useMonitors } from '@/hooks/use-monitors';
 import { useAuth } from '@/lib';
+import { useMonitorsStore, useMonitorStats } from '@/store/monitorContext';
 
 const EmptyState = React.memo(() => (
   <View className="flex-1 items-center justify-center">
+    <FocusAwareStatusBar />
     <Text className="text-white">No monitors available</Text>
   </View>
 ));
 
 const LoadingState = React.memo(() => (
   <View className="flex-1 items-center justify-center">
+    <FocusAwareStatusBar />
     <Text className="text-white">Loading...</Text>
   </View>
 ));
@@ -26,24 +31,14 @@ const ErrorMessage = React.memo(({ error }: { error: string }) => (
   </View>
 ));
 
-const MonitorList = ({ monitors }: { monitors: Record<string, any> }) => (
-  <View className="w-full p-4">
-    {Object.entries(monitors).map(([id, monitor]) => (
-      <MonitorCard key={id} monitor={monitor} />
-    ))}
-  </View>
-);
-
 export default function Index() {
-  const scrollViewRef = React.useRef<ScrollView>(null);
   const [refreshing, setRefreshing] = React.useState(false);
-  const {
-    monitors,
-    error,
-    isLoading,
-    reconnectClient,
-    refreshMonitors
-  } = useMonitors();
+  const { error, isLoading, reconnectClient, refreshMonitors } = useMonitors();
+
+  const monitors = useMonitorsStore();
+  const stats = useMonitorStats();
+
+  const hasMonitors = monitors && monitors.length > 0;
 
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
@@ -51,7 +46,6 @@ export default function Index() {
       // await reconnectClient();
       await refreshMonitors();
     } catch (err) {
-      // Handle error if needed
     } finally {
       setRefreshing(false);
     }
@@ -67,28 +61,33 @@ export default function Index() {
     return <LoadingState />;
   }
 
-  const hasMonitors = Object.keys(monitors ?? {}).length > 0;
-
   return (
-    <View className="bg-background flex-1 pt-24">
+    <View className="bg-background flex-1">
       <FocusAwareStatusBar />
-      <ScrollView
-        ref={scrollViewRef}
-        className="flex-1"
-        contentInsetAdjustmentBehavior="automatic"
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
+      <FlatList
+        data={hasMonitors ? monitors : []}
+        renderItem={({ item: monitor }) => (
+          <MonitorCard key={monitor.id} monitor={monitor} />
+        )}
+        keyExtractor={(monitor) => String(monitor.id)}
+        contentContainerStyle={{ paddingHorizontal: 16 }}
+        ItemSeparatorComponent={() => <View className="h-0.5" />}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
-      >
-        {error && <ErrorMessage error={error} />}
-        {!hasMonitors ? (
-          <EmptyState />
-        ) : (
-          <MonitorList monitors={monitors ?? {}} />
-        )}
-      </ScrollView>
+        ListEmptyComponent={!hasMonitors && !isLoading ? <EmptyState /> : null}
+        ListHeaderComponent={
+          <>
+            <View className="pb-20 pt-40">
+              <MonitorSummaryStats />
+            </View>
+            <View className="mb-2 text-sm opacity-50">
+              <Text>{stats.numMonitors} Monitors</Text>
+            </View>
+            {error ? <ErrorMessage error={error} /> : null}
+          </>
+        }
+      />
     </View>
   );
 }

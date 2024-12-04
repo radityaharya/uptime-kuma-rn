@@ -3,7 +3,7 @@ import * as React from 'react';
 import { StatusIndicator } from '@/components/StatusIndicator';
 import { Text, View } from '@/components/ui';
 
-import { HeartBeat, type Monitor, type Tag } from '../api/types';
+import { type HeartBeat, type Monitor, type Tag } from '../api/types';
 import { HeartbeatHistory } from './heartBeatHistory';
 
 interface MonitorCardProps {
@@ -20,7 +20,7 @@ const MonitorContent: React.FC<{ monitor: Monitor }> = ({ monitor }) => {
       );
     default:
       return null;
-    
+
     // TODO: Add more cases for other monitor types
   }
 };
@@ -46,11 +46,11 @@ function isMonitorUp(heartbeats: HeartBeat[]): boolean {
   if (!heartbeats || heartbeats.length === 0) {
     return false;
   }
-  
-  const sortedHeartbeats = [...heartbeats].sort((a, b) => 
-    new Date(b.time).getTime() - new Date(a.time).getTime()
+
+  const sortedHeartbeats = [...heartbeats].sort(
+    (a, b) => new Date(b.time).getTime() - new Date(a.time).getTime(),
   );
-  
+
   return sortedHeartbeats[0].status === 1;
 }
 
@@ -90,7 +90,7 @@ export function MonitorCard({ monitor }: MonitorCardProps) {
       </View>
 
       {/* Content */}
-      <View className="flex flex-col px-4 py-2">
+      <View className="flex flex-col px-4">
         <MonitorContent monitor={monitor} />
 
         {monitor.description && (
@@ -102,6 +102,11 @@ export function MonitorCard({ monitor }: MonitorCardProps) {
           </Text>
         )}
         <HeartbeatHistory heartbeats={monitor.heartBeatList} className="mt-3" />
+        <View className="mt-2 w-full flex-row justify-between">
+          <Text className="text-xs opacity-40">
+            {monitor.interval}s interval
+          </Text>
+        </View>
       </View>
 
       {/* Footer */}

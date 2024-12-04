@@ -1,5 +1,3 @@
-// HeartbeatHistory.tsx
-import { FlashList } from '@shopify/flash-list';
 import * as React from 'react';
 
 import { View } from '@/components/ui';
@@ -12,17 +10,17 @@ interface HeartbeatHistoryProps {
   className?: string;
 }
 
-const HeartbeatDot = React.memo(({ status }: { status: number }) => (
+const HeartbeatDot = ({ status }: { status: number }) => (
   <View
     className={`h-4 w-2 rounded-full ${
       status === 1 ? 'bg-green-500' : 'bg-red-500'
     }`}
   />
-));
+);
 
-const PlaceholderDot = React.memo(() => (
+const PlaceholderDot = () => (
   <View className="h-4 w-2 rounded-full bg-gray-600/50" />
-));
+);
 
 export function HeartbeatHistory({
   heartbeats = [],
@@ -41,18 +39,13 @@ export function HeartbeatHistory({
 
   return (
     <View className={`${className}`}>
-      <View className="flex-1 justify-center">
-        <FlashList
-          data={dots}
-          renderItem={({ item }) =>
-            item ? <HeartbeatDot status={item.status} /> : <PlaceholderDot />
-          }
-          estimatedItemSize={12}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          ItemSeparatorComponent={() => <View className="w-1" />}
-          contentContainerStyle={{ paddingHorizontal: 2 }}
-        />
+      <View className="flex-1 flex-row justify-center px-2">
+        {dots.map((item, index) => (
+          <React.Fragment key={index}>
+            {item ? <HeartbeatDot status={item.status} /> : <PlaceholderDot />}
+            {index < dots.length - 1 && <View className="w-1" />}
+          </React.Fragment>
+        ))}
       </View>
     </View>
   );
