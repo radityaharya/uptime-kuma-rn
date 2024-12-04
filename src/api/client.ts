@@ -132,25 +132,30 @@ export class UptimeKumaClient {
 
   private setMonitorList(data: Record<string, Monitor>): void {
     console.debug('Setting monitor list', Object.keys(data).length, 'monitors');
-    
+
     if (!this.monitorsInitialized) {
-      this.monitors = Object.values(data).map(monitor => ({
+      this.monitors = Object.values(data).map((monitor) => ({
         ...monitor,
         id: Number(monitor.id),
         heartBeatList: [],
         avgPing: 0,
         uptime: {
           day: monitor.uptime?.day ?? 0,
-          month: monitor.uptime?.month ?? 0
-        }
+          month: monitor.uptime?.month ?? 0,
+        },
       }));
       this.monitorsInitialized = true;
-      console.debug('Monitors initialized:', this.monitors.map(m => m.id));
+      console.debug(
+        'Monitors initialized:',
+        this.monitors.map((m) => m.id),
+      );
       return;
     }
 
-    Object.values(data).forEach(monitor => {
-      const index = this.monitors.findIndex(m => Number(m.id) === Number(monitor.id));
+    Object.values(data).forEach((monitor) => {
+      const index = this.monitors.findIndex(
+        (m) => Number(m.id) === Number(monitor.id),
+      );
       if (index === -1) {
         this.monitors.push({
           ...monitor,
@@ -159,8 +164,8 @@ export class UptimeKumaClient {
           avgPing: 0,
           uptime: {
             day: monitor.uptime?.day ?? 0,
-            month: monitor.uptime?.month ?? 0
-          }
+            month: monitor.uptime?.month ?? 0,
+          },
         });
       } else {
         this.monitors[index] = {
@@ -171,8 +176,9 @@ export class UptimeKumaClient {
           avgPing: this.monitors[index].avgPing,
           uptime: {
             day: monitor.uptime?.day ?? this.monitors[index].uptime?.day ?? 0,
-            month: monitor.uptime?.month ?? this.monitors[index].uptime?.month ?? 0
-          }
+            month:
+              monitor.uptime?.month ?? this.monitors[index].uptime?.month ?? 0,
+          },
         };
       }
     });
@@ -213,23 +219,40 @@ export class UptimeKumaClient {
   }
 
   private setAvgPing(monitorId: number, avgPing: number | null): void {
-    console.debug('Setting avgPing for monitor:', monitorId, 'avgPing:', avgPing);
+    console.debug(
+      'Setting avgPing for monitor:',
+      monitorId,
+      'avgPing:',
+      avgPing,
+    );
     if (avgPing !== null) {
       monitorStore.updateMonitor(monitorId, { avgPing });
     }
   }
 
-  private setMonitorUptime(monitorId: number, period: number, uptime: number): void {
-    console.debug('Setting uptime for monitor:', monitorId, 'period:', period, 'uptime:', uptime);
+  private setMonitorUptime(
+    monitorId: number,
+    period: number,
+    uptime: number,
+  ): void {
+    console.debug(
+      'Setting uptime for monitor:',
+      monitorId,
+      'period:',
+      period,
+      'uptime:',
+      uptime,
+    );
     const monitor = this.getMonitor(monitorId);
     if (!monitor) return;
 
     const currentUptime = monitor.uptime || { day: 0, month: 0 };
-    const uptimeUpdate = period === 24
-      ? { ...currentUptime, day: uptime }
-      : period === 720
-        ? { ...currentUptime, month: uptime }
-        : currentUptime;
+    const uptimeUpdate =
+      period === 24
+        ? { ...currentUptime, day: uptime }
+        : period === 720
+          ? { ...currentUptime, month: uptime }
+          : currentUptime;
 
     monitorStore.updateMonitor(monitorId, { uptime: uptimeUpdate });
   }
@@ -239,15 +262,18 @@ export class UptimeKumaClient {
       console.debug('Processing monitor list event');
       this.setMonitorList(data);
     });
-    
+
     this.socket?.on('info', this.setInfo.bind(this));
     this.socket?.on('heartbeatList', this.setHeartBeat.bind(this));
     this.socket?.on('avgPing', (monitorId: number, avgPing: number | null) => {
       this.setAvgPing(monitorId, avgPing);
     });
-    this.socket?.on('uptime', (monitorId: number, period: number, uptime: number) => {
-      this.setMonitorUptime(monitorId, period, uptime);
-    });
+    this.socket?.on(
+      'uptime',
+      (monitorId: number, period: number, uptime: number) => {
+        this.setMonitorUptime(monitorId, period, uptime);
+      },
+    );
     this.socket?.on('heartbeat', (monitorId: number, heartBeat: HeartBeat) => {
       this.addHeartBeat(monitorId, heartBeat);
     });

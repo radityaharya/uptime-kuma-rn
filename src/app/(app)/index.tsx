@@ -43,7 +43,6 @@ export default function Index() {
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
     try {
-      // await reconnectClient();
       await refreshMonitors();
     } catch (err) {
     } finally {

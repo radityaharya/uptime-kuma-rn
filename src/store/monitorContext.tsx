@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useState } from 'react';
 
-import { HeartBeat, type Monitor } from '@/api/types';
+import { type HeartBeat, type Monitor } from '@/api/types';
 
 interface MonitorContextType {
   monitors: Monitor[];

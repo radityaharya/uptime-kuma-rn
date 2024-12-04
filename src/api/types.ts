@@ -23,7 +23,7 @@ export type HeartBeat = {
   status: number;
   msg: string;
   ping: number;
-  time: Date;
+  time: string;
 }
 
 export type Tag = {
