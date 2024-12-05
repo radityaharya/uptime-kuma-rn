@@ -23,24 +23,6 @@ buildscript {
 
 apply plugin: "com.facebook.react.rootproject"
 
-android {
-    ndkVersion ndkVersion
-
-    defaultConfig {
-        ndk {
-            def buildArch = System.getenv("BUILD_ARCH") ?: "arm64"
-            
-            if (buildArch == "all") {
-                abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
-            } else if (buildArch == "arm") {
-                abiFilters "armeabi-v7a"
-            } else {
-                abiFilters "arm64-v8a"
-            }
-        }
-    }
-}
-
 allprojects {
     repositories {
         maven {
