@@ -107,12 +107,19 @@ jobs:
           retention-days: 7
           if-no-files-found: error
 
+      - name: Create Tag
+        if: steps.build.outcome == 'success'
+        run: |
+          git tag -a v${{ github.run_number }} -m "Release ${{ github.sha }}"
+          git push origin v${{ github.run_number }}
+
       - name: Create Release
         if: steps.build.outcome == 'success'
         uses: softprops/action-gh-release@v2
         with:
           files: ${{ github.workspace }}/app-release.apk
           name: Release ${{ github.sha }}
+          tag_name: v${{ github.run_number }}
           draft: false
           prerelease: false
           fail_on_unmatched_files: true
