@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useState } from 'react';
 
-import { type HeartBeat, type Monitor } from '@/api/types';
+import { type HeartBeat, type ImportantHeartBeat, type Monitor } from '@/api/types';
 
 interface MonitorContextType {
   monitors: Monitor[];
@@ -9,6 +9,7 @@ interface MonitorContextType {
 
 interface MonitorUpdate {
   heartBeatList?: HeartBeat[];
+  importantHeartBeatList?: ImportantHeartBeat[];
   avgPing?: number;
   uptime: {
     day: number;

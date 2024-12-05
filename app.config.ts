@@ -43,7 +43,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   android: {
     adaptiveIcon: {
       foregroundImage: './assets/adaptive-icon.png',
-      backgroundColor: '#2E3C4B',
+      backgroundColor: '#000000',
     },
     package: "com.uptime_kuma_rn.development",
   },
@@ -58,7 +58,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     [
       'expo-splash-screen',
       {
-        backgroundColor: '#2E3C4B',
+        backgroundColor: '#000000',
         image: './assets/splash-icon.png',
         imageWidth: 150,
       },

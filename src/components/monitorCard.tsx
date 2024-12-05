@@ -1,10 +1,12 @@
 import * as React from 'react';
+import { Pressable } from 'react-native';
 
 import { StatusIndicator } from '@/components/StatusIndicator';
 import { Text, View } from '@/components/ui';
 
 import { type HeartBeat, type Monitor, type Tag } from '../api/types';
 import { HeartbeatHistory } from './heartBeatHistory';
+import { MonitorModal } from './monitorModal';
 
 interface MonitorCardProps {
   monitor: Monitor;
@@ -32,7 +34,7 @@ const MonitorTags: React.FC<{ tags: Tag[] }> = ({ tags }) => {
       {tags.map((tag) => (
         <View
           key={tag.id}
-          className="rounded-full text-foreground/80 px-3 py-1.5 backdrop-blur-sm"
+          className="rounded-full px-3 py-1.5 text-foreground/80 backdrop-blur-sm"
           style={{ backgroundColor: tag.color ?? 'gray' }}
         >
           <Text className="text-sm font-medium text-gray-200">{tag.name}</Text>
@@ -55,6 +57,8 @@ function isMonitorUp(heartbeats: HeartBeat[]): boolean {
 }
 
 export function MonitorCard({ monitor }: MonitorCardProps) {
+  const [modalVisible, setModalVisible] = React.useState(false);
+
   const calculateUptime = () => {
     if (!monitor.heartBeatList?.length) return null;
 
@@ -69,50 +73,63 @@ export function MonitorCard({ monitor }: MonitorCardProps) {
   const uptime = calculateUptime();
 
   return (
-    <View
-      className="mb-4 overflow-hidden rounded-lg border border-gray-800 
-      bg-gradient-to-br from-gray-800/90 to-gray-900/90 
-      transition-all duration-200"
-    >
-      {/* Header */}
-      <View className="flex-row justify-between p-4 pb-3">
-        <View className="flex-row items-center space-x-3">
-          <StatusIndicator active={isUp} />
-          <Text className="text-xl font-bold tracking-tight text-foreground">
-            {monitor.name}
-          </Text>
-        </View>
-        {uptime && (
-          <View className="px-3 py-1.5 backdrop-blur-sm">
-            <Text className="font-medium text-foreground">{uptime}%</Text>
+    <>
+      <Pressable onPress={() => setModalVisible(true)}>
+        <View
+          className="mb-4 overflow-hidden rounded-lg border border-gray-800 
+          bg-gradient-to-br from-gray-800/90 to-gray-900/90 
+          transition-all duration-200"
+        >
+          {/* Header */}
+          <View className="flex-row justify-between p-4 pb-3">
+            <View className="flex-row items-center space-x-3">
+              <StatusIndicator active={isUp} />
+              <Text className="text-xl font-bold tracking-tight text-foreground">
+                {monitor.name}
+              </Text>
+            </View>
+            {uptime && (
+              <View className="px-3 py-1.5 backdrop-blur-sm">
+                <Text className="font-medium text-foreground">{uptime}%</Text>
+              </View>
+            )}
           </View>
-        )}
-      </View>
 
-      {/* Content */}
-      <View className="flex flex-col px-4">
-        <MonitorContent monitor={monitor} />
+          {/* Content */}
+          <View className="flex flex-col px-4">
+            <MonitorContent monitor={monitor} />
 
-        {monitor.description && (
-          <Text
-            className="border-t border-gray-700/50 pt-3 
-            text-sm leading-relaxed text-gray-400"
-          >
-            {monitor.description}
-          </Text>
-        )}
-        <HeartbeatHistory heartbeats={monitor.heartBeatList} className="mt-3" />
-        <View className="mt-2 w-full flex-row justify-between">
-          <Text className="text-xs opacity-40">
-            {monitor.interval}s interval
-          </Text>
+            {monitor.description && (
+              <Text
+                className="border-t border-gray-700/50 pt-3 
+                text-sm leading-relaxed text-gray-400"
+              >
+                {monitor.description}
+              </Text>
+            )}
+            <HeartbeatHistory
+              heartbeats={monitor.heartBeatList}
+              className="mt-3"
+            />
+            <View className="mt-2 w-full flex-row justify-between">
+              <Text className="text-xs opacity-40">
+                {monitor.interval}s interval
+              </Text>
+            </View>
+          </View>
+
+          {/* Footer */}
+          <View className="p-4 pt-2">
+            <MonitorTags tags={monitor.tags} />
+          </View>
         </View>
-      </View>
+      </Pressable>
 
-      {/* Footer */}
-      <View className="p-4 pt-2">
-        <MonitorTags tags={monitor.tags} />
-      </View>
-    </View>
+      <MonitorModal
+        monitor={monitor}
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+      />
+    </>
   );
 }

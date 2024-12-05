@@ -26,6 +26,16 @@ export type HeartBeat = {
   time: string;
 }
 
+export type ImportantHeartBeat = {
+  monitorID: number;
+  duration: number;
+  important: number;
+  status: number;
+  msg: string;
+  ping: number;
+  time: string;
+}
+
 export type Tag = {
   id: number;
   monitor_id: number;
@@ -160,6 +170,7 @@ export type Monitor = {
   packetSize: number;
 
   heartBeatList?: HeartBeat[];
+  importantHeartBeatList?: ImportantHeartBeat[];
   uptime?: Uptime;
   avgPing?: number;
 }

@@ -8,6 +8,7 @@ import { monitorStore } from '@/store/monitorContext';
 import {
   type EventPayloads,
   type HeartBeat,
+  type ImportantHeartBeat,
   type Info,
   type Monitor,
   type UptimeKumaEvent,
@@ -208,6 +209,31 @@ export class UptimeKumaClient {
     monitorStore.updateMonitor(monitorId, { heartBeatList: heartbeats });
   }
 
+  private setImportantHeartBeatList(
+    monitorId: number,
+    data: ImportantHeartBeat[] | [ImportantHeartBeat[], boolean],
+  ): void {
+    logger.debug('Setting ImportantHeartbeat for monitor:', monitorId);
+    const numericId = Number(monitorId);
+    if (!Number.isInteger(numericId)) {
+      throw new Error(`Invalid monitor ID: ${monitorId}`);
+    }
+
+    const [heartbeats, _isHistory = false] = Array.isArray(data[0])
+      ? (data as [ImportantHeartBeat[], boolean])
+      : [data as ImportantHeartBeat[], false];
+
+    if (!Array.isArray(heartbeats)) {
+      throw new Error('Invalid ImportantHeartbeat data: not an array');
+    }
+
+    const maxHeartbeats = 100;
+    heartbeats.splice(maxHeartbeats);
+    monitorStore.updateMonitor(monitorId, {
+      importantHeartBeatList: heartbeats,
+    });
+  }
+
   private addHeartBeat(monitorId: number, heartBeat: HeartBeat): void {
     logger.debug('Adding heartbeat for monitor:', monitorId);
     const monitor = this.getMonitor(monitorId);
@@ -220,10 +246,7 @@ export class UptimeKumaClient {
   }
 
   private setAvgPing(monitorId: number, avgPing: number | null): void {
-    logger.debug(
-      'Setting avgPing for monitor:',
-      monitorId,
-    );
+    logger.debug('Setting avgPing for monitor:', monitorId);
     if (avgPing !== null) {
       monitorStore.updateMonitor(monitorId, { avgPing });
     }
@@ -234,14 +257,11 @@ export class UptimeKumaClient {
     period: number,
     uptime: number,
   ): void {
-    logger.debug(
-      'Setting uptime for monitor:',
-      {
-        monitorId,
-        period,
-        uptime,
-      }
-    );
+    logger.debug('Setting uptime for monitor:', {
+      monitorId,
+      period,
+      uptime,
+    });
     const monitor = this.getMonitor(monitorId);
     if (!monitor) return;
 
@@ -264,6 +284,10 @@ export class UptimeKumaClient {
 
     this.socket?.on('info', this.setInfo.bind(this));
     this.socket?.on('heartbeatList', this.setHeartBeat.bind(this));
+    this.socket?.on(
+      'importantHeartbeatList',
+      this.setImportantHeartBeatList.bind(this),
+    );
     this.socket?.on('avgPing', (monitorId: number, avgPing: number | null) => {
       this.setAvgPing(monitorId, avgPing);
     });
