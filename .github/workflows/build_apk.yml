@@ -48,6 +48,17 @@ jobs:
             ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}-
             ${{ runner.os }}-pnpm-
 
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.android/build-cache
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -57,6 +68,15 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3.0.0
+
+      - name: Cache Android build
+        uses: actions/cache@v4
+        with:
+          path: |
+            **/build
+          key: ${{ runner.os }}-android-build-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-android-build-
 
       - name: Setup Expo
         uses: expo/expo-github-action@v8
@@ -82,6 +102,29 @@ jobs:
           path: ${{ github.workspace }}/app-release.apk
           retention-days: 7
           if-no-files-found: error
+
+      - name: Create Release
+        if: steps.build.outcome == 'success'
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.sha }}
+          release_name: Release ${{ github.sha }}
+          draft: false
+          prerelease: false
+
+      - name: Upload APK to Release
+        if: steps.build.outcome == 'success'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ github.workspace }}/app-release.apk
+          asset_name: app-release.apk
+          asset_content_type: application/vnd.android.package-archive
 
       # - name: Notify build status
       #   if: always()
