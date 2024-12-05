@@ -7,7 +7,7 @@ import { Pressable, RefreshControl } from 'react-native';
 import { type Monitor } from '@/api/types';
 import { MonitorCard } from '@/components/monitorCard';
 import { MonitorSummaryStats } from '@/components/monitorSummary';
-import { FocusAwareStatusBar, Text, View } from '@/components/ui';
+import { Text, View } from '@/components/ui';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -21,14 +21,12 @@ import { useMonitorsStore, useMonitorStats } from '@/store/monitorContext';
 
 const EmptyState = React.memo(() => (
   <View className="flex-1 items-center justify-center">
-    <FocusAwareStatusBar />
     <Text className="text-white">No monitors available</Text>
   </View>
 ));
 
 const LoadingState = React.memo(() => (
   <View className="flex-1 items-center justify-center">
-    <FocusAwareStatusBar />
     <Text className="text-white">Loading...</Text>
   </View>
 ));
@@ -53,10 +51,15 @@ const useFilteredMonitors = (
   monitors: Monitor[] | null,
   sortField: SortField,
   sortOrder: SortOrder,
-  filterStatus: FilterStatus
+  filterStatus: FilterStatus,
 ) => {
+  React.useEffect(() => {
+    console.log('Monitors changed:', monitors?.length);
+  }, [monitors]);
+
   return React.useMemo(() => {
     if (!monitors) return [];
+    console.log('Filtering monitors:', monitors.length);
 
     let filtered = [...monitors];
 
@@ -108,8 +111,15 @@ export default function Index() {
     monitors,
     sortField,
     sortOrder,
-    filterStatus
+    filterStatus,
   );
+
+  // Ensure useFilteredMonitors is recalculated when monitors change
+  React.useEffect(() => {
+    setSortField(sortField);
+    setSortOrder(sortOrder);
+    setFilterStatus(filterStatus);
+  }, [monitors, sortField, sortOrder, filterStatus]);
 
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
@@ -134,21 +144,18 @@ export default function Index() {
 
   return (
     <View className="bg-background flex-1">
-      <FocusAwareStatusBar />
       <FlashList
         data={hasMonitors ? sortedAndFilteredMonitors : []}
         renderItem={({ item: monitor }) => (
-          <MonitorCard key={monitor.id} id={monitor.id} />
+          <MonitorCard key={monitor.id} monitor={monitor} />
         )}
-        estimatedItemSize={100}
-        drawDistance={100}
-        estimatedFirstItemOffset={40}
         ItemSeparatorComponent={() => <View className="h-0.5" />}
         keyExtractor={(monitor) => String(monitor.id)}
         contentContainerStyle={{ paddingHorizontal: 16 }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
+        estimatedItemSize={200}
         ListEmptyComponent={!hasMonitors && !isLoading ? <EmptyState /> : null}
         ListHeaderComponent={
           <>

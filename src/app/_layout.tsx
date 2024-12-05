@@ -14,6 +14,7 @@ import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { hydrateAuth, loadSelectedTheme } from '@/lib';
 import { useThemeConfig } from '@/lib/use-theme-config';
 import { MonitorProvider } from '@/store/monitorContext';
+import { StatusBar } from '@/components/ui';
 
 export { ErrorBoundary } from 'expo-router';
 
@@ -46,6 +47,7 @@ function Providers({ children }: { children: React.ReactNode }) {
   const theme = useThemeConfig();
   return (
     <MonitorProvider>
+      <StatusBar />
       <GestureHandlerRootView
         style={styles.container}
         className={theme.dark ? `dark` : undefined}

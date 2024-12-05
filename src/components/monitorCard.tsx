@@ -3,14 +3,13 @@ import { Pressable } from 'react-native';
 
 import { StatusIndicator } from '@/components/StatusIndicator';
 import { Text, View } from '@/components/ui';
-import { useMonitorsStore } from '@/store/monitorContext';
 
 import { type HeartBeat, type Monitor, type Tag } from '../api/types';
 import { HeartbeatHistory } from './heartBeatHistory';
 import { MonitorModal } from './monitorModal';
 
 interface MonitorCardProps {
-  id: number;
+  monitor: Monitor;
 }
 
 const MonitorContent: React.FC<{ monitor: Monitor }> = ({ monitor }) => {
@@ -57,10 +56,8 @@ function isMonitorUp(heartbeats: HeartBeat[]): boolean {
   return sortedHeartbeats[0].status === 1;
 }
 
-export function MonitorCard({ id }: MonitorCardProps) {
+export function MonitorCard({ monitor }: MonitorCardProps) {
   const [modalVisible, setModalVisible] = React.useState(false);
-
-  const monitor = useMonitorsStore().find((m) => m.id === id);
 
   if (!monitor) return null;
 
@@ -81,7 +78,7 @@ export function MonitorCard({ id }: MonitorCardProps) {
     <>
       <Pressable onPress={() => setModalVisible(true)}>
         <View
-          className="mb-4 overflow-hidden rounded-lg border border-gray-800 
+          className="bg-background mb-4 overflow-hidden rounded-lg border border-gray-800 
           bg-gradient-to-br from-gray-800/90 to-gray-900/90 
           transition-all duration-200"
         >

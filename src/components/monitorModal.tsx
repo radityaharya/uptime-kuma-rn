@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
 
-import { FocusAwareStatusBar, Text, View } from '@/components/ui';
+import { Text, View } from '@/components/ui';
 
 import { type Monitor } from '../api/types';
 
@@ -153,7 +153,6 @@ export const MonitorModal: React.FC<MonitorModalProps> = ({
           height: Dimensions.get('window').height,
         }}
       >
-        <FocusAwareStatusBar opacity={1} />
         <View className="flex-1 px-4 pt-12">
           <View className="mb-4 flex flex-row items-center justify-between">
             <Text className="text-lg font-bold">{monitor.name}</Text>

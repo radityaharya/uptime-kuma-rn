@@ -8,7 +8,7 @@ import { Item } from '@/components/settings/item';
 import { ItemsContainer } from '@/components/settings/items-container';
 import { LanguageItem } from '@/components/settings/language-item';
 import { ThemeItem } from '@/components/settings/theme-item';
-import { FocusAwareStatusBar, ScrollView, View } from '@/components/ui';
+import { ScrollView, View } from '@/components/ui';
 import { useAuth } from '@/lib';
 
 export default function Settings() {
@@ -20,7 +20,6 @@ export default function Settings() {
 
   return (
     <View className="bg-background flex-1 pt-24">
-      <FocusAwareStatusBar />
       <ScrollView className="flex-1">
         <View className="flex-1 px-4">
           <Animated.View entering={FadeInDown.duration(1000).delay(100)}>
