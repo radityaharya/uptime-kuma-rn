@@ -39,8 +39,6 @@ const ErrorMessage = React.memo(({ error }: { error: string }) => (
   </View>
 ));
 
-const MemoizedMonitorCard = React.memo(MonitorCard);
-
 type SortOrder = 'asc' | 'desc';
 type SortField = 'name' | 'status' | 'uptime';
 type FilterStatus = 'none' | 'up' | 'down';
@@ -49,6 +47,48 @@ const sortFieldLabels: Record<SortField, string> = {
   name: 'Name',
   status: 'Status',
   uptime: 'Uptime',
+};
+
+const useFilteredMonitors = (
+  monitors: Monitor[] | null,
+  sortField: SortField,
+  sortOrder: SortOrder,
+  filterStatus: FilterStatus
+) => {
+  return React.useMemo(() => {
+    if (!monitors) return [];
+
+    let filtered = [...monitors];
+
+    if (filterStatus !== 'none') {
+      filtered = filtered.filter((m) => {
+        const latestHeartbeat = m.importantHeartBeatList?.[0];
+        const isUp = latestHeartbeat?.status === 1;
+        return filterStatus === 'up' ? isUp : !isUp;
+      });
+    }
+
+    filtered.sort((a, b) => {
+      let comparison = 0;
+      switch (sortField) {
+        case 'name':
+          comparison = a.name.localeCompare(b.name);
+          break;
+        case 'status': {
+          const statusA = a.importantHeartBeatList?.[0]?.status === 1;
+          const statusB = b.importantHeartBeatList?.[0]?.status === 1;
+          comparison = Number(statusA) - Number(statusB);
+          break;
+        }
+        case 'uptime':
+          comparison = (a.uptime?.day ?? 0) - (b.uptime?.day ?? 0);
+          break;
+      }
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+
+    return filtered;
+  }, [monitors, sortField, sortOrder, filterStatus]);
 };
 
 export default function Index() {
@@ -63,50 +103,13 @@ export default function Index() {
   const [sortOrder, setSortOrder] = React.useState<SortOrder>('asc');
   const [sortField, setSortField] = React.useState<SortField>('name');
   const [filterStatus, setFilterStatus] = React.useState<FilterStatus>('none');
-  const [menuVisible, setMenuVisible] = React.useState(false);
 
-  const getMonitorStatus = React.useCallback((monitor: Monitor) => {
-    if (!monitor.importantHeartBeatList?.length) return false;
-
-    const latestHeartbeat = [...monitor.importantHeartBeatList].sort(
-      (a, b) => new Date(b.time).getTime() - new Date(a.time).getTime(),
-    )[0];
-
-    return latestHeartbeat.status === 1;
-  }, []);
-
-  const sortedAndFilteredMonitors = React.useMemo(() => {
-    if (!monitors) return [];
-
-    let filtered = [...monitors];
-
-    if (filterStatus !== 'none') {
-      filtered = filtered.filter((m) =>
-        filterStatus === 'up' ? getMonitorStatus(m) : !getMonitorStatus(m),
-      );
-    }
-
-    filtered.sort((a, b) => {
-      let comparison = 0;
-      switch (sortField) {
-        case 'name':
-          comparison = a.name.localeCompare(b.name);
-          break;
-        case 'status':
-          comparison =
-            Number(getMonitorStatus(a)) - Number(getMonitorStatus(b));
-          break;
-        case 'uptime':
-          const uptimeA = a.uptime?.day ?? 0;
-          const uptimeB = b.uptime?.day ?? 0;
-          comparison = uptimeA - uptimeB;
-          break;
-      }
-      return sortOrder === 'asc' ? comparison : -comparison;
-    });
-
-    return filtered;
-  }, [monitors, sortField, sortOrder, filterStatus, getMonitorStatus]);
+  const sortedAndFilteredMonitors = useFilteredMonitors(
+    monitors,
+    sortField,
+    sortOrder,
+    filterStatus
+  );
 
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
@@ -135,7 +138,7 @@ export default function Index() {
       <FlashList
         data={hasMonitors ? sortedAndFilteredMonitors : []}
         renderItem={({ item: monitor }) => (
-          <MemoizedMonitorCard key={monitor.id} monitor={monitor} />
+          <MonitorCard key={monitor.id} id={monitor.id} />
         )}
         estimatedItemSize={100}
         drawDistance={100}

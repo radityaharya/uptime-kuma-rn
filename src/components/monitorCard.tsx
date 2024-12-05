@@ -3,13 +3,14 @@ import { Pressable } from 'react-native';
 
 import { StatusIndicator } from '@/components/StatusIndicator';
 import { Text, View } from '@/components/ui';
+import { useMonitorsStore } from '@/store/monitorContext';
 
 import { type HeartBeat, type Monitor, type Tag } from '../api/types';
 import { HeartbeatHistory } from './heartBeatHistory';
 import { MonitorModal } from './monitorModal';
 
 interface MonitorCardProps {
-  monitor: Monitor;
+  id: number;
 }
 
 const MonitorContent: React.FC<{ monitor: Monitor }> = ({ monitor }) => {
@@ -56,8 +57,12 @@ function isMonitorUp(heartbeats: HeartBeat[]): boolean {
   return sortedHeartbeats[0].status === 1;
 }
 
-export function MonitorCard({ monitor }: MonitorCardProps) {
+export function MonitorCard({ id }: MonitorCardProps) {
   const [modalVisible, setModalVisible] = React.useState(false);
+
+  const monitor = useMonitorsStore().find((m) => m.id === id);
+
+  if (!monitor) return null;
 
   const calculateUptime = () => {
     if (!monitor.heartBeatList?.length) return null;
