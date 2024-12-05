@@ -7,7 +7,7 @@ on:
 
 permissions:
   contents: write
-  discussions: write
+  pull-requests: write
 
 jobs:
   build:
@@ -16,7 +16,7 @@ jobs:
     timeout-minutes: 30
 
     steps:
-      - name: Setup repo
+      - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
@@ -27,21 +27,18 @@ jobs:
           version: 8.x.x
           run_install: false
 
-      - name: Setup node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20.x
           cache: 'pnpm'
 
-      - name: Get pnpm store directory
+      - name: Get pnpm Store Directory
         id: pnpm-store
-        shell: bash
         run: |
-          STORE_PATH="$(pnpm store path)"
-          echo "STORE_PATH=${STORE_PATH}" >> "$GITHUB_ENV"
-          echo "store-path=${STORE_PATH}" >> "$GITHUB_OUTPUT"
+          echo "store-path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
 
-      - name: Cache pnpm dependencies
+      - name: Cache pnpm Dependencies
         uses: actions/cache@v4
         with:
           path: |
@@ -52,7 +49,7 @@ jobs:
             ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}-
             ${{ runner.os }}-pnpm-
 
-      - name: Cache Gradle packages
+      - name: Cache Gradle Packages
         uses: actions/cache@v4
         with:
           path: |
@@ -73,7 +70,7 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3.0.0
 
-      - name: Cache Android build
+      - name: Cache Android Build
         uses: actions/cache@v4
         with:
           path: |
@@ -89,37 +86,49 @@ jobs:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
-      - name: Install dependencies
+      - name: Install Dependencies
         run: pnpm install
 
-      - name: Build Android app
+      - name: Build Android App
         id: build
         run: |
           eas build --platform android --profile production --local --output ${{ github.workspace }}/app-release.apk
-        continue-on-error: true
 
-      - name: Upload APK artifact
+      - name: Upload APK Artifact
         if: steps.build.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: app-release
           path: ${{ github.workspace }}/app-release.apk
           retention-days: 7
-          if-no-files-found: error
 
-      - name: Create Tag
+      - name: Create Git Tag
         if: steps.build.outcome == 'success'
+        id: create_tag
         run: |
-          git tag -a v${{ github.run_number }} -m "Release ${{ github.sha }}"
-          git push origin v${{ github.run_number }}
+          TAG_NAME=v0.0.${{ github.run_number }}
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
+          git tag $TAG_NAME
+          git push origin $TAG_NAME
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create Release
         if: steps.build.outcome == 'success'
-        uses: softprops/action-gh-release@v2
+        id: create_release
+        uses: actions/create-release@v1
         with:
-          files: ${{ github.workspace }}/app-release.apk
-          name: Release ${{ github.sha }}
-          tag_name: v${{ github.run_number }}
+          tag_name: ${{ steps.create_tag.outputs.TAG_NAME }}
+          release_name: Release ${{ steps.create_tag.outputs.TAG_NAME }}
           draft: false
-          prerelease: false
-          fail_on_unmatched_files: true
+          prerelease: true
+
+      - name: Upload APK to Release
+        if: steps.build.outcome == 'success'
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ github.workspace }}/app-release.apk
+          asset_name: app-release.apk
+          asset_content_type: application/vnd.android.package-archive
