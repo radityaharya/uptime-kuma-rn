@@ -118,6 +118,8 @@ jobs:
         if: steps.build.outcome == 'success'
         id: create_release
         uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ steps.create_tag.outputs.TAG_NAME }}
           release_name: Release ${{ steps.create_tag.outputs.TAG_NAME }}
