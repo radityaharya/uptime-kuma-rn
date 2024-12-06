@@ -1,4 +1,4 @@
-name: Android App APK Build
+name: Android Build Preview APK
 
 on:
   push:
@@ -92,7 +92,7 @@ jobs:
       - name: Build Android App
         id: build
         run: |
-          eas build --platform android --profile production --local --output ${{ github.workspace }}/app-release.apk
+          eas build --platform android --profile staging --local --output ${{ github.workspace }}/app-release.apk
 
       - name: Upload APK Artifact
         if: steps.build.outcome == 'success'
@@ -102,11 +102,18 @@ jobs:
           path: ${{ github.workspace }}/app-release.apk
           retention-days: 7
 
+      - name: Read Version from package.json
+        id: read_version
+        run: |
+          VERSION=$(jq -r '.version' package.json)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "::set-output name=version::$VERSION"
+
       - name: Create Git Tag
         if: steps.build.outcome == 'success'
         id: create_tag
         run: |
-          TAG_NAME=v0.0.${{ github.run_number }}
+          TAG_NAME=v${{ steps.read_version.outputs.version }}.${{ github.run_number }}
           git config user.name "${{ github.actor }}"
           git config user.email "${{ github.actor }}@users.noreply.github.com"
           git tag $TAG_NAME
@@ -121,8 +128,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: "v0.0.${{ github.run_number }}"
-          release_name:  "v0.0.${{ github.run_number }}"
+          tag_name: "v${{ steps.read_version.outputs.version }}.${{ github.run_number }}"
+          release_name:  "v${{ steps.read_version.outputs.version }}.${{ github.run_number }}"
           draft: false
           prerelease: true
 
