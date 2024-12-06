@@ -1,6 +1,6 @@
 {
   "onboarding": {
-    "message": "Welcome to uptime-kuma-rn app"
+    "message": "Welcome to Uptime Kuma App"
   },
   "settings": {
     "about": "About",
@@ -21,6 +21,7 @@
     "terms": "Terms of Service",
     "server": "Server",
     "username": "Username",
+    "server_timezone": "Server timezone",
     "theme": {
       "dark": "Dark",
       "light": "Light",
@@ -31,5 +32,5 @@
     "version": "Version",
     "website": "Website"
   },
-  "welcome": "Welcome to uptime-kuma-rn app site"
+  "welcome": "Welcome to {{appName}}"
 }

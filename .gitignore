@@ -24,3 +24,6 @@ expo-env.d.ts
 .env.test
 .env.production
 .env.staging
+
+ios/
+android/

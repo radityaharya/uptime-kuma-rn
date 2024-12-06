@@ -365,3 +365,6 @@ export class UptimeKumaClient {
     return this.monitors.find((monitor) => monitor.id === id);
   }
 }
+
+// client singleton
+export let globalClient: UptimeKumaClient | null = null;

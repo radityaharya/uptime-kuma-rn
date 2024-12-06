@@ -11,20 +11,28 @@ require('dotenv').config({
   path: envPath,
 });
 
-
-const BUNDLE_ID = 'com.uptime_kuma_rn'; // ios bundle id
+const BUNDLE_ID = 'com.uptime-kuma-rn'; // ios bundle id
 const PACKAGE = 'com.uptime_kuma_rn'; // android package name
-const NAME = 'uptime_kuma_rn'; // app name
+const NAME = 'Uptime Kuma'; // app name
 const EXPO_ACCOUNT_OWNER = 'radityaharya'; // expo account owner
 const EAS_PROJECT_ID = '5a4a75b1-5ff3-4613-be1f-f78c422ac5fa'; // eas project id
 const SCHEME = 'uptime_kuma_rn'; // app scheme
 
-
 // @ts-ignore
 const withEnvSuffix = (name) => {
-  return APP_ENV === 'production' ? name : `${name}.${APP_ENV}`;
+  if (APP_ENV === 'production') {
+    return name;
+  }
+
+  return `${name}.${APP_ENV}`;
 };
 
+const getAppDisplayName = () => {
+  if (APP_ENV === 'production') {
+    return NAME;
+  }
+  return `${NAME} ${APP_ENV.charAt(0).toUpperCase() + APP_ENV.slice(1)}`;
+};
 
 const client = z.object({
   APP_ENV: z.enum(['development', 'staging', 'production']),
@@ -50,7 +58,7 @@ const buildTime = z.object({
  */
 const _clientEnv = {
   APP_ENV,
-  NAME: NAME,
+  NAME: getAppDisplayName(),
   SCHEME: SCHEME,
   BUNDLE_ID: withEnvSuffix(BUNDLE_ID),
   PACKAGE: withEnvSuffix(PACKAGE),
@@ -71,7 +79,6 @@ const _buildTimeEnv = {
   // ADD YOUR ENV VARS HERE TOO
   // SECRET_KEY: process.env.SECRET_KEY,
 };
-
 
 const _env = {
   ..._clientEnv,

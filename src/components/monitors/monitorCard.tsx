@@ -1,12 +1,12 @@
 import * as React from 'react';
 import { Pressable } from 'react-native';
 
-import { StatusIndicator } from '@/components/StatusIndicator';
+import { type HeartBeat, type Monitor, type Tag } from '@/api/types';
 import { Text, View } from '@/components/ui';
 
-import { type HeartBeat, type Monitor, type Tag } from '../api/types';
 import { HeartbeatHistory } from './heartBeatHistory';
 import { MonitorModal } from './monitorModal';
+import { StatusIndicator } from './StatusIndicator';
 
 interface MonitorCardProps {
   monitor: Monitor;
@@ -15,10 +15,10 @@ interface MonitorCardProps {
 const MonitorContent: React.FC<{ monitor: Monitor }> = ({ monitor }) => {
   switch (monitor.type) {
     case 'http':
-      return <Text className="font-medium text-gray-300">{monitor.url}</Text>;
+      return <Text className="font-medium text-foreground">{monitor.url}</Text>;
     case 'ping':
       return (
-        <Text className="font-medium text-gray-300">{monitor.hostname}</Text>
+        <Text className="font-medium text-foreground">{monitor.hostname}</Text>
       );
     default:
       return null;
@@ -34,7 +34,7 @@ const MonitorTags: React.FC<{ tags: Tag[] }> = ({ tags }) => {
       {tags.map((tag) => (
         <View
           key={tag.id}
-          className="rounded-full px-3 py-1.5 text-foreground/80 backdrop-blur-sm"
+          className="rounded-full px-3 text-foreground/80 backdrop-blur-sm"
           style={{ backgroundColor: tag.color ?? 'gray' }}
         >
           <Text className="text-sm font-medium text-gray-200">{tag.name}</Text>
@@ -78,12 +78,12 @@ export function MonitorCard({ monitor }: MonitorCardProps) {
     <>
       <Pressable onPress={() => setModalVisible(true)}>
         <View
-          className="bg-background mb-4 overflow-hidden rounded-lg border border-gray-800 
-          bg-gradient-to-br from-gray-800/90 to-gray-900/90 
-          transition-all duration-200"
+          className="bg-background flex flex-col overflow-hidden rounded-lg 
+          border border-gray-800 bg-gradient-to-br 
+          from-gray-800/90 to-gray-900/90 p-4 transition-all duration-200"
         >
           {/* Header */}
-          <View className="flex-row justify-between p-4 pb-3">
+          <View className="mb-2 flex-row justify-between">
             <View className="flex-row items-center space-x-3">
               <StatusIndicator active={isUp} />
               <Text className="text-xl font-bold tracking-tight text-foreground">
@@ -91,19 +91,20 @@ export function MonitorCard({ monitor }: MonitorCardProps) {
               </Text>
             </View>
             {uptime && (
-              <View className="px-3 py-1.5 backdrop-blur-sm">
+              <View className="backdrop-blur-sm">
                 <Text className="font-medium text-foreground">{uptime}%</Text>
               </View>
             )}
           </View>
 
           {/* Content */}
-          <View className="flex flex-col px-4">
-            <MonitorContent monitor={monitor} />
-
+          <View className="mb-4 flex flex-col">
+            <View className="mb-2">
+              <MonitorContent monitor={monitor} />
+            </View>
             {monitor.description && (
               <Text
-                className="border-t border-gray-700/50 pt-3 
+                className="border-t border-gray-700/50 
                 text-sm leading-relaxed text-gray-400"
               >
                 {monitor.description}
@@ -111,17 +112,12 @@ export function MonitorCard({ monitor }: MonitorCardProps) {
             )}
             <HeartbeatHistory
               heartbeats={monitor.heartBeatList}
-              className="mt-3"
+              interval={monitor.interval}
             />
-            <View className="mt-2 w-full flex-row justify-between">
-              <Text className="text-xs opacity-40">
-                {monitor.interval}s interval
-              </Text>
-            </View>
           </View>
 
           {/* Footer */}
-          <View className="p-4 pt-2">
+          <View>
             <MonitorTags tags={monitor.tags} />
           </View>
         </View>

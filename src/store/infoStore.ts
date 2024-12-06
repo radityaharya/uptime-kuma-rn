@@ -9,6 +9,7 @@ interface InfoStore {
   // Actions
   setInfo: (info: Info) => void
   getInfo: () => Info
+  reset: () => void
 }
 
 export const infoStore = create<InfoStore>((set, get) => ({
@@ -23,4 +24,12 @@ export const infoStore = create<InfoStore>((set, get) => ({
 
   setInfo: (info: Info) => set({ info }),
   getInfo: () => get().info,
+  reset: () => set({ info: {
+    isContainer: false,
+    latestVersion: '',
+    primaryBaseURL: null,
+    serverTimezone: '',
+    serverTimezoneOffset: '',
+    version: '',
+  }})
 }))

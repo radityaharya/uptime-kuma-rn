@@ -11,10 +11,10 @@ import FlashMessage from 'react-native-flash-message';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 
+import { StatusBar } from '@/components/ui';
 import { hydrateAuth, loadSelectedTheme } from '@/lib';
 import { useThemeConfig } from '@/lib/use-theme-config';
 import { MonitorProvider } from '@/store/monitorContext';
-import { StatusBar } from '@/components/ui';
 
 export { ErrorBoundary } from 'expo-router';
 

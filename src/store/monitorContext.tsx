@@ -168,6 +168,12 @@ class MonitorStore {
       upMonitors
     };
   }
+
+  reset() {
+    this.currentMonitors = [];
+    this.settersMap.clear();
+    this.subscribers.clear();
+  }
 }
 
 export function useMonitorsStore() {

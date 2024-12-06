@@ -1,12 +1,12 @@
 import * as React from 'react';
 
+import { type HeartBeat } from '@/api/types';
 import { Text, View } from '@/components/ui';
-
-import { type HeartBeat } from '../api/types';
 
 interface HeartbeatHistoryProps {
   heartbeats?: HeartBeat[] | null;
   numLastBeats?: number;
+  interval?: number;
   className?: string;
 }
 
@@ -27,8 +27,9 @@ const getLatestHeartbeat = (
 ): HeartBeat | undefined => {
   if (!heartbeats?.length) return undefined;
 
+  // time is in datetime string format
   return heartbeats.reduce((latest, current) =>
-    !latest || current.time > latest.time ? current : latest,
+    new Date(current.time) > new Date(latest.time) ? current : latest,
   );
 };
 
@@ -36,6 +37,7 @@ export function HeartbeatHistory({
   heartbeats = [],
   numLastBeats = 30,
   className = '',
+  interval,
 }: HeartbeatHistoryProps) {
   const dots = React.useMemo(() => {
     const filledHeartbeats = heartbeats?.length
@@ -58,7 +60,7 @@ export function HeartbeatHistory({
 
   return (
     <View className={`${className}`}>
-      <View className="flex-1 flex-row justify-between p-2">
+      <View className="mb-2 flex-row justify-between">
         {dots.map((item, index) => (
           <React.Fragment key={index}>
             {item ? <HeartbeatDot status={item.status} /> : <PlaceholderDot />}
@@ -66,11 +68,22 @@ export function HeartbeatHistory({
           </React.Fragment>
         ))}
       </View>
-      <Text className="text-sm opacity-50">
-        {lastHeartbeat?.time
-          ? new Date(lastHeartbeat.time).toLocaleTimeString()
-          : 'No data'}
-      </Text>
+      <View className="flex-row justify-between">
+        <Text className="text-xs opacity-50">
+          {lastHeartbeat?.time
+            ? new Date(lastHeartbeat.time).toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false,
+                timeZoneName: 'short'
+              })
+            : 'No data'}
+        </Text>
+        <Text className="text-xs opacity-50">
+          {interval ? `${interval}s` : 'No data'}
+        </Text>
+      </View>
     </View>
   );
 }

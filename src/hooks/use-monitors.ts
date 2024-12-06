@@ -1,11 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { UptimeKumaClient } from '@/api/client';
+import { globalClient,UptimeKumaClient } from '@/api/client';
+import { useAuth } from '@/lib/auth';
 import { getToken } from '@/lib/auth/utils';
 import { useMonitorsStore } from '@/store/monitorContext';
-
-let globalClient: UptimeKumaClient | null = null;
-
 export const useMonitors = () => {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -13,6 +11,8 @@ export const useMonitors = () => {
   const clientRef = useRef<UptimeKumaClient | null>(null);
 
   const monitors = useMonitorsStore();
+
+  const auth = useAuth();
 
   const refreshMonitors = useCallback(async () => {
     console.log('refreshMonitors called');
@@ -27,12 +27,17 @@ export const useMonitors = () => {
   }, []);
 
   const initializeClient = useCallback(async () => {
+    if (auth.status === 'unauthenticated') {
+      setIsLoading(false);
+      return;
+    }
+
     if (clientRef.current || globalClient) {
       clientRef.current = globalClient;
       setIsLoading(false);
       return;
     }
-    
+
     console.log('Initializing new client');
     const token = getToken();
     if (!token) {
@@ -47,7 +52,6 @@ export const useMonitors = () => {
       reconnectionDelayMax: 10000,
     });
 
-    globalClient = client;
     clientRef.current = client;
 
     try {
@@ -57,7 +61,6 @@ export const useMonitors = () => {
       await clientRef.current.getHeartbeats();
     } catch {
       setError('Authentication failed. Please check your credentials.');
-      globalClient = null;
       clientRef.current = null;
     } finally {
       setIsLoading(false);
@@ -84,7 +87,6 @@ export const useMonitors = () => {
     return () => {
       if (process.env.NODE_ENV === 'production') {
         globalClient?.disconnect();
-        globalClient = null;
       }
     };
   }, [initializeClient]);

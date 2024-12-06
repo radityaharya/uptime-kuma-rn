@@ -34,7 +34,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   newArchEnabled: true,
   updates: {
     fallbackToCacheTimeout: 0,
-    url: ""
+    url: '',
   },
   assetBundlePatterns: ['**/*'],
   experiments: {
@@ -45,10 +45,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       foregroundImage: './assets/adaptive-icon.png',
       backgroundColor: '#000000',
     },
-    package: "com.uptime_kuma_rn.development",
+    package: Env.PACKAGE,
   },
   ios: {
-    "bundleIdentifier": "com.uptime-kuma-rn.development"
+    bundleIdentifier: Env.BUNDLE_ID,
   },
   web: {
     favicon: './assets/favicon.png',
@@ -72,7 +72,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     'expo-localization',
     'expo-router',
     ['app-icon-badge', appIconBadgeConfig],
-    ["react-native-edge-to-edge"]
+    ['react-native-edge-to-edge'],
   ],
   extra: {
     ...ClientEnv,
