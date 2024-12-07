@@ -1,13 +1,12 @@
 /* eslint-disable unused-imports/no-unused-vars */
-import { FlashList } from '@shopify/flash-list';
 import { Redirect } from 'expo-router';
 import * as React from 'react';
-import { RefreshControl, ToastAndroid } from 'react-native';
+import { FlatList, RefreshControl, ToastAndroid } from 'react-native';
 
 import { type Monitor } from '@/api/types';
 import { EmptyState } from '@/components/monitors/EmptyState';
 import { LoadingState } from '@/components/monitors/LoadingState';
-import { MonitorCard } from '@/components/monitors/monitorCard';
+import { MonitorCard } from '@/components/monitors/MonitorCard';
 import {
   type FilterStatus,
   MonitorListHeader,
@@ -111,7 +110,7 @@ export default function Index() {
 
   return (
     <View className="bg-background flex-1">
-      <FlashList
+      <FlatList
         data={hasMonitors ? filteredMonitors : []}
         renderItem={({ item: monitor }) => <MonitorCard monitor={monitor} />}
         ItemSeparatorComponent={() => <View className="h-4" />}
@@ -123,7 +122,6 @@ export default function Index() {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
-        estimatedItemSize={200}
         removeClippedSubviews={true}
         ListEmptyComponent={!hasMonitors && !isLoading ? <EmptyState /> : null}
         ListHeaderComponent={

@@ -5,6 +5,7 @@ import {
   type ImportantHeartBeat,
   type Monitor,
 } from '@/api/types';
+import { sendNotificationImmediately } from '@/lib/notification';
 import { getItem, removeItem, setItem } from '@/lib/storage';
 
 // import { infoStore } from './infoStore';
@@ -169,7 +170,27 @@ class MonitorStore {
       heartBeatList: [hb, ...(monitor.heartBeatList || [])],
     };
 
-    this.setMonitors(monitors);
+    if (
+      monitor.heartBeatList &&
+      monitor.heartBeatList[0] &&
+      monitor.heartBeatList[0].status !== monitor.heartBeatList[0].status
+    ) {
+      const title = `${monitor.name} is ${
+        heartbeat.status === 1 ? 'up' : 'down'
+      }!`;
+      const body = `Your monitor ${monitor.name} is ${
+        heartbeat.status === 1 ? 'up' : 'down'
+      }!`;
+      sendNotificationImmediately(title, body, {
+        monitorID: monitor.id,
+        monitorName: monitor.name,
+        status: heartbeat.status,
+      });
+    }
+
+    this.updateMonitor(hb.monitor_id, {
+      heartBeatList: monitors[index].heartBeatList,
+    });
   }
 
   setMonitorList(data: Record<string, Monitor>): void {

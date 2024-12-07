@@ -30,10 +30,23 @@ export async function schedulePushNotification(
   });
 }
 
+export async function sendNotificationImmediately(
+  title: string,
+  body: string,
+  data?: any,
+) {
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title,
+      body,
+      data: data || {},
+    },
+    trigger: null,
+  });
+}
 export async function cancelAllScheduledNotifications() {
   await Notifications.cancelAllScheduledNotificationsAsync();
 }
-
 
 export async function registerForPushNotificationsAsync() {
   let token;
