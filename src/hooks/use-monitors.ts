@@ -65,7 +65,7 @@ export const useMonitors = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [refreshMonitors]);
+  }, [auth.status, refreshMonitors]);
 
   const reconnectClient = useCallback(async () => {
     setError(null);

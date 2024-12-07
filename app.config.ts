@@ -34,7 +34,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   newArchEnabled: true,
   updates: {
     fallbackToCacheTimeout: 0,
-    url: '',
+    url: 'https://u.expo.dev/5a4a75b1-5ff3-4613-be1f-f78c422ac5fa',
+  },
+  runtimeVersion: {
+    policy: 'appVersion',
   },
   assetBundlePatterns: ['**/*'],
   experiments: {
@@ -59,7 +62,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       'expo-splash-screen',
       {
         backgroundColor: '#000000',
-        image: './assets/splash-icon.png',
+        image: './assets/splash.png',
         imageWidth: 150,
       },
     ],

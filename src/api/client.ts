@@ -43,13 +43,6 @@ class CustomEventEmitter extends ExpoEventEmitter<EventPayloads> {
 }
 
 export class UptimeKumaClient {
-  private monitorsInitialized = false;
-  private readonly emitter: CustomEventEmitter;
-  private credentials?: Credentials;
-  private readonly connectionOptions: UptimeKumaOptions;
-  private reconnectAttempts = 0;
-  private readonly DEFAULT_TIMEOUT = 10000;
-
   private static readonly DEFAULT_OPTIONS: UptimeKumaOptions = {
     autoReconnect: true,
     reconnectionDelay: 1000,
@@ -58,6 +51,10 @@ export class UptimeKumaClient {
     timeout: 10000,
   };
 
+  private readonly emitter: CustomEventEmitter;
+  private readonly connectionOptions: UptimeKumaOptions;
+  private monitorsInitialized = false;
+  private credentials?: Credentials;
   public socket: Socket | null = null;
 
   constructor(
@@ -71,14 +68,7 @@ export class UptimeKumaClient {
     };
   }
 
-  private get monitors(): Monitor[] {
-    return monitorStore.getMonitors();
-  }
-
-  private set monitors(value: Monitor[]) {
-    monitorStore.setMonitors(value);
-  }
-
+  // Authentication Methods
   public async authenticate(username: string, password: string): Promise<void> {
     this.credentials = { username, password };
     return this.connectAndAuthenticate();
@@ -91,177 +81,180 @@ export class UptimeKumaClient {
 
     return new Promise<void>((resolve, reject) => {
       try {
-        this.socket = io(this.url, this.connectionOptions);
-
-        this.socket.once('connect', () => {
-          if (!this.credentials) {
-            this.setupListeners();
-            return resolve();
-          }
-
-          this.socket?.emit(
-            'login',
-            this.credentials,
-            (response: AuthResponse) => {
-              if (response.ok) {
-                this.setupListeners();
-                resolve();
-              } else {
-                this.socket?.disconnect();
-                reject(new Error(response.msg ?? 'Authentication failed'));
-              }
-            },
-          );
-        });
-
-        this.socket.once('connect_error', reject);
-
-        this.socket.on('disconnect', (reason: string) => {
-          this.emitter.emit('disconnect', reason);
-          if (this.connectionOptions.autoReconnect) {
-            this.handleReconnect();
-          }
-        });
+        this.initializeSocket(resolve, reject);
       } catch (error) {
         reject(error);
       }
     });
   }
 
-  private setInfo(data: Info): void {
-    infoStore.setState({ info: data });
+  // Socket Initialization and Management
+  private initializeSocket(
+    resolve: () => void,
+    reject: (error: Error) => void,
+  ): void {
+    this.socket = io(this.url, this.connectionOptions);
+
+    this.socket.once('connect', () => {
+      if (!this.credentials) {
+        this.setupListeners();
+        return resolve();
+      }
+
+      this.handleAuthentication(resolve, reject);
+    });
+
+    this.setupSocketErrorHandling(reject);
   }
 
-  private setMonitorList(data: Record<string, Monitor>): void {
-    logger.debug('Setting monitor list', Object.keys(data).length);
+  private handleAuthentication(
+    resolve: () => void,
+    reject: (error: Error) => void,
+  ): void {
+    this.socket?.emit('login', this.credentials, (response: AuthResponse) => {
+      if (response.ok) {
+        this.setupListeners();
+        resolve();
+      } else {
+        this.socket?.disconnect();
+        reject(new Error(response.msg ?? 'Authentication failed'));
+      }
+    });
+  }
 
+  private setupSocketErrorHandling(reject: (error: Error) => void): void {
+    this.socket?.once('connect_error', reject);
+    this.socket?.on('disconnect', (reason: string) => {
+      this.emitter.emit('disconnect', reason);
+      if (this.connectionOptions.autoReconnect) {
+        this.handleReconnect();
+      }
+    });
+  }
+
+  // Monitor Management
+  private get monitors(): Monitor[] {
+    return monitorStore.getMonitors();
+  }
+
+  private set monitors(value: Monitor[]) {
+    monitorStore.setMonitors(value);
+  }
+
+  private updateMonitor(id: number, data: Partial<Monitor>): void {
+    monitorStore.updateMonitor(id, data);
+  }
+
+  public getMonitor(id: number): Monitor | undefined {
+    return this.monitors.find((monitor) => monitor.id === id);
+  }
+
+  // Monitor Data Updates
+  private setMonitorList(data: Record<string, Monitor>): void {
     if (!this.monitorsInitialized) {
-      this.monitors = Object.values(data).map((monitor) => ({
-        ...monitor,
-        id: Number(monitor.id),
-        heartBeatList: [],
-        avgPing: 0,
-        uptime: {
-          day: monitor.uptime?.day ?? 0,
-          month: monitor.uptime?.month ?? 0,
-        },
-      }));
-      this.monitorsInitialized = true;
-      logger.debug(
-        'Monitors initialized:',
-        this.monitors.map((m) => m.id),
-      );
+      this.initializeMonitors(data);
       return;
     }
 
+    this.updateExistingMonitors(data);
+  }
+
+  private initializeMonitors(data: Record<string, Monitor>): void {
+    this.monitors = Object.values(data).map(this.createMonitorObject);
+    this.monitorsInitialized = true;
+    logger.debug(
+      'Monitors initialized:',
+      this.monitors.map((m) => m.id),
+    );
+  }
+
+  private createMonitorObject(monitor: Monitor): Monitor {
+    return {
+      ...monitor,
+      id: Number(monitor.id),
+      heartBeatList: [],
+      avgPing: 0,
+      uptime: {
+        day: monitor.uptime?.day ?? 0,
+        month: monitor.uptime?.month ?? 0,
+      },
+    };
+  }
+
+  private updateExistingMonitors(data: Record<string, Monitor>): void {
     Object.values(data).forEach((monitor) => {
       const index = this.monitors.findIndex(
         (m) => Number(m.id) === Number(monitor.id),
       );
+
       if (index === -1) {
-        this.monitors.push({
-          ...monitor,
-          id: Number(monitor.id),
-          heartBeatList: [],
-          avgPing: 0,
-          uptime: {
-            day: monitor.uptime?.day ?? 0,
-            month: monitor.uptime?.month ?? 0,
-          },
-        });
+        this.monitors.push(this.createMonitorObject(monitor));
       } else {
-        this.monitors[index] = {
-          ...this.monitors[index],
-          ...monitor,
-          id: Number(monitor.id),
-          heartBeatList: this.monitors[index].heartBeatList,
-          avgPing: this.monitors[index].avgPing,
-          uptime: {
-            day: monitor.uptime?.day ?? this.monitors[index].uptime?.day ?? 0,
-            month:
-              monitor.uptime?.month ?? this.monitors[index].uptime?.month ?? 0,
-          },
-        };
+        this.monitors[index] = this.mergeMonitorData(
+          this.monitors[index],
+          monitor,
+        );
       }
     });
+  }
+
+  private mergeMonitorData(existing: Monitor, update: Monitor): Monitor {
+    return {
+      ...existing,
+      ...update,
+      id: Number(update.id),
+      heartBeatList: existing.heartBeatList,
+      avgPing: existing.avgPing,
+      uptime: {
+        day: update.uptime?.day ?? existing.uptime?.day ?? 0,
+        month: update.uptime?.month ?? existing.uptime?.month ?? 0,
+      },
+    };
+  }
+
+  // Heartbeat Management
+  private handleHeartbeatData<T>(
+    monitorId: number,
+    data: T[] | [T[], boolean],
+    maxHeartbeats: number = 100,
+  ): T[] {
+    const [heartbeats, _isHistory = false] = Array.isArray(data[0])
+      ? (data as [T[], boolean])
+      : [data as T[], false];
+
+    if (!Array.isArray(heartbeats)) {
+      throw new Error('Invalid heartbeat data: not an array');
+    }
+
+    return heartbeats.slice(0, maxHeartbeats);
   }
 
   private setHeartBeat(
     monitorId: number,
     data: HeartBeat[] | [HeartBeat[], boolean],
   ): void {
-    logger.debug('Setting heartbeat for monitor:', monitorId);
-    const numericId = Number(monitorId);
-    if (!Number.isInteger(numericId)) {
-      throw new Error(`Invalid monitor ID: ${monitorId}`);
-    }
+    this.validateMonitorId(monitorId);
 
-    const [heartbeats, _isHistory = false] = Array.isArray(data[0])
-      ? (data as [HeartBeat[], boolean])
-      : [data as HeartBeat[], false];
-
-    if (!Array.isArray(heartbeats)) {
-      throw new Error('Invalid heartbeat data: not an array');
-    }
-
-    const maxHeartbeats = 100;
-    heartbeats.splice(maxHeartbeats);
-    monitorStore.updateMonitor(monitorId, { heartBeatList: heartbeats });
+    const heartbeats = this.handleHeartbeatData(monitorId, data);
+    this.updateMonitor(monitorId, { heartBeatList: heartbeats });
   }
 
   private setImportantHeartBeatList(
     monitorId: number,
     data: ImportantHeartBeat[] | [ImportantHeartBeat[], boolean],
   ): void {
-    logger.debug('Setting ImportantHeartbeat for monitor:', monitorId);
-    const numericId = Number(monitorId);
-    if (!Number.isInteger(numericId)) {
-      throw new Error(`Invalid monitor ID: ${monitorId}`);
-    }
+    this.validateMonitorId(monitorId);
 
-    const [heartbeats, _isHistory = false] = Array.isArray(data[0])
-      ? (data as [ImportantHeartBeat[], boolean])
-      : [data as ImportantHeartBeat[], false];
-
-    if (!Array.isArray(heartbeats)) {
-      throw new Error('Invalid ImportantHeartbeat data: not an array');
-    }
-
-    const maxHeartbeats = 100;
-    heartbeats.splice(maxHeartbeats);
-    monitorStore.updateMonitor(monitorId, {
-      importantHeartBeatList: heartbeats,
-    });
+    const heartbeats = this.handleHeartbeatData(monitorId, data);
+    this.updateMonitor(monitorId, { importantHeartBeatList: heartbeats });
   }
 
-  private addHeartBeat(monitorId: number, heartBeat: HeartBeat): void {
-    logger.debug('Adding heartbeat for monitor:', monitorId);
-    const monitor = this.getMonitor(monitorId);
-    if (!monitor) return;
-
-    const heartBeatList = monitor.heartBeatList || [];
-    monitorStore.updateMonitor(monitorId, {
-      heartBeatList: [heartBeat, ...heartBeatList],
-    });
+  private setAvgPing(monitorId: number, avgPing: number): void {
+    if (avgPing === null) return;
+    this.updateMonitor(monitorId, { avgPing });
   }
 
-  private setAvgPing(monitorId: number, avgPing: number | null): void {
-    logger.debug('Setting avgPing for monitor:', monitorId);
-    if (avgPing !== null) {
-      monitorStore.updateMonitor(monitorId, { avgPing });
-    }
-  }
-
-  private setMonitorUptime(
-    monitorId: number,
-    period: number,
-    uptime: number,
-  ): void {
-    logger.debug('Setting uptime for monitor:', {
-      monitorId,
-      period,
-      uptime,
-    });
+  private setUptime(monitorId: number, period: number, uptime: number): void {
     const monitor = this.getMonitor(monitorId);
     if (!monitor) return;
 
@@ -273,35 +266,17 @@ export class UptimeKumaClient {
           ? { ...currentUptime, month: uptime }
           : currentUptime;
 
-    monitorStore.updateMonitor(monitorId, { uptime: uptimeUpdate });
+    this.updateMonitor(monitorId, { uptime: uptimeUpdate });
   }
 
-  public setupListeners(): void {
-    this.socket?.on('monitorList', (data) => {
-      logger.debug('Processing monitor list event');
-      this.setMonitorList(data);
-    });
-
-    this.socket?.on('info', this.setInfo.bind(this));
-    this.socket?.on('heartbeatList', this.setHeartBeat.bind(this));
-    this.socket?.on(
-      'importantHeartbeatList',
-      this.setImportantHeartBeatList.bind(this),
-    );
-    this.socket?.on('avgPing', (monitorId: number, avgPing: number | null) => {
-      this.setAvgPing(monitorId, avgPing);
-    });
-    this.socket?.on(
-      'uptime',
-      (monitorId: number, period: number, uptime: number) => {
-        this.setMonitorUptime(monitorId, period, uptime);
-      },
-    );
-    this.socket?.on('heartbeat', (monitorId: number, heartBeat: HeartBeat) => {
-      this.addHeartBeat(monitorId, heartBeat);
-    });
+  private validateMonitorId(monitorId: number): void {
+    const numericId = Number(monitorId);
+    if (!Number.isInteger(numericId)) {
+      throw new Error(`Invalid monitor ID: ${monitorId}`);
+    }
   }
 
+  // Public API Methods
   public async getMonitors(): Promise<void> {
     logger.debug('Fetching monitors');
     return new Promise((resolve, reject) => {
@@ -325,7 +300,6 @@ export class UptimeKumaClient {
     monitorId: number,
     period?: number,
   ): Promise<void> {
-    logger.debug('Getting beats for monitor:', monitorId);
     return new Promise((resolve, reject) => {
       if (!this.socket?.connected) {
         reject(new Error('Socket not connected'));
@@ -333,7 +307,6 @@ export class UptimeKumaClient {
       }
 
       this.socket.emit('getMonitorBeats', { monitorID: monitorId, period });
-
       resolve();
     });
   }
@@ -343,6 +316,32 @@ export class UptimeKumaClient {
     return Promise.resolve();
   }
 
+  // Event Listeners
+  public setupListeners(): void {
+    const handlers = {
+      monitorList: this.setMonitorList.bind(this),
+      info: (data: Info) => infoStore.setState({ info: data }),
+      heartbeatList: this.setHeartBeat.bind(this),
+      importantHeartbeatList: this.setImportantHeartBeatList.bind(this),
+      avgPing: this.setAvgPing.bind(this),
+      uptime: this.setUptime.bind(this),
+      heartbeat: (monitorId: number, heartBeat: HeartBeat) => {
+        const monitor = this.getMonitor(monitorId);
+        if (!monitor) return;
+
+        const heartBeatList = monitor.heartBeatList || [];
+        this.updateMonitor(monitorId, {
+          heartBeatList: [heartBeat, ...heartBeatList],
+        });
+      },
+    };
+
+    Object.entries(handlers).forEach(([event, handler]) => {
+      this.socket?.on(event, handler);
+    });
+  }
+
+  // Connection Management
   public async reconnect(): Promise<void> {
     return this.connectAndAuthenticate();
   }
@@ -359,10 +358,6 @@ export class UptimeKumaClient {
     this.monitorsInitialized = false;
     this.socket?.disconnect();
     this.socket = null;
-  }
-
-  public getMonitor(id: number): Monitor | undefined {
-    return this.monitors.find((monitor) => monitor.id === id);
   }
 }
 
