@@ -92,12 +92,11 @@ const CustomTabBar = ({ state, navigation }: BottomTabBarProps) => {
 
 export default function TabLayout() {
   const status = useAuth.use.status();
-  // const [isFirstTime] = useIsFirstTime();
-
-  
+  const authStatus = useAuth.use.status();
   const hideSplash = useCallback(async () => {
     await SplashScreen.hideAsync();
   }, []);
+
   useEffect(() => {
     if (status !== 'idle') {
       setTimeout(() => {
@@ -105,9 +104,6 @@ export default function TabLayout() {
       }, 1000);
     }
   }, [hideSplash, status]);
-
-
-  const authStatus = useAuth.use.status();
 
   if (authStatus === 'unauthenticated') {
     return <Redirect href="/login" />;

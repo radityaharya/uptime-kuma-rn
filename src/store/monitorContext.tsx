@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useState } from 'react';
 
 import { type HeartBeat, type ImportantHeartBeat, type Monitor } from '@/api/types';
+import { getItem, removeItem,setItem } from '@/lib/storage';
 
 interface MonitorContextType {
   monitors: Monitor[];
@@ -19,14 +20,20 @@ interface MonitorUpdate {
 
 const MonitorContext = createContext<MonitorContextType | null>(null);
 
-// External store manager
 class MonitorStore {
   private static instance: MonitorStore;
   private settersMap: Set<(monitors: Monitor[]) => void> = new Set();
-  private currentMonitors: Monitor[] = [];
+  private currentMonitors: Monitor[] = getItem('monitors') || [];
   private subscribers: Set<(monitors: Monitor[]) => void> = new Set();
 
-  private constructor() {}
+  constructor() {
+    try {
+      this.currentMonitors = getItem<Monitor[]>('monitors') || [];
+    } catch (error) {
+      console.error('Error initializing MonitorStore:', error);
+      this.currentMonitors = [];
+    }
+  }
 
   static getInstance() {
     if (!MonitorStore.instance) {
@@ -55,9 +62,14 @@ class MonitorStore {
   }
 
   setMonitors(monitors: Monitor[]) {
-    this.currentMonitors = monitors;
-    this.settersMap.forEach(setter => setter(monitors));
-    this.subscribers.forEach(sub => sub(monitors));
+    try {
+      this.currentMonitors = monitors;
+      setItem('monitors', monitors);
+      this.settersMap.forEach(setter => setter(monitors));
+      this.subscribers.forEach(sub => sub(monitors));
+    } catch (error) {
+      console.error('Error setting monitors:', error);
+    }
   }
 
   updateMonitor(id: number, update: Partial<MonitorUpdate>): void {
@@ -82,7 +94,7 @@ class MonitorStore {
       uptime: updatedUptime
     };
 
-    monitorStore.setMonitors(monitors);
+    this.setMonitors(monitors);
   }
 
   setMonitorList(data: Record<string, Monitor>): void {
@@ -115,6 +127,8 @@ class MonitorStore {
         };
       }
     });
+
+    this.setMonitors(this.currentMonitors);
   }
 
   getMonitorStats() {
@@ -170,9 +184,14 @@ class MonitorStore {
   }
 
   reset() {
-    this.currentMonitors = [];
-    this.settersMap.clear();
-    this.subscribers.clear();
+    try {
+      this.currentMonitors = [];
+      this.settersMap.clear();
+      this.subscribers.clear();
+      removeItem('monitors');
+    } catch (error) {
+      console.error('Error resetting MonitorStore:', error);
+    }
   }
 }
 

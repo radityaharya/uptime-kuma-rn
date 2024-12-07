@@ -45,13 +45,17 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   android: {
     adaptiveIcon: {
-      foregroundImage: './assets/adaptive-icon.png',
+      foregroundImage: './assets/icon.png',
       backgroundColor: '#000000',
     },
     package: Env.PACKAGE,
   },
   ios: {
     bundleIdentifier: Env.BUNDLE_ID,
+    infoPlist: {
+      UIBackgroundModes: ['fetch', 'processing'],
+      BGTaskSchedulerPermittedIdentifiers: ['com.transistorsoft.fetch'],
+    },
   },
   web: {
     favicon: './assets/favicon.png',
@@ -76,6 +80,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     'expo-router',
     ['app-icon-badge', appIconBadgeConfig],
     ['react-native-edge-to-edge'],
+    'react-native-background-fetch',
   ],
   extra: {
     ...ClientEnv,

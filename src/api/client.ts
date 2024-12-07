@@ -47,7 +47,7 @@ export class UptimeKumaClient {
     autoReconnect: true,
     reconnectionDelay: 1000,
     reconnectionDelayMax: 5000,
-    reconnectionAttempts: 5,
+    reconnectionAttempts: 10,
     timeout: 10000,
   };
 
