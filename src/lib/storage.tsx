@@ -28,7 +28,6 @@ export function removeItem(key: string): void {
   }
 }
 
-// Utility to clear all storage
 export function clearStorage(): void {
   try {
     storage.clearAll();

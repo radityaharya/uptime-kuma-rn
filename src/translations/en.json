@@ -21,6 +21,7 @@
     "terms": "Terms of Service",
     "server": "Server",
     "username": "Username",
+    "debug": "Debug",
     "server_timezone": "Server timezone",
     "theme": {
       "dark": "Dark",
@@ -31,6 +32,22 @@
     "title": "Settings",
     "version": "Version",
     "website": "Website"
+  },
+  "debug": {
+    "api": "API",
+    "app": "App",
+    "database": "Database",
+    "environment": "Environment",
+    "logs": "Logs",
+    "system": "System",
+    "title": "Debug",
+    "color_scheme": "Color scheme",
+    "device_info": "Device info",
+    "build_version": "Build version",
+    "notifications": "Notifications",
+    "send_test_notification": "Send test notification",
+    "cancel_all_notifications": "Cancel all notifications"
+    
   },
   "welcome": "Welcome to {{appName}}"
 }

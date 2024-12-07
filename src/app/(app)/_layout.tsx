@@ -41,20 +41,40 @@ const CustomHeader = ({ route }: CustomHeaderProps) => {
 const CustomTabBar = ({ state, navigation }: BottomTabBarProps) => {
   const { colorScheme } = useColorScheme();
   const { width } = useWindowDimensions();
-  const tabWidth = width / state.routes.length;
 
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [
-        {
-          translateX: withSpring(state.index * tabWidth, {
-            damping: 15,
-            stiffness: 100,
-          }),
-        },
-      ],
-    };
+  const getRootRouteName = (routeName: string) => {
+    const segments = routeName.split('/');
+    return segments[0].replace(/^\((.+)\)$/, '$1');
+  };
+
+  const getActiveIndex = () => {
+    const currentRootRoute = getRootRouteName(state.routes[state.index].name);
+    return mainRoutes.findIndex(
+      (route) => getRootRouteName(route.name) === currentRootRoute,
+    );
+  };
+
+  const mainRoutes = state.routes.filter((route) => {
+    const routeParts = route.name.split('/');
+    return (
+      routeParts.length === 1 ||
+      (routeParts.length === 2 && routeParts[1] === 'index')
+    );
   });
+
+  const tabWidth = width / mainRoutes.length;
+  const activeIndex = getActiveIndex();
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      {
+        translateX: withSpring(activeIndex * tabWidth, {
+          damping: 15,
+          stiffness: 100,
+        }),
+      },
+    ],
+  }));
 
   return (
     <View className="bg-background h-20 flex-row">
@@ -64,8 +84,13 @@ const CustomTabBar = ({ state, navigation }: BottomTabBarProps) => {
         } backdrop-blur-lg`}
         style={[{ width: tabWidth - 32, marginHorizontal: 16 }, animatedStyle]}
       />
-      {state.routes.map((route: Route<string>, index: number) => {
-        const isFocused = state.index === index;
+      {mainRoutes.map((route: Route<string>, _index: number) => {
+        const currentRootRoute = getRootRouteName(
+          state.routes[state.index].name,
+        );
+        const routeRootName = getRootRouteName(route.name);
+        const isFocused = currentRootRoute === routeRootName;
+
         const activeColor = colorScheme === 'dark' ? '#fff' : '#000';
         const inactiveColor = colorScheme === 'dark' ? '#666' : '#999';
 
@@ -125,7 +150,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="settings"
+        name="(settings)/index"
         options={{
           title: 'Settings',
           tabBarButtonTestID: 'settings-tab',

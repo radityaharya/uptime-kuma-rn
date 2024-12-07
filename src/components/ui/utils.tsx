@@ -8,7 +8,6 @@ const { width, height } = Dimensions.get('screen');
 export const WIDTH = width;
 export const HEIGHT = height;
 
-// for onError react queries and mutations
 export const showError = (error: AxiosError) => {
   console.log(JSON.stringify(error?.response?.data));
   const description = extractError(error?.response?.data).trimEnd();

@@ -1,4 +1,5 @@
 import { Env } from '@env';
+import { useRouter } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import React from 'react';
 
@@ -15,6 +16,8 @@ export default function Settings() {
   const { colorScheme } = useColorScheme();
   const credentials = useAuth.use.credentials();
   const { info } = infoStore();
+
+  const router = useRouter();
 
   return (
     <View className="bg-background flex-1 pt-24">
@@ -86,13 +89,20 @@ export default function Settings() {
               />
             </ItemsContainer>
           </View>
-
           <View>
-            <ItemsContainer>
+            <ItemsContainer className="mb-6">
               <Item
                 text="settings.logout"
                 onPress={signOut}
                 className="rounded-xl bg-red-600 p-4"
+              />
+            </ItemsContainer>
+            <ItemsContainer>
+              <Item
+                text="settings.debug"
+                onPress={() => {
+                  router.push('/(app)/(settings)/debug');
+                }}
               />
             </ItemsContainer>
           </View>
