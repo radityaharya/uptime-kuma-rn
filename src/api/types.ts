@@ -23,17 +23,11 @@ export type HeartBeat = {
   status: number;
   msg: string;
   ping: number;
-  time: string;
+  time: Date;
 }
 
-export type ImportantHeartBeat = {
+export type ImportantHeartBeat = Omit<HeartBeat, 'id' | 'monitor_id' | 'down_count'> & {
   monitorID: number;
-  duration: number;
-  important: number;
-  status: number;
-  msg: string;
-  ping: number;
-  time: string;
 }
 
 export type Tag = {
@@ -173,6 +167,8 @@ export type Monitor = {
   importantHeartBeatList?: ImportantHeartBeat[];
   uptime?: Uptime;
   avgPing?: number;
+
+  isUp?: boolean;
 }
 
 export type UptimeKumaEvent =

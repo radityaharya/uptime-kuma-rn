@@ -239,6 +239,10 @@ export class UptimeKumaClient {
     this.updateMonitor(monitorId, { heartBeatList: heartbeats });
   }
 
+  private addHeartbeat(heartbeat: ImportantHeartBeat): void {
+    monitorStore.addHeartbeat(heartbeat);
+  }
+
   private setImportantHeartBeatList(
     monitorId: number,
     data: ImportantHeartBeat[] | [ImportantHeartBeat[], boolean],
@@ -325,19 +329,14 @@ export class UptimeKumaClient {
       importantHeartbeatList: this.setImportantHeartBeatList.bind(this),
       avgPing: this.setAvgPing.bind(this),
       uptime: this.setUptime.bind(this),
-      heartbeat: (monitorId: number, heartBeat: HeartBeat) => {
-        const monitor = this.getMonitor(monitorId);
-        if (!monitor) return;
-
-        const heartBeatList = monitor.heartBeatList || [];
-        this.updateMonitor(monitorId, {
-          heartBeatList: [heartBeat, ...heartBeatList],
-        });
-      },
+      heartbeat: this.addHeartbeat.bind(this),
     };
 
     Object.entries(handlers).forEach(([event, handler]) => {
-      this.socket?.on(event, handler);
+      this.socket?.on(event, (...args: any[]) => {
+        logger.debug('Received event:', event);
+        (handler as (...args: any[]) => void)(...args);
+      });
     });
   }
 

@@ -55,7 +55,6 @@ const filterAndSortMonitors = (
     }
     return sortOrder === 'asc' ? comparison : -comparison;
   });
-
   return filtered;
 };
 
@@ -116,7 +115,10 @@ export default function Index() {
         data={hasMonitors ? filteredMonitors : []}
         renderItem={({ item: monitor }) => <MonitorCard monitor={monitor} />}
         ItemSeparatorComponent={() => <View className="h-4" />}
-        keyExtractor={(monitor) => String(monitor.id)}
+        keyExtractor={(monitor) => {
+          const latestHeartbeat = monitor.heartBeatList?.[0];
+          return `${monitor.id}-${latestHeartbeat?.status}-${latestHeartbeat?.time}`;
+        }}
         contentContainerStyle={{ paddingHorizontal: 16 }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />

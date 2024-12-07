@@ -49,11 +49,7 @@ function isMonitorUp(heartbeats: HeartBeat[]): boolean {
     return false;
   }
 
-  const sortedHeartbeats = [...heartbeats].sort(
-    (a, b) => new Date(b.time).getTime() - new Date(a.time).getTime(),
-  );
-
-  return sortedHeartbeats[0].status === 1;
+  return heartbeats[0].status === 1;
 }
 
 export function MonitorCard({ monitor }: MonitorCardProps) {

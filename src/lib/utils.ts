@@ -2,6 +2,7 @@ import { type ClassValue,clsx } from 'clsx';
 import { Linking } from 'react-native';
 import { twMerge } from 'tailwind-merge';
 import type { StoreApi, UseBoundStore } from 'zustand';
+
 export function openLinkInBrowser(url: string) {
   Linking.canOpenURL(url).then((canOpen) => canOpen && Linking.openURL(url));
 }
@@ -25,3 +26,15 @@ export const createSelectors = <S extends UseBoundStore<StoreApi<object>>>(
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+export const formatDateTime = (utcDate: Date) => {
+  const localDate = new Date(
+    utcDate.getTime() - utcDate.getTimezoneOffset() * 60000
+  );
+
+  const options: Intl.DateTimeFormatOptions = {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  };
+  return localDate.toLocaleString(undefined, options);
+};

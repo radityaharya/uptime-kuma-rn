@@ -47,7 +47,7 @@ export const useMonitors = () => {
 
     const client = new UptimeKumaClient(token.host, {
       autoReconnect: true,
-      reconnectionAttempts: 3,
+      reconnectionAttempts: 10,
       reconnectionDelay: 2000,
       reconnectionDelayMax: 10000,
     });
@@ -59,8 +59,8 @@ export const useMonitors = () => {
       client.socket && refreshMonitors();
       await clientRef.current.getMonitors();
       await clientRef.current.getHeartbeats();
-    } catch {
-      setError('Authentication failed. Please check your credentials.');
+    } catch (error:any) {
+      setError(`Connection failed: ${error.message}`);
       clientRef.current = null;
     } finally {
       setIsLoading(false);

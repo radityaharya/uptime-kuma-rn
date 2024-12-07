@@ -8,20 +8,14 @@ import {
 } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
 
-import { type Monitor } from '@/api/types';
+import { type HeartBeat, type Monitor } from '@/api/types';
 import { StatusBar, Text, View } from '@/components/ui';
+import { formatDateTime } from '@/lib';
 
 interface MonitorModalProps {
   monitor: Monitor;
   visible: boolean;
   onClose: () => void;
-}
-
-interface HeartBeat {
-  time: string;
-  ping: number;
-  status: number;
-  msg: string;
 }
 
 // Chart Components
@@ -63,7 +57,7 @@ const HeartbeatCard: React.FC<{ item: any }> = ({ item }) => {
   return (
     <View className={`mb-2 rounded-lg border border-secondary p-4`}>
       <Text className="text-sm text-gray-500">
-        {new Date(item.time).toLocaleTimeString()}
+        {formatDateTime(item.time)}
       </Text>
       <Text className={`text-lg font-bold text-foreground`}>
         {item.status === 1 ? 'Up' : 'Down'}
@@ -82,15 +76,12 @@ export const MonitorModal: React.FC<MonitorModalProps> = ({
   const colorScheme = useColorScheme();
   const isDarkMode = colorScheme === 'dark';
 
-  const latestHeartbeats = React.useMemo(
-    () => monitor.heartBeatList?.slice(-100) ?? [],
-    [monitor.heartBeatList],
-  );
+
   const importantHeartBeatList = monitor.importantHeartBeatList ?? [];
 
   const transformChartData = React.useMemo(
     () =>
-      latestHeartbeats.map((hb: HeartBeat, index: number) => ({
+      monitor.heartBeatList?.map((hb: HeartBeat, index: number) => ({
         value: hb.ping,
         hideDataPoint: index % 4 !== 0,
         customDataPoint: index % 4 === 0 ? ChartDataPoint : undefined,
@@ -98,16 +89,13 @@ export const MonitorModal: React.FC<MonitorModalProps> = ({
           index % 12 === 0
             ? () => (
                 <ChartLabel
-                  value={new Date(hb.time).toLocaleTimeString([], {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
+                  value={formatDateTime(hb.time)}
                   isDarkMode={isDarkMode}
                 />
               )
             : undefined,
       })),
-    [latestHeartbeats, isDarkMode],
+    [isDarkMode, monitor.heartBeatList],
   );
 
   const chartConfig = React.useMemo(
@@ -122,7 +110,7 @@ export const MonitorModal: React.FC<MonitorModalProps> = ({
       adjustToWidth: true,
       thickness: 2,
       color: '#1DB954',
-      maxValue: Math.max(...latestHeartbeats.map((hb: HeartBeat) => hb.ping)),
+      maxValue: Math.max(...(monitor.heartBeatList?.map((hb: HeartBeat) => hb.ping) || [])),
       noOfSections: 4,
       yAxisTextStyle: {
         color: isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)',
@@ -143,7 +131,7 @@ export const MonitorModal: React.FC<MonitorModalProps> = ({
       showDataPointOnPress: true,
       pressEnabled: true,
     }),
-    [isDarkMode, latestHeartbeats],
+    [isDarkMode, monitor.heartBeatList],
   );
 
   return (
@@ -172,7 +160,7 @@ export const MonitorModal: React.FC<MonitorModalProps> = ({
           <FlatList
             data={importantHeartBeatList}
             renderItem={({ item }) => <HeartbeatCard item={item} />}
-            keyExtractor={(item) => item.time}
+            keyExtractor={(item) => item.time.toString()}
           />
         </View>
       </View>
