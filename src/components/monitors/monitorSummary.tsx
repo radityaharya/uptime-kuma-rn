@@ -42,8 +42,9 @@ export function MonitorSummaryStats() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const isAllUp = stats.downMonitors.length === 0;
-  const numOfDownMonitors = stats.downMonitors.length;
+  const activeDownMonitors = stats.downMonitors.filter(m => m.active);
+  const isAllUp = activeDownMonitors.length === 0;
+  const numOfDownMonitors = activeDownMonitors.length;
 
   return (
     <View className="flex-1 items-center justify-center">

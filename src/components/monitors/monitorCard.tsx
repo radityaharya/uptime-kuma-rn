@@ -74,9 +74,10 @@ export function MonitorCard({ monitor }: MonitorCardProps) {
     <>
       <Pressable onPress={() => setModalVisible(true)}>
         <View
-          className="bg-background flex flex-col overflow-hidden rounded-lg 
+          className={`bg-background flex flex-col overflow-hidden rounded-lg 
           border border-gray-800 bg-gradient-to-br 
-          from-gray-800/90 to-gray-900/90 p-4 transition-all duration-200"
+          from-gray-800/90 to-gray-900/90 p-4 transition-all duration-200
+          ${!monitor.active ? 'opacity-50' : ''}`}
         >
           {/* Header */}
           <View className="mb-2 flex-row justify-between">

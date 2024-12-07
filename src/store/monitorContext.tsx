@@ -216,9 +216,9 @@ class MonitorStore {
   }
 
   getMonitorStats() {
-    const monitors = this.currentMonitors;
-    const numMonitors = monitors.length;
-    const numHeartbeats = monitors.reduce(
+    const activeMonitors = this.currentMonitors.filter((m) => m.active);
+    const numMonitors = activeMonitors.length;
+    const numHeartbeats = activeMonitors.reduce(
       (acc, monitor) => acc + (monitor.heartBeatList?.length || 0),
       0,
     );
@@ -226,7 +226,7 @@ class MonitorStore {
       ? (numHeartbeats / numMonitors).toFixed(1)
       : 0;
 
-    const statusCounts = monitors.reduce(
+    const statusCounts = activeMonitors.reduce(
       (acc, monitor) => {
         acc[monitor.active ? 'active' : 'inactive'] =
           (acc[monitor.active ? 'active' : 'inactive'] || 0) + 1;
@@ -236,13 +236,16 @@ class MonitorStore {
     );
 
     const avgDayUptime =
-      monitors.reduce((acc, m) => acc + (m.uptime?.day || 0), 0) /
+      activeMonitors.reduce((acc, m) => acc + (m.uptime?.day || 0), 0) /
         numMonitors || 0;
     const avgMonthUptime =
-      monitors.reduce((acc, m) => acc + (m.uptime?.month || 0), 0) /
+      activeMonitors.reduce((acc, m) => acc + (m.uptime?.month || 0), 0) /
         numMonitors || 0;
 
-    const avgPingTotal = monitors.reduce((acc, m) => acc + (m.avgPing || 0), 0);
+    const avgPingTotal = activeMonitors.reduce(
+      (acc, m) => acc + (m.avgPing || 0),
+      0,
+    );
     const avgPingOverall = numMonitors ? avgPingTotal / numMonitors : 0;
 
     function isMonitorUp(heartbeats: HeartBeat[]): boolean {
@@ -259,13 +262,15 @@ class MonitorStore {
       return sortedHeartbeats[0].status === 1;
     }
 
-    const downMonitors = monitors.filter(
+    const downMonitors = activeMonitors.filter(
       (m) => !isMonitorUp(m.heartBeatList || []),
     );
 
-    const upMonitors = monitors.filter((m) =>
+    const upMonitors = activeMonitors.filter((m) =>
       isMonitorUp(m.heartBeatList || []),
     );
+
+    const inactiveMonitors = this.currentMonitors.filter((m) => !m.active);
 
     return {
       numMonitors,
@@ -281,6 +286,7 @@ class MonitorStore {
       },
       downMonitors,
       upMonitors,
+      inactiveMonitors,
     };
   }
 
