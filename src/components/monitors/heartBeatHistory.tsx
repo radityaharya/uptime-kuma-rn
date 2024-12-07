@@ -34,7 +34,8 @@ export function HeartbeatHistory({
 
   const filledHeartbeats = heartbeats?.length
     ? [...heartbeats]
-        .sort((a, b) => b.time.getTime() - a.time.getTime())
+        .filter((hb) => hb.time) // Ensure time is defined
+        .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
         .slice(0, numLastBeats)
     : [];
   const placeholders = Array(numLastBeats - filledHeartbeats.length).fill(null);

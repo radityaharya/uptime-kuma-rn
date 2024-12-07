@@ -244,7 +244,7 @@ class MonitorStore {
       0,
     );
     const avgHeartbeatsPerMonitor = numMonitors
-      ? (numHeartbeats / numMonitors).toFixed(1)
+      ? Number((numHeartbeats / numMonitors).toFixed(1))  // Convert to number
       : 0;
 
     const statusCounts = activeMonitors.reduce(
@@ -294,9 +294,10 @@ class MonitorStore {
     const inactiveMonitors = this.currentMonitors.filter((m) => !m.active);
 
     return {
+      totalMonitors: this.currentMonitors.length,
       numMonitors,
       numHeartbeats,
-      avgHeartbeatsPerMonitor,
+      avgHeartbeatsPerMonitor,  // Now this will always be a number
       statusCounts,
       uptimeStats: {
         avgDay: avgDayUptime.toFixed(2) + '%',
@@ -364,7 +365,25 @@ export function useMonitorContext() {
   return context;
 }
 
-export function useMonitorStats() {
+export interface MonitorStats {
+  totalMonitors: number;
+  numMonitors: number;
+  numHeartbeats: number;
+  avgHeartbeatsPerMonitor: number;
+  statusCounts: Record<string, number>;
+  uptimeStats: {
+    avgDay: string;
+    avgMonth: string;
+  };
+  pingStats: {
+    avgOverall: string;
+  };
+  downMonitors: Monitor[];
+  upMonitors: Monitor[];
+  inactiveMonitors: Monitor[];
+}
+
+export function useMonitorStats(): MonitorStats {
   const [stats, setStats] = React.useState(() =>
     monitorStore.getMonitorStats(),
   );

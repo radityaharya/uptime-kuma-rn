@@ -3,7 +3,32 @@ import React from 'react';
 import { Animated, StyleSheet } from 'react-native';
 
 import { Text, View } from '@/components/ui';
-import { useMonitorStats } from '@/store/monitorContext';
+import { type MonitorStats, useMonitorStats } from '@/store/monitorContext';
+
+function _MonitorNumbers({ stats }: { stats: MonitorStats }) {
+  return (
+    <View className="w-full flex-row justify-between rounded-xl bg-secondary p-2">
+      <View className="flex flex-col items-center justify-center rounded-lg p-4">
+        <Text className="text-2xl font-bold text-foreground">
+          {stats.totalMonitors}
+        </Text>
+        <Text className="text-sm text-foreground/90">Total</Text>
+      </View>
+      <View className="flex flex-col items-center justify-center rounded-lg p-4">
+        <Text className="text-2xl font-bold text-foreground">
+          {stats.downMonitors.length}
+        </Text>
+        <Text className="text-sm text-foreground/90">Down</Text>
+      </View>
+      <View className="flex flex-col items-center justify-center rounded-lg p-4">
+        <Text className="text-2xl font-bold text-foreground">
+          {stats.inactiveMonitors.length}
+        </Text>
+        <Text className="text-sm text-foreground/90">Inactive</Text>
+      </View>
+    </View>
+  );
+}
 
 export function MonitorSummaryStats() {
   const stats = useMonitorStats();
@@ -39,10 +64,10 @@ export function MonitorSummaryStats() {
     ]);
 
     Animated.loop(pulse).start();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const activeDownMonitors = stats.downMonitors.filter(m => m.active);
+  const activeDownMonitors = stats.downMonitors.filter((m) => m.active);
   const isAllUp = activeDownMonitors.length === 0;
   const numOfDownMonitors = activeDownMonitors.length;
 
@@ -76,7 +101,7 @@ export function MonitorSummaryStats() {
           />
         </View>
       </View>
-      <View className="mt-20 items-center">
+      <View className="mb-6 mt-14 items-center">
         <Text className="text-2xl font-bold text-foreground">
           {isAllUp ? 'All Systems Up' : `${numOfDownMonitors} Monitors Down`}
         </Text>
@@ -119,5 +144,5 @@ const styles = StyleSheet.create({
     height: 120,
     alignItems: 'center',
     justifyContent: 'center',
-  }
+  },
 });

@@ -132,7 +132,7 @@ export default function Index() {
             setSortField={setSortField}
             filterStatus={filterStatus}
             setFilterStatus={setFilterStatus}
-            totalMonitors={stats.numMonitors}
+            totalMonitors={stats.totalMonitors}
             filteredCount={filteredMonitors.length}
             error={error ?? undefined}
           />
