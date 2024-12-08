@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { Animated, StyleSheet } from 'react-native';
+import { ActivityIndicator, Animated, StyleSheet } from 'react-native';
 
 import { Text, View } from '@/components/ui';
 import { type MonitorStats, useMonitorStats } from '@/store/monitorContext';
@@ -70,6 +70,7 @@ export function MonitorSummaryStats() {
   const activeDownMonitors = stats.downMonitors.filter((m) => m.active);
   const isAllUp = activeDownMonitors.length === 0;
   const numOfDownMonitors = activeDownMonitors.length;
+  const isAllHeartbeatPopulated = stats.isAllHeartbeatPopulated;
 
   return (
     <View className="flex-1 items-center justify-center">
@@ -94,11 +95,15 @@ export function MonitorSummaryStats() {
           ]}
         />
         <View style={styles.iconContainer}>
-          <Ionicons
-            name={isAllUp ? 'checkmark' : 'alert'}
-            size={40}
-            color="white"
-          />
+          {isAllHeartbeatPopulated ? (
+            <Ionicons
+              name={isAllUp ? 'checkmark' : 'alert'}
+              size={40}
+              color="white"
+            />
+          ) : (
+            <ActivityIndicator size="large" color="white" />
+          )}
         </View>
       </View>
       <View className="mb-6 mt-14 items-center">

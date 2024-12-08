@@ -74,10 +74,16 @@ export class UptimeKumaClient {
     return this.connectAndAuthenticate();
   }
 
-  private async connectAndAuthenticate(): Promise<void> {
-    if (this.socket?.connected) {
+  private cleanupExistingSocket(): void {
+    if (this.socket) {
+      this.socket?.removeAllListeners();
       this.socket.disconnect();
+      this.socket = null;
     }
+  }
+
+  private async connectAndAuthenticate(): Promise<void> {
+    this.cleanupExistingSocket();
 
     return new Promise<void>((resolve, reject) => {
       try {
@@ -123,10 +129,15 @@ export class UptimeKumaClient {
   }
 
   private setupSocketErrorHandling(reject: (error: Error) => void): void {
-    this.socket?.once('connect_error', reject);
+    this.socket?.once('connect_error', (error) => {
+      logger.error('Socket connect error:', error);
+      reject(error);
+    });
+    
     this.socket?.on('disconnect', (reason: string) => {
+      logger.debug('Socket disconnected:', reason);
       this.emitter.emit('disconnect', reason);
-      if (this.connectionOptions.autoReconnect) {
+      if (this.connectionOptions.autoReconnect && reason !== 'io client disconnect') {
         this.handleReconnect();
       }
     });
@@ -322,6 +333,9 @@ export class UptimeKumaClient {
 
   // Event Listeners
   public setupListeners(): void {
+
+    this.socket?.removeAllListeners();
+
     const handlers = {
       monitorList: this.setMonitorList.bind(this),
       info: (data: Info) => infoStore.setState({ info: data }),
@@ -347,7 +361,9 @@ export class UptimeKumaClient {
 
   private async handleReconnect(): Promise<void> {
     try {
+      this.cleanupExistingSocket();
       await this.connectAndAuthenticate();
+      return;
     } catch (error) {
       console.error('Reconnection failed:', error);
     }
@@ -355,10 +371,32 @@ export class UptimeKumaClient {
 
   public disconnect(): void {
     this.monitorsInitialized = false;
-    this.socket?.disconnect();
-    this.socket = null;
+    this.cleanupExistingSocket();
+  }
+
+  public isSocketConnected(): boolean {
+    return this.socket?.connected ?? false;
+  }
+
+  public async reinitializeSocket(): Promise<void> {
+    logger.debug('Reinitializing socket connection');
+    if (!this.credentials) {
+      throw new Error('No credentials available for reconnection');
+    }
+
+    // Attempt to disconnect existing socket if any
+    if (this.socket?.connected) {
+      this.socket.disconnect();
+    }
+
+    try {
+      await this.connectAndAuthenticate();
+      // Refresh data after reconnection
+      await this.getMonitors();
+      await this.getHeartbeats();
+    } catch (error) {
+      logger.error('Failed to reinitialize socket:', error);
+      throw error;
+    }
   }
 }
-
-// client singleton
-export let globalClient: UptimeKumaClient | null = null;

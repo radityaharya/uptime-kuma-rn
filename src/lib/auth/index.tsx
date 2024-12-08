@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-import { globalClient } from '@/api/client';
+import { clientStore } from '@/store/clientStore';
 import { infoStore } from '@/store/infoStore';
 import { monitorStore } from '@/store/monitorContext';
 
@@ -27,7 +27,8 @@ const _useAuth = create<AuthState>((set, get) => ({
     console.debug('Signing out');
     monitorStore.reset();
     infoStore.getState().reset();
-    globalClient?.disconnect();
+    clientStore.getClient()?.disconnect();
+    clientStore.destroyClient();
 
     removeToken();
     set({ status: 'unauthenticated', credentials: null });

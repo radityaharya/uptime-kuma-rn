@@ -20,7 +20,7 @@ export default function Settings() {
   const router = useRouter();
 
   return (
-    <View className="bg-background flex-1 pt-24">
+    <View className="bg-background flex-1">
       <ScrollView className="flex-1">
         <View className="flex-1 px-4">
           <View>

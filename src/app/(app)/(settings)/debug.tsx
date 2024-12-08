@@ -12,7 +12,7 @@ export default function Debug() {
   const { colorScheme } = useColorScheme();
 
   return (
-    <View className="bg-background flex-1 pt-24">
+    <View className="bg-background flex-1">
       <ScrollView className="flex-1">
         <View className="flex-1 px-4">
           <ItemsContainer title="debug.system" className="mb-4">

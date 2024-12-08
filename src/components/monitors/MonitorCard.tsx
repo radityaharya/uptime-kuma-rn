@@ -1,11 +1,11 @@
+import { useRouter } from 'expo-router';
 import * as React from 'react';
 import { Pressable } from 'react-native';
 
 import { type HeartBeat, type Monitor, type Tag } from '@/api/types';
 import { Text, View } from '@/components/ui';
 
-import { HeartbeatHistory } from './heartBeatHistory';
-import { MonitorModal } from './monitorModal';
+import { HeartbeatHistory } from './HeartBeatHistory';
 import { StatusIndicator } from './StatusIndicator';
 
 interface MonitorCardProps {
@@ -53,7 +53,7 @@ function isMonitorUp(heartbeats: HeartBeat[]): boolean {
 }
 
 export function MonitorCard({ monitor }: MonitorCardProps) {
-  const [modalVisible, setModalVisible] = React.useState(false);
+  const router = useRouter();
 
   if (!monitor) return null;
 
@@ -72,7 +72,14 @@ export function MonitorCard({ monitor }: MonitorCardProps) {
 
   return (
     <>
-      <Pressable onPress={() => setModalVisible(true)}>
+      <Pressable
+        onPress={() =>
+          router.push({
+            pathname: '/(app)/(monitors)/[id]',
+            params: { id: monitor.id.toString() },
+          })
+        }
+      >
         <View
           className={`bg-background flex flex-col overflow-hidden rounded-lg 
           border border-gray-800 bg-gradient-to-br 
@@ -119,12 +126,6 @@ export function MonitorCard({ monitor }: MonitorCardProps) {
           </View>
         </View>
       </Pressable>
-
-      <MonitorModal
-        monitor={monitor}
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-      />
     </>
   );
 }

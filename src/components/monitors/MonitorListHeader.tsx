@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 import { ErrorMessage } from './ErrorMessage';
-import { MonitorSummaryStats } from './monitorSummary';
+import { MonitorSummaryStats } from './MonitorSummary';
 
 export type SortOrder = 'asc' | 'desc';
 export type SortField = 'name' | 'status' | 'uptime';
@@ -48,7 +48,7 @@ export const MonitorListHeader = ({
   error,
 }: MonitorListHeaderProps) => (
   <>
-    <View className="pb-20 pt-40">
+    <View className="pb-14 pt-40">
       <MonitorSummaryStats />
     </View>
 

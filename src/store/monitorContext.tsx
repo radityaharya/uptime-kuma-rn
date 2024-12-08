@@ -293,6 +293,10 @@ class MonitorStore {
 
     const inactiveMonitors = this.currentMonitors.filter((m) => !m.active);
 
+    const isAllHeartbeatPopulated = activeMonitors.every(
+      (m) => m.heartBeatList && m.heartBeatList.length > 0,
+    );
+
     return {
       totalMonitors: this.currentMonitors.length,
       numMonitors,
@@ -309,6 +313,7 @@ class MonitorStore {
       downMonitors,
       upMonitors,
       inactiveMonitors,
+      isAllHeartbeatPopulated
     };
   }
 
@@ -333,6 +338,11 @@ export function useMonitorsStore() {
   }, []);
 
   return monitors;
+}
+
+export function useMonitor(id: number) {
+  const monitors = useMonitorsStore();
+  return monitors.find((m) => m.id === id);
 }
 
 export const monitorStore = MonitorStore.getInstance();
@@ -381,6 +391,7 @@ export interface MonitorStats {
   downMonitors: Monitor[];
   upMonitors: Monitor[];
   inactiveMonitors: Monitor[];
+  isAllHeartbeatPopulated: boolean;
 }
 
 export function useMonitorStats(): MonitorStats {

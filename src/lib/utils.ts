@@ -1,4 +1,4 @@
-import { type ClassValue,clsx } from 'clsx';
+import { type ClassValue, clsx } from 'clsx';
 import { Linking } from 'react-native';
 import { twMerge } from 'tailwind-merge';
 import type { StoreApi, UseBoundStore } from 'zustand';
@@ -12,7 +12,7 @@ type WithSelectors<S> = S extends { getState: () => infer T }
   : never;
 
 export const createSelectors = <S extends UseBoundStore<StoreApi<object>>>(
-  _store: S
+  _store: S,
 ) => {
   let store = _store as WithSelectors<typeof _store>;
   store.use = {};
@@ -26,15 +26,16 @@ export const createSelectors = <S extends UseBoundStore<StoreApi<object>>>(
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
-export const formatDateTime = (utcDate: Date) => {
-  const localDate = new Date(
-    utcDate.getTime() - utcDate.getTimezoneOffset() * 60000
-  );
+export const formatDateTime = (utcDate?: Date) => {
+  if (!(utcDate instanceof Date) || isNaN(utcDate.getTime())) {
+    return 'Invalid date';
+  }
 
   const options: Intl.DateTimeFormatOptions = {
     hour: '2-digit',
     minute: '2-digit',
+    timeZoneName: 'short',
     hour12: true,
   };
-  return localDate.toLocaleString(undefined, options);
+  return `${utcDate.toLocaleDateString(undefined, options)}`;
 };

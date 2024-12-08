@@ -59,7 +59,7 @@ const filterAndSortMonitors = (
 
 export default function Index() {
   const [refreshing, setRefreshing] = React.useState(false);
-  const { error, isLoading, refreshMonitors } = useMonitors();
+  const { error, isLoading, refreshMonitors, reconnectClient } = useMonitors();
   const monitors = useMonitorsStore();
   const stats = useMonitorStats();
   const hasMonitors = monitors && monitors.length > 0;
