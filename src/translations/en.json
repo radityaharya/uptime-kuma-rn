@@ -46,8 +46,9 @@
     "build_version": "Build version",
     "notifications": "Notifications",
     "send_test_notification": "Send test notification",
-    "cancel_all_notifications": "Cancel all notifications"
-    
+    "cancel_all_notifications": "Cancel all notifications",
+    "status_pages": "Status pages",
+    "clean_status_pages": "Clean status pages"
   },
   "welcome": "Welcome to {{appName}}"
 }

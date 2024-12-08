@@ -41,17 +41,21 @@ export const useMonitors = () => {
       setIsLoading(false);
 
       if (clientRef.current && !clientRef.current.isSocketConnected()) {
-        console.log('Socket not connected, reinitializing client');
-        await clientRef.current.reinitializeSocket();
+        console.log('Socket not connected, attempting to reinitialize...');
+        try {
+          await clientRef.current.reinitializeSocket();
+        } catch (err: any) {
+          setError(`Failed to reinitialize socket: ${err.message}`);
+        }
       }
-
       return;
     }
 
     console.log('Initializing new client');
     const token = getToken();
     if (!token) {
-      setError('Token not found.');
+      setError('Authentication token not found');
+      setIsLoading(false);
       return;
     }
 
@@ -64,7 +68,10 @@ export const useMonitors = () => {
       await client.getMonitors();
       await client.getHeartbeats();
     } catch (error: any) {
-      setError(`Connection failed: ${error.message}`);
+      const errorMessage = error.message.includes('timeout') 
+        ? 'Connection timed out. Please check your network connection.'
+        : `Connection failed: ${error.message}`;
+      setError(errorMessage);
       clientRef.current = null;
       clientStore.setClient(null);
     } finally {

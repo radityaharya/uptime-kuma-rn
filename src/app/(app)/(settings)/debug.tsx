@@ -7,6 +7,7 @@ import { Platform } from 'react-native';
 import { Item } from '@/components/settings/item';
 import { ItemsContainer } from '@/components/settings/items-container';
 import { ScrollView, View } from '@/components/ui';
+import statusStore from '@/store/statusStore';
 
 export default function Debug() {
   const { colorScheme } = useColorScheme();
@@ -49,6 +50,17 @@ export default function Debug() {
                   },
                   trigger: null,
                 });
+              }}
+              className={`rounded-xl p-4 ${
+                colorScheme === 'dark' ? 'bg-white/5' : 'bg-black/5'
+              }`}
+            />
+          </ItemsContainer>
+          <ItemsContainer title="debug.status_pages" className="mb-4">
+            <Item
+              text="debug.clean_status_pages"
+              onPress={() => {
+                statusStore.clearStatusList();
               }}
               className={`rounded-xl p-4 ${
                 colorScheme === 'dark' ? 'bg-white/5' : 'bg-black/5'

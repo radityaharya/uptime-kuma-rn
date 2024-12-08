@@ -171,6 +171,22 @@ export type Monitor = {
   isUp?: boolean;
 }
 
+export type StatusPage = {
+  id: number;
+  slug: string;
+  title: string;
+  description: string | null;
+  icon: string;
+  theme: string;
+  published: boolean;
+  showTags: boolean;
+  customCSS: string;
+  footerText: string | null;
+  showPoweredBy: boolean;
+  googleAnalyticsId: string | null;
+  showCertificateExpiry: boolean;
+}
+
 export type UptimeKumaEvent =
   | 'updateMonitorIntoList'
   | 'deleteMonitorFromList'

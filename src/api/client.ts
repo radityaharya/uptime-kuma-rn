@@ -4,6 +4,7 @@ import io, { type Socket } from 'socket.io-client';
 import { logger } from '@/lib/log';
 import { infoStore } from '@/store/infoStore';
 import { monitorStore } from '@/store/monitorContext';
+import statusStore from '@/store/statusStore';
 
 import {
   type EventPayloads,
@@ -11,6 +12,7 @@ import {
   type ImportantHeartBeat,
   type Info,
   type Monitor,
+  type StatusPage,
   type UptimeKumaEvent,
 } from './types';
 
@@ -48,7 +50,7 @@ export class UptimeKumaClient {
     reconnectionDelay: 1000,
     reconnectionDelayMax: 5000,
     reconnectionAttempts: 10,
-    timeout: 10000,
+    timeout: 30000,
   };
 
   private readonly emitter: CustomEventEmitter;
@@ -86,11 +88,28 @@ export class UptimeKumaClient {
     this.cleanupExistingSocket();
 
     return new Promise<void>((resolve, reject) => {
-      try {
-        this.initializeSocket(resolve, reject);
-      } catch (error) {
-        reject(error);
-      }
+      let retryCount = 0;
+      const maxRetries = 3;
+
+      const attemptConnection = () => {
+        try {
+          this.initializeSocket(resolve, (error) => {
+            if (retryCount < maxRetries && error.message.includes('timeout')) {
+              retryCount++;
+              logger.debug(
+                `Retrying connection (${retryCount}/${maxRetries})...`,
+              );
+              setTimeout(attemptConnection, 1000 * retryCount);
+            } else {
+              reject(error);
+            }
+          });
+        } catch (error) {
+          reject(error);
+        }
+      };
+
+      attemptConnection();
     });
   }
 
@@ -102,6 +121,7 @@ export class UptimeKumaClient {
     this.socket = io(this.url, this.connectionOptions);
 
     this.socket.once('connect', () => {
+      logger.debug('Socket connected successfully');
       if (!this.credentials) {
         this.setupListeners();
         return resolve();
@@ -130,14 +150,23 @@ export class UptimeKumaClient {
 
   private setupSocketErrorHandling(reject: (error: Error) => void): void {
     this.socket?.once('connect_error', (error) => {
-      logger.error('Socket connect error:', error);
+      logger.error('Socket connect error:', error.message);
+      if (error.message === 'timeout') {
+        logger.debug(
+          `Connection timed out after ${this.connectionOptions.timeout}ms`,
+        );
+      }
       reject(error);
     });
-    
+
     this.socket?.on('disconnect', (reason: string) => {
-      logger.debug('Socket disconnected:', reason);
+      logger.debug(`Socket disconnected: ${reason}`);
       this.emitter.emit('disconnect', reason);
-      if (this.connectionOptions.autoReconnect && reason !== 'io client disconnect') {
+      if (
+        this.connectionOptions.autoReconnect &&
+        reason !== 'io client disconnect'
+      ) {
+        logger.debug('Attempting automatic reconnection...');
         this.handleReconnect();
       }
     });
@@ -284,6 +313,33 @@ export class UptimeKumaClient {
     this.updateMonitor(monitorId, { uptime: uptimeUpdate });
   }
 
+  private handleStatusPageList(statusPages: {
+    [key: string]: StatusPage;
+  }): void {
+    logger.debug('Processing status pages:', statusPages);
+    const statusPageArray = Object.values(statusPages);
+
+    if (!this.url) {
+      logger.error('No base URL available');
+      return;
+    }
+
+    for (const statusPage of statusPageArray) {
+      try {
+        const status = {
+          url: `${this.url}/status/${statusPage.slug}`,
+          isExternal: false,
+          monitors: [],
+        };
+
+        logger.debug('Adding status page:', status);
+        statusStore.addStatus(status);
+      } catch (error) {
+        logger.error('Failed to add status page:', statusPage.slug);
+      }
+    }
+  }
+
   private validateMonitorId(monitorId: number): void {
     const numericId = Number(monitorId);
     if (!Number.isInteger(numericId)) {
@@ -333,7 +389,6 @@ export class UptimeKumaClient {
 
   // Event Listeners
   public setupListeners(): void {
-
     this.socket?.removeAllListeners();
 
     const handlers = {
@@ -344,11 +399,11 @@ export class UptimeKumaClient {
       avgPing: this.setAvgPing.bind(this),
       uptime: this.setUptime.bind(this),
       heartbeat: this.addHeartbeat.bind(this),
+      statusPageList: this.handleStatusPageList.bind(this),
     };
 
     Object.entries(handlers).forEach(([event, handler]) => {
       this.socket?.on(event, (...args: any[]) => {
-        logger.debug('Received event:', event);
         (handler as (...args: any[]) => void)(...args);
       });
     });

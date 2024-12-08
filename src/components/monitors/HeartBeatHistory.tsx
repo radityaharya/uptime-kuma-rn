@@ -1,12 +1,13 @@
 import * as React from 'react';
 
+import { type HeartbeatData } from '@/api/status/types';
 import { type HeartBeat } from '@/api/types';
 import { Text, View } from '@/components/ui';
 import { formatDateTime } from '@/lib/utils';
 // import { infoStore } from '@/store/infoStore';
 
 interface HeartbeatHistoryProps {
-  heartbeats?: HeartBeat[] | null;
+  heartbeats?: HeartBeat[] | HeartbeatData[];
   numLastBeats?: number;
   interval?: number;
   className?: string;
@@ -55,7 +56,7 @@ export function HeartbeatHistory({
       </View>
       <View className="flex-row justify-between">
         <Text className="text-xs opacity-50">
-          {heartbeats.length ? formatDateTime(heartbeats[0].time) : 'No data'}
+          {heartbeats.length ? formatDateTime(new Date(heartbeats[0].time)) : 'No data'}
         </Text>
         <Text className="text-xs opacity-50">
           {interval ? `${interval}s` : 'No data'}

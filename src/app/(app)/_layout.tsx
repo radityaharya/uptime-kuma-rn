@@ -1,5 +1,6 @@
 /* eslint-disable react/no-unstable-nested-components */
 import { Redirect, SplashScreen, Tabs } from 'expo-router';
+import { RssIcon } from 'lucide-react-native';
 import React, { useCallback, useEffect } from 'react';
 
 import {
@@ -43,6 +44,15 @@ export default function TabLayout() {
           tabBarButtonTestID: 'index-tab',
           tabBarIcon: FeedIcon,
           href: '/(monitors)',
+        }}
+      />
+      <Tabs.Screen
+        name="(status)"
+        options={{
+          title: 'Status Pages',
+          tabBarButtonTestID: 'status-tab',
+          tabBarIcon: RssIcon,
+          href: '/(status)',
         }}
       />
       <Tabs.Screen
