@@ -132,7 +132,8 @@
       "reactNativeDirectoryCheck": {
         "listUnknownPackages": false,
         "exclude": [
-          "react-native-restart"
+          "react-native-restart",
+          "lucide-react-native"
         ]
       }
     },
