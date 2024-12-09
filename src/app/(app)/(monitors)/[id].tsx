@@ -4,6 +4,7 @@ import {
   ActivityIndicator,
   Dimensions,
   FlatList,
+  RefreshControl,
   useColorScheme,
 } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
@@ -11,6 +12,7 @@ import { LineChart } from 'react-native-gifted-charts';
 import { type HeartBeat } from '@/api/types';
 import { Text, View } from '@/components/ui';
 import { formatDateTime } from '@/lib';
+import { clientStore } from '@/store/clientStore';
 import { useMonitor } from '@/store/monitorContext';
 
 const LoadingSkeleton = React.memo(() => (
@@ -106,6 +108,38 @@ export default function MonitorDetails() {
   const isDarkMode = colorScheme === 'dark';
   const { id } = useLocalSearchParams() as { id: string };
   const monitor = useMonitor(Number.parseInt(id, 10));
+  const client = clientStore.getClient();
+  const [refreshing, setRefreshing] = React.useState(false);
+  const [_lastUpdate, setLastUpdate] = React.useState(Date.now());
+
+  // V2_compat
+  const fetchImportantHeartbeats = React.useCallback(async () => {
+    if (client) {
+      try {
+        await client.getMonitorImportantHeartbeatListPaged(
+          Number.parseInt(id, 10),
+          0,
+          25,
+        );
+        setLastUpdate(Date.now());
+      } catch (error) {
+        console.error('Failed to fetch important heartbeats:', error);
+      }
+    }
+  }, [client, id]);
+
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await fetchImportantHeartbeats();
+    setRefreshing(false);
+  }, [fetchImportantHeartbeats]);
+
+  // V2_compat
+  React.useEffect(() => {
+    fetchImportantHeartbeats();
+    const interval = setInterval(fetchImportantHeartbeats, 30000);
+    return () => clearInterval(interval);
+  }, [fetchImportantHeartbeats]);
 
   const transformChartData = React.useMemo(
     () =>
@@ -137,7 +171,7 @@ export default function MonitorDetails() {
     [isDarkMode, monitor?.heartBeatList],
   );
 
-  if (!monitor) {
+  if (!monitor?.importantHeartBeatList) {
     return (
       <View
         className={`flex-1 ${isDarkMode ? 'bg-black' : 'bg-white'}`}
@@ -163,16 +197,23 @@ export default function MonitorDetails() {
         <View className="mb-4 flex flex-row items-center justify-between">
           <Text className="text-lg font-bold">{monitor.name}</Text>
         </View>
-        <LineChart areaChart data={transformChartData} {...chartConfig} />
-        <Text className="mb-2 text-lg font-bold">Important Events</Text>
         <FlatList
           data={importantHeartBeatList}
           renderItem={({ item }) => <HeartbeatCard item={item} />}
           keyExtractor={(item) => item.time.toString()}
           removeClippedSubviews={true}
           maxToRenderPerBatch={10}
+          ListHeaderComponent={() => (
+            <View className="mb-4">
+              <LineChart areaChart data={transformChartData} {...chartConfig} />
+              <Text className="my-2 text-lg font-bold">Important Events</Text>
+            </View>
+          )}
           windowSize={5}
           initialNumToRender={5}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
           getItemLayout={(data, index) => ({
             length: 100,
             offset: 100 * index,

@@ -33,7 +33,7 @@ const MonitorTags: React.FC<{ tags: Tag[] }> = ({ tags }) => {
     <View className="flex-row flex-wrap gap-2">
       {tags.map((tag) => (
         <View
-          key={tag.id}
+          key={tag.id || tag.tag_id}
           className="rounded-full px-3 text-foreground/80 backdrop-blur-sm"
           style={{ backgroundColor: tag.color ?? 'gray' }}
         >

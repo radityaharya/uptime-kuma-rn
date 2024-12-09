@@ -1,4 +1,3 @@
-import { EventEmitter as ExpoEventEmitter } from 'expo-modules-core';
 import io, { type Socket } from 'socket.io-client';
 
 import { logger } from '@/lib/log';
@@ -7,13 +6,11 @@ import { monitorStore } from '@/store/monitorContext';
 import statusStore from '@/store/statusStore';
 
 import {
-  type EventPayloads,
   type HeartBeat,
   type ImportantHeartBeat,
   type Info,
   type Monitor,
   type StatusPage,
-  type UptimeKumaEvent,
 } from './types';
 
 interface UptimeKumaOptions {
@@ -32,16 +29,7 @@ interface AuthResponse {
 interface Credentials {
   username: string;
   password: string;
-}
-
-class CustomEventEmitter extends ExpoEventEmitter<EventPayloads> {
-  on<T extends UptimeKumaEvent>(
-    event: T,
-    listener: (payload: EventPayloads[T]) => void,
-  ): this {
-    super.addListener(event, listener);
-    return this;
-  }
+  token?: string;
 }
 
 export class UptimeKumaClient {
@@ -53,7 +41,6 @@ export class UptimeKumaClient {
     timeout: 30000,
   };
 
-  private readonly emitter: CustomEventEmitter;
   private readonly connectionOptions: UptimeKumaOptions;
   private monitorsInitialized = false;
   private credentials?: Credentials;
@@ -63,7 +50,6 @@ export class UptimeKumaClient {
     private readonly url: string,
     options: Partial<UptimeKumaOptions> = {},
   ) {
-    this.emitter = new CustomEventEmitter();
     this.connectionOptions = {
       ...UptimeKumaClient.DEFAULT_OPTIONS,
       ...options,
@@ -137,9 +123,9 @@ export class UptimeKumaClient {
     resolve: () => void,
     reject: (error: Error) => void,
   ): void {
+    this.setupListeners();
     this.socket?.emit('login', this.credentials, (response: AuthResponse) => {
       if (response.ok) {
-        this.setupListeners();
         resolve();
       } else {
         this.socket?.disconnect();
@@ -161,7 +147,6 @@ export class UptimeKumaClient {
 
     this.socket?.on('disconnect', (reason: string) => {
       logger.debug(`Socket disconnected: ${reason}`);
-      this.emitter.emit('disconnect', reason);
       if (
         this.connectionOptions.autoReconnect &&
         reason !== 'io client disconnect'
@@ -383,8 +368,41 @@ export class UptimeKumaClient {
   }
 
   public async getHeartbeats(): Promise<void> {
-    this.monitors.map((monitor) => this.getMonitorBeats(monitor.id));
+    this.monitors.map((monitor) => this.getMonitorBeats(monitor.id, 2));
     return Promise.resolve();
+  }
+
+  // V2_compatiblity
+  public async getMonitorImportantHeartbeatListPaged(
+    monitorId: number,
+    offset: number,
+    count: number,
+  ): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (!this.socket?.connected) {
+        reject(new Error('Socket not connected'));
+        return;
+      }
+
+      logger.debug(
+        `Fetching important heartbeats for monitor ${monitorId} (offset: ${offset}, count: ${count})`,
+      );
+      this.socket.emit(
+        'monitorImportantHeartbeatListPaged',
+        monitorId,
+        offset,
+        count,
+        (response: { ok: boolean; data: ImportantHeartBeat[] }) => {
+          logger.debug('Received important heartbeat list:', response);
+          if (response.ok) {
+            this.setImportantHeartBeatList(monitorId, response.data);
+            resolve();
+          } else {
+            reject(new Error('Failed to fetch important heartbeat list'));
+          }
+        },
+      );
+    });
   }
 
   // Event Listeners
@@ -404,6 +422,7 @@ export class UptimeKumaClient {
 
     Object.entries(handlers).forEach(([event, handler]) => {
       this.socket?.on(event, (...args: any[]) => {
+        // logger.debug('Received event:', event);
         (handler as (...args: any[]) => void)(...args);
       });
     });
