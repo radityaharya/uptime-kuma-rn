@@ -7,11 +7,12 @@ import {
   RefreshControl,
   useColorScheme,
 } from 'react-native';
-import { LineChart } from 'react-native-gifted-charts';
+import { LineChart, type LineChartPropsType } from 'react-native-gifted-charts';
 
 import { type HeartBeat } from '@/api/types';
+import { DetailStatCard } from '@/components/monitors/DetailStatCard';
+import { MonitorCard } from '@/components/monitors/MonitorCard';
 import { Text, View } from '@/components/ui';
-import { formatDateTime } from '@/lib';
 import { clientStore } from '@/store/clientStore';
 import { useMonitor } from '@/store/monitorContext';
 
@@ -56,7 +57,10 @@ const ChartLabel = React.memo(
   ),
 );
 
-const getChartConfig = (isDarkMode: boolean, maxPing: number) => ({
+const getChartConfig = (
+  isDarkMode: boolean,
+  maxPing: number,
+): LineChartPropsType => ({
   startFillColor: '#1DB954',
   startOpacity: 0.3,
   endFillColor: '#1DB954',
@@ -74,7 +78,7 @@ const getChartConfig = (isDarkMode: boolean, maxPing: number) => ({
     fontSize: 10,
     fontWeight: '500',
   },
-  spacing: 32,
+  spacing: 10,
   backgroundColor: isDarkMode ? '#000000' : '#fff',
   rulesColor: isDarkMode ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)',
   rulesType: 'dash',
@@ -85,15 +89,26 @@ const getChartConfig = (isDarkMode: boolean, maxPing: number) => ({
   hideYAxisText: false,
   yAxisOffset: 0,
   rotateLabel: false,
-  showDataPointOnPress: true,
-  pressEnabled: true,
 });
 
 // Memoize HeartbeatCard
 const HeartbeatCard = React.memo(({ item }: { item: any }) => {
   return (
     <View className={`mb-2 rounded-lg border border-secondary p-4`}>
-      <Text className="text-sm text-gray-500">{formatDateTime(item.time)}</Text>
+      <Text className="text-sm text-gray-500">
+        {item.time
+          ? new Date(item.time).toLocaleDateString('en-US', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              hour: 'numeric',
+              minute: 'numeric',
+              second: 'numeric',
+              timeZoneName: 'short',
+            })
+          : ''}
+      </Text>
       <Text className={`text-lg font-bold text-foreground`}>
         {item.status === 1 ? 'Up' : 'Down'}
       </Text>
@@ -151,7 +166,7 @@ export default function MonitorDetails() {
           index % 12 === 0
             ? () => (
                 <ChartLabel
-                  value={formatDateTime(hb.time)}
+                  value={hb.time.toLocaleTimeString()}
                   isDarkMode={isDarkMode}
                 />
               )
@@ -186,6 +201,10 @@ export default function MonitorDetails() {
 
   const importantHeartBeatList = monitor.importantHeartBeatList ?? [];
 
+  const uptime = monitor.uptime ?? { day: 0, month: 0 };
+  const current_ping = monitor.heartBeatList?.[0]?.ping ?? 0;
+  const average_ping = monitor.avgPing ?? 0;
+
   return (
     <View
       className={`flex-1 ${isDarkMode ? 'bg-black' : 'bg-white'}`}
@@ -193,9 +212,9 @@ export default function MonitorDetails() {
         height: Dimensions.get('window').height,
       }}
     >
-      <View className="flex-1 px-4 pt-6">
-        <View className="mb-4 flex flex-row items-center justify-between">
-          <Text className="text-lg font-bold">{monitor.name}</Text>
+      <View className="px-4 pt-2">
+        <View className="pb-4">
+          <MonitorCard monitor={monitor} />
         </View>
         <FlatList
           data={importantHeartBeatList}
@@ -204,9 +223,14 @@ export default function MonitorDetails() {
           removeClippedSubviews={true}
           maxToRenderPerBatch={10}
           ListHeaderComponent={() => (
-            <View className="mb-4">
+            <View className="mb-4 flex gap-2">
+              <DetailStatCard
+                current_ping={current_ping}
+                average_ping={average_ping}
+                uptime={uptime}
+              />
               <LineChart areaChart data={transformChartData} {...chartConfig} />
-              <Text className="my-2 text-lg font-bold">Important Events</Text>
+              <Text className="mt-4 text-lg font-bold">Important Events</Text>
             </View>
           )}
           windowSize={5}

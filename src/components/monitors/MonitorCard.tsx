@@ -4,12 +4,15 @@ import { Pressable } from 'react-native';
 
 import { type HeartBeat, type Monitor, type Tag } from '@/api/types';
 import { Text, View } from '@/components/ui';
+import { cn } from '@/lib';
 
 import { HeartbeatHistory } from './HeartBeatHistory';
 import { StatusIndicator } from './StatusIndicator';
 
 interface MonitorCardProps {
   monitor: Monitor;
+  onClick?: () => void;
+  className?: string;
 }
 
 const MonitorContent: React.FC<{ monitor: Monitor }> = ({ monitor }) => {
@@ -52,7 +55,7 @@ function isMonitorUp(heartbeats: HeartBeat[]): boolean {
   return heartbeats[0].status === 1;
 }
 
-export function MonitorCard({ monitor }: MonitorCardProps) {
+export function MonitorCard({ monitor, onClick, className }: MonitorCardProps) {
   const router = useRouter();
 
   if (!monitor) return null;
@@ -68,37 +71,38 @@ export function MonitorCard({ monitor }: MonitorCardProps) {
 
   const isUp = isMonitorUp(monitor.heartBeatList ?? []);
 
-  const uptime = calculateUptime();
-
   return (
     <>
       <Pressable
         onPress={() =>
-          router.push({
-            pathname: '/(app)/(monitors)/[id]',
-            params: { id: monitor.id.toString() },
-          })
+          onClick
+            ? onClick()
+            : router.push({
+                pathname: '/(app)/(monitors)/[id]',
+                params: { id: monitor.id.toString() },
+              })
         }
       >
         <View
-          className={`bg-background flex flex-col overflow-hidden rounded-lg 
-          border border-gray-800 bg-gradient-to-br 
-          from-gray-800/90 to-gray-900/90 p-4 transition-all duration-200
-          ${!monitor.active ? 'opacity-50' : ''}`}
+          className={cn(
+            'bg-background flex flex-col overflow-hidden rounded-lg border border-gray-800 bg-gradient-to-br from-gray-800/90 to-gray-900/90 p-4 transition-all duration-200',
+            !monitor.active && 'opacity-50',
+            className,
+          )}
         >
           {/* Header */}
           <View className="mb-2 flex-row justify-between">
             <View className="flex-row items-center space-x-3">
               <StatusIndicator active={isUp} />
               <Text className="text-xl font-bold tracking-tight text-foreground">
-                {monitor.name}
+                {monitor.pathName || monitor.name}
               </Text>
             </View>
-            {uptime && (
-              <View className="backdrop-blur-sm">
-                <Text className="font-medium text-foreground">{uptime}%</Text>
-              </View>
-            )}
+            <View className="backdrop-blur-sm">
+              <Text className="font-medium text-foreground">
+                {calculateUptime()}%
+              </Text>
+            </View>
           </View>
 
           {/* Content */}

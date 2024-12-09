@@ -39,6 +39,7 @@
     "babel-plugin-react-compiler": "19.0.0-beta-df7b47d-20241124",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
     "expo": "~52.0.17",
     "expo-constants": "~17.0.3",
     "expo-dev-client": "~5.0.5",

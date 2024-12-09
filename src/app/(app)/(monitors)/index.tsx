@@ -1,7 +1,13 @@
 /* eslint-disable unused-imports/no-unused-vars */
 import { Redirect } from 'expo-router';
+import { ChevronDown, ChevronUp } from 'lucide-react-native';
 import * as React from 'react';
-import { FlatList, RefreshControl, ToastAndroid } from 'react-native';
+import {
+  RefreshControl,
+  SectionList,
+  ToastAndroid,
+  TouchableOpacity,
+} from 'react-native';
 
 import { type Monitor } from '@/api/types';
 import { EmptyState } from '@/components/monitors/EmptyState';
@@ -13,7 +19,7 @@ import {
   type SortField,
   type SortOrder,
 } from '@/components/monitors/MonitorListHeader';
-import { View } from '@/components/ui';
+import { Text, View } from '@/components/ui';
 import { useMonitors } from '@/hooks/use-monitors';
 import { useAuth } from '@/lib';
 import { useMonitorsStore, useMonitorStats } from '@/store/monitorContext';
@@ -57,6 +63,45 @@ const filterAndSortMonitors = (
   return filtered;
 };
 
+const groupMonitorsByParent = (monitors: Monitor[]) => {
+  // First, identify all monitors that are parents
+  const parentIds = new Set(
+    monitors.filter((m) => m.parent).map((m) => m.parent),
+  );
+
+  const grouped = monitors.reduce(
+    (acc, monitor) => {
+      const parent = monitor.parent || 'No Parent';
+      if (!acc[parent]) {
+        acc[parent] = {
+          parentMonitor: monitors.find((m) => m.id === parent),
+          children: [],
+        };
+      }
+      // Only add to children if it's not a parent monitor
+      if (
+        monitor.id !== parent &&
+        (!parentIds.has(monitor.id) || parent !== 'No Parent')
+      ) {
+        acc[parent].children.push(monitor);
+      }
+      return acc;
+    },
+    {} as Record<
+      string,
+      { parentMonitor: Monitor | undefined; children: Monitor[] }
+    >,
+  );
+
+  return Object.entries(grouped).map(
+    ([parent, { parentMonitor, children }]) => ({
+      title: parent,
+      parentMonitor,
+      data: children,
+    }),
+  );
+};
+
 export default function Index() {
   const [refreshing, setRefreshing] = React.useState(false);
   const { error, isLoading, refreshMonitors, reconnectClient } = useMonitors();
@@ -67,6 +112,9 @@ export default function Index() {
   const [sortOrder, setSortOrder] = React.useState<SortOrder>('asc');
   const [sortField, setSortField] = React.useState<SortField>('name');
   const [filterStatus, setFilterStatus] = React.useState<FilterStatus>('none');
+  const [expandedSections, setExpandedSections] = React.useState<
+    Record<string, boolean>
+  >({});
 
   const auth = useAuth();
 
@@ -78,7 +126,10 @@ export default function Index() {
       );
       auth.signOut();
     }
-  }, [error, auth]);
+    if (error) {
+      reconnectClient();
+    }
+  }, [error, auth, reconnectClient]);
 
   const filteredMonitors = filterAndSortMonitors(
     monitors,
@@ -86,6 +137,8 @@ export default function Index() {
     sortOrder,
     filterStatus,
   );
+
+  const groupedMonitors = groupMonitorsByParent(filteredMonitors);
 
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
@@ -97,6 +150,13 @@ export default function Index() {
       setRefreshing(false);
     }
   }, [refreshMonitors]);
+
+  const toggleSection = (title: string) => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [title]: !prev[title],
+    }));
+  };
 
   const authStatus = auth.status;
 
@@ -110,14 +170,51 @@ export default function Index() {
 
   return (
     <View className="bg-background flex-1">
-      <FlatList
-        data={hasMonitors ? filteredMonitors : []}
-        renderItem={({ item: monitor }) => <MonitorCard monitor={monitor} />}
-        ItemSeparatorComponent={() => <View className="h-4" />}
+      <SectionList
+        sections={groupedMonitors}
+        renderItem={({ item: monitor, section }) =>
+          section.title === 'No Parent' || expandedSections[section.title] ? (
+            <View className={`mb-2 ${monitor.parent ? '' : ''}`}>
+              <MonitorCard monitor={monitor} />
+            </View>
+          ) : (
+            <View className="h-0" />
+          )
+        }
+        renderSectionHeader={({ section: { title, parentMonitor, data } }) => (
+          <View>
+            {parentMonitor ? (
+              <View className="mb-2">
+                <MonitorCard
+                  monitor={parentMonitor}
+                  className="rounded-b-none border-b-0"
+                />
+                <TouchableOpacity
+                  onPress={() => toggleSection(title)}
+                  className="bg-background items-center justify-center rounded-lg rounded-t-none border border-t-0 border-secondary pb-2"
+                >
+                  <Text className="text-xs text-foreground opacity-80">
+                    {data.length} monitors
+                  </Text>
+                  {expandedSections[title] ? (
+                    <View className="">
+                      <ChevronUp size={24} className="text-foreground" />
+                    </View>
+                  ) : (
+                    <ChevronDown size={24} className="text-foreground" />
+                  )}
+                </TouchableOpacity>
+              </View>
+            ) : null}
+          </View>
+        )}
         keyExtractor={(monitor) => {
           const latestHeartbeat = monitor.heartBeatList?.[0];
-          return `${monitor.id}-${latestHeartbeat?.status}-${latestHeartbeat?.time}`;
+          return `${monitor.id}-${latestHeartbeat?.status}-${latestHeartbeat?.time}-${monitor.active}-${monitor.name}`;
         }}
+        maxToRenderPerBatch={10}
+        updateCellsBatchingPeriod={50}
+        initialNumToRender={20}
         contentContainerStyle={{ paddingHorizontal: 16 }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />

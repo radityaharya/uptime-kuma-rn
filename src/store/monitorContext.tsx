@@ -8,8 +8,6 @@ import {
 import { sendNotificationImmediately } from '@/lib/notification';
 import { getItem, removeItem, setItem } from '@/lib/storage';
 
-// import { infoStore } from './infoStore';
-
 interface MonitorContextType {
   monitors: Monitor[];
   setMonitors: (monitors: Monitor[]) => void;
@@ -112,37 +110,48 @@ class MonitorStore {
         }
       : currentUptime;
 
-    monitors[index] = {
-      ...monitors[index],
-      ...update,
-      uptime: updatedUptime,
-    };
-
-    // const { serverTimezone } = infoStore.getState().info;
-
     const processHeartbeats = <T extends { time: string | Date }>(
       heartbeats: T[],
     ): T[] => {
       return heartbeats
         .map((hb) => ({
           ...hb,
-          time: new Date(String(hb.time)),
+          time:
+            typeof hb.time === 'string'
+              ? new Date(
+                  Date.UTC(
+                    parseInt(hb.time.slice(0, 4)), // Year
+                    parseInt(hb.time.slice(5, 7)) - 1, // Month (0-indexed)
+                    parseInt(hb.time.slice(8, 10)), // Day
+                    parseInt(hb.time.slice(11, 13)), // Hours
+                    parseInt(hb.time.slice(14, 16)), // Minutes
+                    parseInt(hb.time.slice(17, 19)), // Seconds
+                  ),
+                )
+              : hb.time,
         }))
         .sort((a, b) => b.time.getTime() - a.time.getTime());
     };
 
+    const updatedMonitor = {
+      ...monitors[index],
+      ...update,
+      uptime: updatedUptime,
+    };
+
     if (update.heartBeatList) {
-      monitors[index].heartBeatList = processHeartbeats(update.heartBeatList);
-      monitors[index].isUp = monitors[index].heartBeatList[-1].status === 1;
+      updatedMonitor.heartBeatList = processHeartbeats(update.heartBeatList);
+      updatedMonitor.isUp = updatedMonitor.heartBeatList[0]?.status === 1;
     }
 
     if (update.importantHeartBeatList) {
-      monitors[index].importantHeartBeatList = processHeartbeats(
+      updatedMonitor.importantHeartBeatList = processHeartbeats(
         update.importantHeartBeatList,
       );
     }
 
-    this.setMonitors(monitors);
+    monitors[index] = updatedMonitor;
+    this.setMonitors([...monitors]);
   }
 
   addHeartbeat(heartbeat: ImportantHeartBeat): void {
@@ -173,7 +182,7 @@ class MonitorStore {
     if (
       monitor.heartBeatList &&
       monitor.heartBeatList[0] &&
-      monitor.heartBeatList[0].status !== monitor.heartBeatList[0].status
+      monitor.heartBeatList[0].status !== heartbeat.status
     ) {
       const title = `${monitor.name} is ${
         heartbeat.status === 1 ? 'up' : 'down'
@@ -186,6 +195,7 @@ class MonitorStore {
         monitorName: monitor.name,
         status: heartbeat.status,
       });
+      hb.important = 1;
     }
 
     this.updateMonitor(hb.monitor_id, {
@@ -244,7 +254,7 @@ class MonitorStore {
       0,
     );
     const avgHeartbeatsPerMonitor = numMonitors
-      ? Number((numHeartbeats / numMonitors).toFixed(1))  // Convert to number
+      ? Number((numHeartbeats / numMonitors).toFixed(1)) // Convert to number
       : 0;
 
     const statusCounts = activeMonitors.reduce(
@@ -297,11 +307,46 @@ class MonitorStore {
       (m) => m.heartBeatList && m.heartBeatList.length > 0,
     );
 
+    const latestImportantEvent = activeMonitors.reduce<{
+      heartbeat: HeartBeat | null;
+      monitorId: string | null;
+      monitorName: string;
+    }>(
+      (acc, monitor) => {
+        if (!monitor.heartBeatList?.length) return acc;
+
+        const importantHeartbeats = monitor.heartBeatList.filter(
+          (hb) => hb.important === 1,
+        );
+        if (!importantHeartbeats.length) return acc;
+
+        const monitorLatest = importantHeartbeats.reduce((latest, current) => {
+          const currentTime = new Date(current.time).getTime();
+          const latestTime = new Date(latest.time).getTime();
+          return currentTime > latestTime ? current : latest;
+        });
+
+        if (
+          !acc.heartbeat ||
+          new Date(monitorLatest.time).getTime() >
+            new Date(acc.heartbeat.time).getTime()
+        ) {
+          return {
+            heartbeat: monitorLatest,
+            monitorId: String(monitor.id),
+            monitorName: monitor.name,
+          };
+        }
+        return acc;
+      },
+      { heartbeat: null, monitorId: null, monitorName: '' },
+    );
+
     return {
       totalMonitors: this.currentMonitors.length,
       numMonitors,
       numHeartbeats,
-      avgHeartbeatsPerMonitor,  // Now this will always be a number
+      avgHeartbeatsPerMonitor,
       statusCounts,
       uptimeStats: {
         avgDay: avgDayUptime.toFixed(2) + '%',
@@ -313,7 +358,8 @@ class MonitorStore {
       downMonitors,
       upMonitors,
       inactiveMonitors,
-      isAllHeartbeatPopulated
+      isAllHeartbeatPopulated,
+      latestImportantEvent,
     };
   }
 
@@ -392,6 +438,11 @@ export interface MonitorStats {
   upMonitors: Monitor[];
   inactiveMonitors: Monitor[];
   isAllHeartbeatPopulated: boolean;
+  latestImportantEvent: {
+    heartbeat: HeartBeat | null;
+    monitorId: string | null;
+    monitorName: string;
+  };
 }
 
 export function useMonitorStats(): MonitorStats {

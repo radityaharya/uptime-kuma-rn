@@ -3,7 +3,6 @@ import * as React from 'react';
 import { type HeartbeatData } from '@/api/status/types';
 import { type HeartBeat } from '@/api/types';
 import { Text, View } from '@/components/ui';
-import { formatDateTime } from '@/lib/utils';
 // import { infoStore } from '@/store/infoStore';
 
 interface HeartbeatHistoryProps {
@@ -33,14 +32,22 @@ export function HeartbeatHistory({
 }: HeartbeatHistoryProps) {
   // const { serverTimezone } = infoStore((state) => state.info);
 
-  const filledHeartbeats = heartbeats?.length
-    ? [...heartbeats]
-        .filter((hb) => hb.time) // Ensure time is defined
-        .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
-        .slice(0, numLastBeats)
-    : [];
-  const placeholders = Array(numLastBeats - filledHeartbeats.length).fill(null);
-  const dots = [...filledHeartbeats, ...placeholders];
+  const filledHeartbeats = React.useMemo(() => {
+    return heartbeats?.length
+      ? [...heartbeats]
+          .filter((hb) => hb.time) // Ensure time is defined
+          .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
+          .slice(0, numLastBeats)
+      : [];
+  }, [heartbeats, numLastBeats]);
+
+  const placeholders = React.useMemo(() => {
+    return Array(numLastBeats - filledHeartbeats.length).fill(null);
+  }, [filledHeartbeats.length, numLastBeats]);
+
+  const dots = React.useMemo(() => {
+    return [...filledHeartbeats, ...placeholders];
+  }, [filledHeartbeats, placeholders]);
 
   if (!heartbeats) return null;
 
@@ -56,10 +63,25 @@ export function HeartbeatHistory({
       </View>
       <View className="flex-row justify-between">
         <Text className="text-xs opacity-50">
-          {heartbeats.length ? formatDateTime(new Date(heartbeats[0].time)) : 'No data'}
+          {filledHeartbeats.length ? new Date(heartbeats[0].time).toLocaleTimeString(
+            undefined,
+            {
+              hour: 'numeric',
+              minute: 'numeric'
+            }
+          ) : 'No data'}
         </Text>
         <Text className="text-xs opacity-50">
-          {interval ? `${interval}s` : 'No data'}
+          {interval}s
+        </Text>
+        <Text className="text-xs opacity-50">
+          {filledHeartbeats.length ? new Date(heartbeats[heartbeats.length - 1].time).toLocaleTimeString(
+            undefined,
+            {
+              hour: 'numeric',
+              minute: 'numeric'
+            }
+          ) : 'No data'}
         </Text>
       </View>
     </View>

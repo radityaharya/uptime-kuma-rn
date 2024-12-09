@@ -1,9 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Check } from 'lucide-react-native';
 import React from 'react';
 import { ActivityIndicator, Animated, StyleSheet } from 'react-native';
 
 import { Text, View } from '@/components/ui';
 import { type MonitorStats, useMonitorStats } from '@/store/monitorContext';
+
+import { LatestImportantEvent } from './LatestImportantEvent';
 
 function _MonitorNumbers({ stats }: { stats: MonitorStats }) {
   return (
@@ -96,17 +99,17 @@ export function MonitorSummaryStats() {
         />
         <View style={styles.iconContainer}>
           {isAllHeartbeatPopulated ? (
-            <Ionicons
-              name={isAllUp ? 'checkmark' : 'alert'}
-              size={40}
-              color="white"
-            />
+            isAllUp ? (
+              <Check size={48} color="white" />
+            ) : (
+              <Ionicons name="alert" size={48} color="white" />
+            )
           ) : (
             <ActivityIndicator size="large" color="white" />
           )}
         </View>
       </View>
-      <View className="mb-6 mt-14 items-center">
+      <View className="mb-10 mt-14 items-center">
         <Text className="text-2xl font-bold text-foreground">
           {isAllUp ? 'All Systems Up' : `${numOfDownMonitors} Monitors Down`}
         </Text>
@@ -114,6 +117,7 @@ export function MonitorSummaryStats() {
           {isAllUp ? 'Everything is running smoothly' : 'Attention required'}
         </Text>
       </View>
+      <LatestImportantEvent />
     </View>
   );
 }
