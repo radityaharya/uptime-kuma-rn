@@ -48,7 +48,9 @@
     "send_test_notification": "Send test notification",
     "cancel_all_notifications": "Cancel all notifications",
     "status_pages": "Status pages",
-    "clean_status_pages": "Clean status pages"
+    "clean_status_pages": "Clean status pages",
+    "clear_logs": "Clear logs",
+    "view_logs": "View logs"
   },
   "welcome": "Welcome to {{appName}}"
 }

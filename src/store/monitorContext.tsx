@@ -5,6 +5,7 @@ import {
   type ImportantHeartBeat,
   type Monitor,
 } from '@/api/types';
+import { log } from '@/lib/log';
 import { sendNotificationImmediately } from '@/lib/notification';
 import { getItem, removeItem, setItem } from '@/lib/storage';
 
@@ -171,7 +172,7 @@ class MonitorStore {
 
     const id = (monitors[index].heartBeatList?.[0]?.id ?? 0) + 1;
     hb.id = id;
-    console.log('addHeartbeat', hb.monitor_id, heartbeat);
+    log.debug('addHeartbeat', hb.monitor_id, heartbeat);
 
     const monitor = monitors[index];
     monitors[index] = {

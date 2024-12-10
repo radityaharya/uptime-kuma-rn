@@ -13,6 +13,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { StatusBar } from '@/components/ui';
 import { hydrateAuth, loadSelectedTheme } from '@/lib';
+import { log } from '@/lib/log';
 import { registerForPushNotificationsAsync } from '@/lib/notification';
 import { useThemeConfig } from '@/lib/use-theme-config';
 import { MonitorProvider } from '@/store/monitorContext';
@@ -56,12 +57,12 @@ function Providers({ children }: { children: React.ReactNode }) {
 
     notificationListener.current =
       Notifications.addNotificationReceivedListener((notification) => {
-        console.log('Notification received:', notification);
+        log.info('Notification received:', notification);
       });
 
     responseListener.current =
       Notifications.addNotificationResponseReceivedListener((response) => {
-        console.log('Notification response:', response);
+        log.info('Notification response:', response);
       });
 
     return () => {

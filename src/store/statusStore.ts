@@ -49,7 +49,6 @@ class StatusStore {
     }
 
     try {
-      console.log('Adding status:', status);
       const index = this._statusList.findIndex((s) => s.url === status.url);
 
       if (index !== -1) {
@@ -72,7 +71,6 @@ class StatusStore {
         this._statusList.push(status);
       }
 
-      console.log('Updated status list:', this._statusList);
       setItem('statusList', this._statusList);
       this.notifySubscribers();
     } catch (error) {

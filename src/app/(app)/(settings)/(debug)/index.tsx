@@ -1,5 +1,6 @@
 import * as Application from 'expo-application';
 import { scheduleNotificationAsync } from 'expo-notifications';
+import { useRouter } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import React from 'react';
 import { Platform } from 'react-native';
@@ -11,6 +12,7 @@ import statusStore from '@/store/statusStore';
 
 export default function Debug() {
   const { colorScheme } = useColorScheme();
+  const router = useRouter();
 
   return (
     <View className="bg-background flex-1">
@@ -61,6 +63,17 @@ export default function Debug() {
               text="debug.clean_status_pages"
               onPress={() => {
                 statusStore.clearStatusList();
+              }}
+              className={`rounded-xl p-4 ${
+                colorScheme === 'dark' ? 'bg-white/5' : 'bg-black/5'
+              }`}
+            />
+          </ItemsContainer>
+          <ItemsContainer title="debug.logs" className="mb-4">
+            <Item
+              text="debug.view_logs"
+              onPress={() => {
+                router.push('/(settings)/(debug)/logs');
               }}
               className={`rounded-xl p-4 ${
                 colorScheme === 'dark' ? 'bg-white/5' : 'bg-black/5'

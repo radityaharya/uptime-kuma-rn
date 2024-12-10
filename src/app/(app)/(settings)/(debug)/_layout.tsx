@@ -2,7 +2,7 @@ import { Stack } from 'expo-router';
 
 import { useThemeConfig } from '@/lib/use-theme-config';
 
-export default function SettingsLayout() {
+export default function DebugLayout() {
   const theme = useThemeConfig();
 
   return (
@@ -20,13 +20,13 @@ export default function SettingsLayout() {
       <Stack.Screen
         name="index"
         options={{
-          title: 'Settings',
+          title: 'Debug',
           headerBackButtonDisplayMode: 'generic',
         }}
       />
       <Stack.Screen
-        name="(debug)"
-        options={{ title: 'Debug', headerBackButtonDisplayMode: 'generic', headerShown: false }}
+        name="logs"
+        options={{ title: 'Debug', headerBackButtonDisplayMode: 'generic' }}
       />
     </Stack>
   );

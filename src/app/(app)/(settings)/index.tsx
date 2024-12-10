@@ -101,7 +101,7 @@ export default function Settings() {
               <Item
                 text="settings.debug"
                 onPress={() => {
-                  router.push('/(app)/(settings)/debug');
+                  router.push('/(app)/(settings)/(debug)');
                 }}
               />
             </ItemsContainer>

@@ -1,6 +1,6 @@
 import io, { type Socket } from 'socket.io-client';
 
-import { logger } from '@/lib/log';
+import { log } from '@/lib/log';
 import { infoStore } from '@/store/infoStore';
 import { monitorStore } from '@/store/monitorContext';
 import statusStore from '@/store/statusStore';
@@ -82,7 +82,7 @@ export class UptimeKumaClient {
           this.initializeSocket(resolve, (error) => {
             if (retryCount < maxRetries && error.message.includes('timeout')) {
               retryCount++;
-              logger.debug(
+              log.debug(
                 `Retrying connection (${retryCount}/${maxRetries})...`,
               );
               setTimeout(attemptConnection, 1000 * retryCount);
@@ -107,7 +107,7 @@ export class UptimeKumaClient {
     this.socket = io(this.url, this.connectionOptions);
 
     this.socket.once('connect', () => {
-      logger.debug('Socket connected successfully');
+      log.debug('Socket connected successfully');
       if (!this.credentials) {
         this.setupListeners();
         return resolve();
@@ -136,9 +136,9 @@ export class UptimeKumaClient {
 
   private setupSocketErrorHandling(reject: (error: Error) => void): void {
     this.socket?.once('connect_error', (error) => {
-      logger.error('Socket connect error:', error.message);
+      log.error('Socket connect error:', error.message);
       if (error.message === 'timeout') {
-        logger.debug(
+        log.debug(
           `Connection timed out after ${this.connectionOptions.timeout}ms`,
         );
       }
@@ -146,12 +146,12 @@ export class UptimeKumaClient {
     });
 
     this.socket?.on('disconnect', (reason: string) => {
-      logger.debug(`Socket disconnected: ${reason}`);
+      log.debug(`Socket disconnected: ${reason}`);
       if (
         this.connectionOptions.autoReconnect &&
         reason !== 'io client disconnect'
       ) {
-        logger.debug('Attempting automatic reconnection...');
+        log.debug('Attempting automatic reconnection...');
         this.handleReconnect();
       }
     });
@@ -187,7 +187,7 @@ export class UptimeKumaClient {
   private initializeMonitors(data: Record<string, Monitor>): void {
     this.monitors = Object.values(data).map(this.createMonitorObject);
     this.monitorsInitialized = true;
-    logger.debug(
+    log.debug(
       'Monitors initialized:',
       this.monitors.map((m) => m.id),
     );
@@ -301,11 +301,11 @@ export class UptimeKumaClient {
   private handleStatusPageList(statusPages: {
     [key: string]: StatusPage;
   }): void {
-    logger.debug('Processing status pages:', statusPages);
+    log.debug('Processing status pages:', statusPages);
     const statusPageArray = Object.values(statusPages);
 
     if (!this.url) {
-      logger.error('No base URL available');
+      log.error('No base URL available');
       return;
     }
 
@@ -317,10 +317,10 @@ export class UptimeKumaClient {
           monitors: [],
         };
 
-        logger.debug('Adding status page:', status);
+        log.debug('Adding status page:', status);
         statusStore.addStatus(status);
       } catch (error) {
-        logger.error('Failed to add status page:', statusPage.slug);
+        log.error('Failed to add status page:', statusPage.slug);
       }
     }
   }
@@ -334,7 +334,7 @@ export class UptimeKumaClient {
 
   // Public API Methods
   public async getMonitors(): Promise<void> {
-    logger.debug('Fetching monitors');
+    log.debug('Fetching monitors');
     return new Promise((resolve, reject) => {
       if (!this.socket?.connected) {
         reject(new Error('Socket not connected'));
@@ -384,7 +384,7 @@ export class UptimeKumaClient {
         return;
       }
 
-      logger.debug(
+      log.debug(
         `Fetching important heartbeats for monitor ${monitorId} (offset: ${offset}, count: ${count})`,
       );
       this.socket.emit(
@@ -393,7 +393,7 @@ export class UptimeKumaClient {
         offset,
         count,
         (response: { ok: boolean; data: ImportantHeartBeat[] }) => {
-          logger.debug('Received important heartbeat list:', response);
+          log.debug('Received important heartbeat list:', response);
           if (response.ok) {
             this.setImportantHeartBeatList(monitorId, response.data);
             resolve();
@@ -422,7 +422,7 @@ export class UptimeKumaClient {
 
     Object.entries(handlers).forEach(([event, handler]) => {
       this.socket?.on(event, (...args: any[]) => {
-        // logger.debug('Received event:', event);
+        // log.debug('Received event:', event);
         (handler as (...args: any[]) => void)(...args);
       });
     });
@@ -453,7 +453,7 @@ export class UptimeKumaClient {
   }
 
   public async reinitializeSocket(): Promise<void> {
-    logger.debug('Reinitializing socket connection');
+    log.debug('Reinitializing socket connection');
     if (!this.credentials) {
       throw new Error('No credentials available for reconnection');
     }
@@ -469,7 +469,7 @@ export class UptimeKumaClient {
       await this.getMonitors();
       await this.getHeartbeats();
     } catch (error) {
-      logger.error('Failed to reinitialize socket:', error);
+      log.error('Failed to reinitialize socket:', error);
       throw error;
     }
   }

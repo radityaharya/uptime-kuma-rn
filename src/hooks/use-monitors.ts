@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { UptimeKumaClient } from '@/api/client';
 import { useAuth } from '@/lib/auth';
 import { getToken } from '@/lib/auth/utils';
+import { log } from '@/lib/log';
 import { clientStore } from '@/store/clientStore';
 import { useMonitorsStore } from '@/store/monitorContext';
 
@@ -17,7 +18,7 @@ export const useMonitors = () => {
   const auth = useAuth();
 
   const refreshMonitors = useCallback(async () => {
-    console.log('refreshMonitors called');
+    log.debug('refreshMonitors called');
     setError(null);
     if (!clientRef.current) return;
     try {
@@ -41,7 +42,7 @@ export const useMonitors = () => {
       setIsLoading(false);
 
       if (clientRef.current && !clientRef.current.isSocketConnected()) {
-        console.log('Socket not connected, attempting to reinitialize...');
+        log.warn('Socket not connected, attempting to reinitialize...');
         try {
           await clientRef.current.reinitializeSocket();
         } catch (err: any) {
@@ -51,9 +52,10 @@ export const useMonitors = () => {
       return;
     }
 
-    console.log('Initializing new client');
+    log.info('Initializing new client');
     const token = getToken();
     if (!token) {
+      log.error('Authentication token not found');
       setError('Authentication token not found');
       setIsLoading(false);
       return;
@@ -81,7 +83,7 @@ export const useMonitors = () => {
 
   const reconnectClient = useCallback(async () => {
     setError(null);
-    console.log('reconnectClient called');
+    log.info('Reconnecting client...');
     if (!clientRef.current) return;
     setIsReconnecting(true);
 
@@ -103,7 +105,7 @@ export const useMonitors = () => {
 
       try {
         if (!client.isSocketConnected()) {
-          console.log('Socket disconnected, attempting to reconnect...');
+          log.warn('Socket disconnected, attempting to reconnect...');
           await client.reinitializeSocket();
         }
       } catch (err) {
