@@ -20,8 +20,8 @@ function StatItem({ title, value, timeRange }: StatItemProps) {
 }
 
 interface DetailStatCardProps {
-  current_ping: number;
-  average_ping: number;
+  current_ping?: number;
+  average_ping?: number;
   uptime: Uptime;
 }
 export function DetailStatCard({
@@ -32,15 +32,16 @@ export function DetailStatCard({
   return (
     <View className="bg-background mb-2 flex flex-row justify-between rounded-lg border border-secondary p-4">
       <StatItem
-        title="Current Ping"
-        value={`${current_ping}ms`}
+        title="Ping"
+        value={current_ping ? `${current_ping}ms` : 'N/A'}
         timeRange="current"
       />
       <StatItem
-        title="Average Ping"
-        value={`${average_ping}ms`}
+        title="Avg Ping"
+        value={average_ping ? `${average_ping}ms` : 'N/A'}
         timeRange="24h avg"
       />
+
       <StatItem
         title="Uptime"
         value={`${(uptime.day * 100).toFixed(1)}%`}

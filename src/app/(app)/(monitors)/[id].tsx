@@ -213,8 +213,10 @@ export default function MonitorDetails() {
   const importantHeartBeatList = monitor.importantHeartBeatList ?? [];
 
   const uptime = monitor.uptime ?? { day: 0, month: 0, year: 0 };
-  const current_ping = monitor.heartBeatList?.[0]?.ping ?? 0;
-  const average_ping = monitor.avgPing ?? 0;
+  const current_ping = monitor.heartBeatList?.[0]?.ping;
+  const average_ping = monitor.avgPing;
+
+  const beatsHasPings = monitor.heartBeatList?.some((hb) => hb.ping > 0);
 
   return (
     <View
@@ -240,10 +242,12 @@ export default function MonitorDetails() {
                 average_ping={average_ping}
                 uptime={uptime}
               />
-              <MonitorChart
-                heartBeatList={monitor.heartBeatList || []}
-                isDarkMode={isDarkMode}
-              />
+              {beatsHasPings && (
+                <MonitorChart
+                  heartBeatList={monitor.heartBeatList || []}
+                  isDarkMode={isDarkMode}
+                />
+              )}
               <Text className="mt-4 text-lg font-bold">Important Events</Text>
             </View>
           )}
