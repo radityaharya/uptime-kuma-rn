@@ -7,6 +7,7 @@ import { Text, View } from '@/components/ui';
 interface HeartbeatHistoryProps {
   heartbeats?: HeartBeat[] | HeartbeatData[];
   numLastBeats?: number;
+  isParent: boolean;
   interval?: number;
   className?: string;
 }
@@ -14,13 +15,15 @@ interface HeartbeatHistoryProps {
 const HeartbeatBar = ({
   status,
   ping,
-  maxPing
+  maxPing,
+  isParent
 }: {
   status: number;
   ping: number;
   maxPing: number;
+  isParent: boolean;
 }) => {
-  const percentage = (ping / maxPing) * 100;
+  const percentage = isParent ? 100 : (ping / maxPing) * 100;
   return (
     <View className="items-center justify-end">
       <View
@@ -50,6 +53,7 @@ const PlaceholderBar = () => (
 export function HeartbeatHistory({
   heartbeats = [],
   numLastBeats = 30,
+  isParent = false,
   className = '',
   interval
 }: HeartbeatHistoryProps) {
@@ -88,6 +92,7 @@ export function HeartbeatHistory({
                 status={item.status}
                 ping={item.ping || 0}
                 maxPing={maxPing}
+                isParent={isParent}
               />
             ) : (
               <PlaceholderBar />
