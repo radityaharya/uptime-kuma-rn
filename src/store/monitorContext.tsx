@@ -4,8 +4,8 @@ import {
   type HeartBeat,
   type ImportantHeartBeat,
   type Monitor,
-  type Uptime} from '@/api/types';
-import { log } from '@/lib/log';
+  type Uptime
+} from '@/api/types';
 import { sendNotificationImmediately } from '@/lib/notification';
 import { getItem, removeItem, setItem } from '@/lib/storage';
 
@@ -174,7 +174,6 @@ class MonitorStore {
 
     const id = (monitors[index].heartBeatList?.[0]?.id ?? 0) + 1;
     hb.id = id;
-    log.debug('addHeartbeat', hb.monitor_id, heartbeat);
 
     const monitor = monitors[index];
     monitors[index] = {

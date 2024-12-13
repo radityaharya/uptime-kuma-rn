@@ -1,34 +1,40 @@
 /* eslint-disable unused-imports/no-unused-vars */
 import { Redirect } from 'expo-router';
-import { ChevronDown, ChevronUp } from 'lucide-react-native';
 import * as React from 'react';
 import {
   RefreshControl,
   SectionList,
-  ToastAndroid,
-  TouchableOpacity,
+  type SectionListData,
+  ToastAndroid
 } from 'react-native';
 
 import { type Monitor } from '@/api/types';
 import { EmptyState } from '@/components/monitors/EmptyState';
 import { LoadingState } from '@/components/monitors/LoadingState';
-import { MonitorCard } from '@/components/monitors/MonitorCard';
+import { MonitorItem } from '@/components/monitors/MonitorItem';
 import {
   type FilterStatus,
   MonitorListHeader,
   type SortField,
-  type SortOrder,
+  type SortOrder
 } from '@/components/monitors/MonitorListHeader';
-import { Text, View } from '@/components/ui';
+import { SectionHeader } from '@/components/monitors/SectionHeader';
+import { View } from '@/components/ui';
 import { useMonitors } from '@/hooks/use-monitors';
 import { useAuth } from '@/lib';
 import { useMonitorsStore, useMonitorStats } from '@/store/monitorContext';
+
+export interface MonitorSection extends SectionListData<Monitor> {
+  title: string;
+  parentMonitor?: Monitor;
+  data: Monitor[];
+}
 
 const filterAndSortMonitors = (
   monitors: Monitor[] | null,
   sortField: SortField,
   sortOrder: SortOrder,
-  filterStatus: FilterStatus,
+  filterStatus: FilterStatus
 ) => {
   if (!monitors) return [];
 
@@ -64,9 +70,8 @@ const filterAndSortMonitors = (
 };
 
 const groupMonitorsByParent = (monitors: Monitor[]) => {
-  // First, identify all monitors that are parents
   const parentIds = new Set(
-    monitors.filter((m) => m.parent).map((m) => m.parent),
+    monitors.filter((m) => m.parent).map((m) => m.parent)
   );
 
   const grouped = monitors.reduce(
@@ -75,10 +80,9 @@ const groupMonitorsByParent = (monitors: Monitor[]) => {
       if (!acc[parent]) {
         acc[parent] = {
           parentMonitor: monitors.find((m) => m.id === parent),
-          children: [],
+          children: []
         };
       }
-      // Only add to children if it's not a parent monitor
       if (
         monitor.id !== parent &&
         (!parentIds.has(monitor.id) || parent !== 'No Parent')
@@ -90,15 +94,15 @@ const groupMonitorsByParent = (monitors: Monitor[]) => {
     {} as Record<
       string,
       { parentMonitor: Monitor | undefined; children: Monitor[] }
-    >,
+    >
   );
 
   return Object.entries(grouped).map(
     ([parent, { parentMonitor, children }]) => ({
       title: parent,
       parentMonitor,
-      data: children,
-    }),
+      data: children
+    })
   );
 };
 
@@ -122,7 +126,7 @@ export default function Index() {
     if (error?.includes('Authentication failed')) {
       ToastAndroid.show(
         'Authentication failed. Please check your credentials.',
-        3000,
+        3000
       );
       auth.signOut();
     }
@@ -135,7 +139,7 @@ export default function Index() {
     monitors,
     sortField,
     sortOrder,
-    filterStatus,
+    filterStatus
   );
 
   const groupedMonitors = groupMonitorsByParent(filteredMonitors);
@@ -151,63 +155,68 @@ export default function Index() {
     }
   }, [refreshMonitors]);
 
-  const toggleSection = (title: string) => {
+  const toggleSection = React.useCallback((title: string) => {
     setExpandedSections((prev) => ({
       ...prev,
-      [title]: !prev[title],
+      [title]: !prev[title]
     }));
-  };
+  }, []);
 
   const authStatus = auth.status;
+
+  const renderItem = React.useCallback(
+    ({
+      item: monitor,
+      section
+    }: {
+      item: Monitor;
+      section: MonitorSection;
+    }) => (
+      <MonitorItem
+        monitor={monitor}
+        isExpanded={
+          section.title === 'No Parent' || expandedSections[section.title]
+        }
+      />
+    ),
+    [expandedSections]
+  );
+
+  const renderSectionHeader = React.useCallback(
+    ({
+      section: { title, parentMonitor, data }
+    }: {
+      section: MonitorSection;
+    }) => (
+      <SectionHeader
+        title={title}
+        parentMonitor={parentMonitor}
+        data={data}
+        isExpanded={expandedSections[title]}
+        onToggle={() => toggleSection(title)}
+      />
+    ),
+    [expandedSections, toggleSection]
+  );
 
   if (authStatus === 'unauthenticated') {
     return <Redirect href="/login" />;
   }
 
   if (isLoading) {
-    return <LoadingState />;
+    return (
+      <LoadingState
+        message={error ? 'Error loading monitors' : 'Loading monitors...'}
+      />
+    );
   }
 
   return (
     <View className="bg-background flex-1">
-      <SectionList
+      <SectionList<Monitor, MonitorSection>
         sections={groupedMonitors}
-        renderItem={({ item: monitor, section }) =>
-          section.title === 'No Parent' || expandedSections[section.title] ? (
-            <View className={`mb-2 ${monitor.parent ? '' : ''}`}>
-              <MonitorCard monitor={monitor} />
-            </View>
-          ) : (
-            <View className="h-0" />
-          )
-        }
-        renderSectionHeader={({ section: { title, parentMonitor, data } }) => (
-          <View>
-            {parentMonitor ? (
-              <View className="mb-2">
-                <MonitorCard
-                  monitor={parentMonitor}
-                  className="rounded-b-none border-b-0"
-                />
-                <TouchableOpacity
-                  onPress={() => toggleSection(title)}
-                  className="bg-background items-center justify-center rounded-lg rounded-t-none border border-t-0 border-secondary pb-2"
-                >
-                  <Text className="text-xs text-foreground opacity-80">
-                    {data.length} monitors
-                  </Text>
-                  {expandedSections[title] ? (
-                    <View className="">
-                      <ChevronUp size={24} className="text-foreground" />
-                    </View>
-                  ) : (
-                    <ChevronDown size={24} className="text-foreground" />
-                  )}
-                </TouchableOpacity>
-              </View>
-            ) : null}
-          </View>
-        )}
+        renderItem={renderItem}
+        renderSectionHeader={renderSectionHeader}
         keyExtractor={(monitor) => {
           const latestHeartbeat = monitor.heartBeatList?.[0];
           return `${monitor.id}-${latestHeartbeat?.status}-${latestHeartbeat?.time}-${monitor.active}-${monitor.name}`;
