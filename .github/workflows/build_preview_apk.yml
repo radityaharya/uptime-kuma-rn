@@ -3,7 +3,8 @@ name: Android Build Preview APK
 on:
   push:
     branches:
-      - master
+      - development
+  workflow_dispatch:
 
 permissions:
   contents: write
