@@ -193,8 +193,6 @@ export default function MonitorDetails() {
   // V2_compat
   React.useEffect(() => {
     fetchImportantHeartbeats();
-    const interval = setInterval(fetchImportantHeartbeats, 30000);
-    return () => clearInterval(interval);
   }, [fetchImportantHeartbeats]);
 
   if (!monitor?.importantHeartBeatList) {
