@@ -7,7 +7,7 @@ import { Text, View } from '@/components/ui';
 import { cn } from '@/lib';
 
 import { HeartbeatHistory } from './HeartBeatHistory';
-import { StatusIndicator } from './StatusIndicator';
+// import { StatusIndicator } from './StatusIndicator';
 
 interface MonitorCardProps {
   monitor: Monitor;
@@ -55,19 +55,31 @@ function isMonitorUp(heartbeats: HeartBeat[]): boolean {
   return heartbeats[0].status === 1;
 }
 
+function UptimeBadge({
+  uptime,
+  className
+}: {
+  uptime: number;
+  className?: string;
+}) {
+  return (
+    <View
+      className={cn(
+        'rounded-full px-3 text-foreground/80 backdrop-blur-sm',
+        className
+      )}
+    >
+      <Text className="text-sm font-medium text-gray-200">
+        {uptime.toFixed(2)}%
+      </Text>
+    </View>
+  );
+}
+
 export function MonitorCard({ monitor, onClick, className }: MonitorCardProps) {
   const router = useRouter();
 
   if (!monitor) return null;
-
-  const calculateUptime = () => {
-    if (!monitor.heartBeatList?.length) return null;
-
-    const upHeartbeats = monitor.heartBeatList.filter((hb) => hb.status === 1);
-    const percentage =
-      (upHeartbeats.length / monitor.heartBeatList.length) * 100;
-    return percentage.toFixed(1);
-  };
 
   const isUp = isMonitorUp(monitor.heartBeatList ?? []);
 
@@ -79,7 +91,7 @@ export function MonitorCard({ monitor, onClick, className }: MonitorCardProps) {
             ? onClick()
             : router.push({
                 pathname: '/(app)/(monitors)/[id]',
-                params: { id: monitor.id.toString() },
+                params: { id: monitor.id.toString() }
               })
         }
       >
@@ -87,20 +99,20 @@ export function MonitorCard({ monitor, onClick, className }: MonitorCardProps) {
           className={cn(
             'bg-background flex flex-col overflow-hidden rounded-lg border border-gray-800 bg-gradient-to-br from-gray-800/90 to-gray-900/90 p-4 transition-all duration-200',
             !monitor.active && 'opacity-50',
-            className,
+            className
           )}
         >
           {/* Header */}
           <View className="mb-2 flex-row justify-between">
-            <View className="flex-row items-center space-x-3">
-              <StatusIndicator active={isUp} />
+            <View className="flex-row items-center gap-2">
+              <View className="backdrop-blur-sm">
+                <UptimeBadge
+                  uptime={(monitor.uptime?.month || 0) * 100}
+                  className={isUp ? 'bg-green-500' : 'bg-red-500'}
+                />
+              </View>
               <Text className="text-xl font-bold tracking-tight text-foreground">
-                {monitor.pathName || monitor.name}
-              </Text>
-            </View>
-            <View className="backdrop-blur-sm">
-              <Text className="font-medium text-foreground">
-                {calculateUptime()}%
+                {monitor.pathName || monitor.name} {monitor.id}
               </Text>
             </View>
           </View>

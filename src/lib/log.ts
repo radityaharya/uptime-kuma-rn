@@ -61,12 +61,10 @@ const ensureDirectoryExists = async () => {
     if (!dirInfo.exists) {
       await FileSystem.makeDirectoryAsync(logDir, { intermediates: true });
     }
-    console.log('Log directory:', logDir);
     return logDir;
   } catch (error) {
     console.error('Failed to ensure directory exists:', error);
     const fallbackDir = `${FileSystem.cacheDirectory}logs`;
-    console.log('Using fallback log directory:', fallbackDir);
     return fallbackDir;
   }
 };

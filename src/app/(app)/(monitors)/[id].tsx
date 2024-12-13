@@ -5,7 +5,7 @@ import {
   Dimensions,
   FlatList,
   RefreshControl,
-  useColorScheme,
+  useColorScheme
 } from 'react-native';
 import { LineChart, type LineChartPropsType } from 'react-native-gifted-charts';
 
@@ -36,7 +36,7 @@ const ChartDataPoint = React.memo(() => (
       shadowColor: '#1DB954',
       shadowOffset: { width: 0, height: 0 },
       shadowOpacity: 0.5,
-      shadowRadius: 4,
+      shadowRadius: 4
     }}
   />
 ));
@@ -48,18 +48,18 @@ const ChartLabel = React.memo(
         style={{
           color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)',
           fontSize: 9,
-          fontWeight: '500',
+          fontWeight: '500'
         }}
       >
         {value}
       </Text>
     </View>
-  ),
+  )
 );
 
 const getChartConfig = (
   isDarkMode: boolean,
-  maxPing: number,
+  maxPing: number
 ): LineChartPropsType => ({
   startFillColor: '#1DB954',
   startOpacity: 0.3,
@@ -76,7 +76,7 @@ const getChartConfig = (
   yAxisTextStyle: {
     color: isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)',
     fontSize: 10,
-    fontWeight: '500',
+    fontWeight: '500'
   },
   spacing: 10,
   backgroundColor: isDarkMode ? '#000000' : '#fff',
@@ -88,7 +88,7 @@ const getChartConfig = (
   hideRules: false,
   hideYAxisText: false,
   yAxisOffset: 0,
-  rotateLabel: false,
+  rotateLabel: false
 });
 
 // Memoize HeartbeatCard
@@ -105,7 +105,7 @@ const HeartbeatCard = React.memo(({ item }: { item: any }) => {
               hour: 'numeric',
               minute: 'numeric',
               second: 'numeric',
-              timeZoneName: 'short',
+              timeZoneName: 'short'
             })
           : ''}
       </Text>
@@ -134,7 +134,7 @@ export default function MonitorDetails() {
         await client.getMonitorImportantHeartbeatListPaged(
           Number.parseInt(id, 10),
           0,
-          25,
+          25
         );
         setLastUpdate(Date.now());
       } catch (error) {
@@ -170,9 +170,9 @@ export default function MonitorDetails() {
                   isDarkMode={isDarkMode}
                 />
               )
-            : undefined,
+            : undefined
       })) || [],
-    [isDarkMode, monitor?.heartBeatList],
+    [isDarkMode, monitor?.heartBeatList]
   );
 
   const chartConfig = React.useMemo(
@@ -180,10 +180,10 @@ export default function MonitorDetails() {
       getChartConfig(
         isDarkMode,
         Math.max(
-          ...(monitor?.heartBeatList?.map((hb: HeartBeat) => hb.ping) || [0]),
-        ),
+          ...(monitor?.heartBeatList?.map((hb: HeartBeat) => hb.ping) || [0])
+        )
       ),
-    [isDarkMode, monitor?.heartBeatList],
+    [isDarkMode, monitor?.heartBeatList]
   );
 
   if (!monitor?.importantHeartBeatList) {
@@ -191,7 +191,7 @@ export default function MonitorDetails() {
       <View
         className={`flex-1 ${isDarkMode ? 'bg-black' : 'bg-white'}`}
         style={{
-          height: Dimensions.get('window').height,
+          height: Dimensions.get('window').height
         }}
       >
         <LoadingSkeleton />
@@ -201,7 +201,7 @@ export default function MonitorDetails() {
 
   const importantHeartBeatList = monitor.importantHeartBeatList ?? [];
 
-  const uptime = monitor.uptime ?? { day: 0, month: 0 };
+  const uptime = monitor.uptime ?? { day: 0, month: 0, year: 0 };
   const current_ping = monitor.heartBeatList?.[0]?.ping ?? 0;
   const average_ping = monitor.avgPing ?? 0;
 
@@ -209,7 +209,7 @@ export default function MonitorDetails() {
     <View
       className={`flex-1 ${isDarkMode ? 'bg-black' : 'bg-white'}`}
       style={{
-        height: Dimensions.get('window').height,
+        height: Dimensions.get('window').height
       }}
     >
       <View className="px-4 pt-2">
@@ -241,7 +241,7 @@ export default function MonitorDetails() {
           getItemLayout={(data, index) => ({
             length: 100,
             offset: 100 * index,
-            index,
+            index
           })}
         />
       </View>

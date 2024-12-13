@@ -12,7 +12,7 @@ export type Info = {
   serverTimezone: string;
   serverTimezoneOffset: string;
   version: string;
-}
+};
 
 export type HeartBeat = {
   id: number;
@@ -24,11 +24,14 @@ export type HeartBeat = {
   msg: string;
   ping: number;
   time: Date;
-}
+};
 
-export type ImportantHeartBeat = Omit<HeartBeat, 'id' | 'monitor_id' | 'down_count'> & {
+export type ImportantHeartBeat = Omit<
+  HeartBeat,
+  'id' | 'monitor_id' | 'down_count'
+> & {
   monitorID: number;
-}
+};
 
 export type Tag = {
   id: number;
@@ -37,12 +40,14 @@ export type Tag = {
   value: string;
   name: string;
   color: string;
-}
+};
 
 export type Uptime = {
   day: number;
   month: number;
-}
+  // v2_compatibility
+  year?: number;
+};
 
 export type Monitor = {
   // Basic Info
@@ -169,7 +174,7 @@ export type Monitor = {
   avgPing?: number;
 
   isUp?: boolean;
-}
+};
 
 export type StatusPage = {
   id: number;
@@ -185,7 +190,7 @@ export type StatusPage = {
   showPoweredBy: boolean;
   googleAnalyticsId: string | null;
   showCertificateExpiry: boolean;
-}
+};
 
 export type UptimeKumaEvent =
   | 'updateMonitorIntoList'

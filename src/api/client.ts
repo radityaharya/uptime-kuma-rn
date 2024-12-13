@@ -82,9 +82,7 @@ export class UptimeKumaClient {
           this.initializeSocket(resolve, (error) => {
             if (retryCount < maxRetries && error.message.includes('timeout')) {
               retryCount++;
-              log.debug(
-                `Retrying connection (${retryCount}/${maxRetries})...`,
-              );
+              log.debug(`Retrying connection (${retryCount}/${maxRetries})...`);
               setTimeout(attemptConnection, 1000 * retryCount);
             } else {
               reject(error);
@@ -202,6 +200,7 @@ export class UptimeKumaClient {
       uptime: {
         day: monitor.uptime?.day ?? 0,
         month: monitor.uptime?.month ?? 0,
+        year: monitor.uptime?.year ?? 0,
       },
     };
   }
@@ -233,6 +232,7 @@ export class UptimeKumaClient {
       uptime: {
         day: update.uptime?.day ?? existing.uptime?.day ?? 0,
         month: update.uptime?.month ?? existing.uptime?.month ?? 0,
+        year: update.uptime?.year ?? existing.uptime?.year ?? 0,
       },
     };
   }
@@ -283,17 +283,27 @@ export class UptimeKumaClient {
     this.updateMonitor(monitorId, { avgPing });
   }
 
-  private setUptime(monitorId: number, period: number, uptime: number): void {
+  private setUptime(
+    monitorId: number,
+    period: number | string,
+    uptime: number,
+  ): void {
     const monitor = this.getMonitor(monitorId);
     if (!monitor) return;
 
-    const currentUptime = monitor.uptime || { day: 0, month: 0 };
+    const currentUptime = monitor.uptime || {
+      day: 0,
+      month: 0,
+      year: undefined,
+    };
     const uptimeUpdate =
       period === 24
         ? { ...currentUptime, day: uptime }
         : period === 720
           ? { ...currentUptime, month: uptime }
-          : currentUptime;
+          : period === '1y'
+            ? { ...currentUptime, year: uptime }
+            : currentUptime;
 
     this.updateMonitor(monitorId, { uptime: uptimeUpdate });
   }

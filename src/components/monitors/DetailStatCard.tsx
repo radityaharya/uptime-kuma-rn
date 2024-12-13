@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { type Uptime } from '@/api';
 import { Text, View } from '@/components/ui';
 
 interface StatItemProps {
@@ -21,15 +22,12 @@ function StatItem({ title, value, timeRange }: StatItemProps) {
 interface DetailStatCardProps {
   current_ping: number;
   average_ping: number;
-  uptime: {
-    day: number;
-    month: number;
-  };
+  uptime: Uptime;
 }
 export function DetailStatCard({
   current_ping,
   average_ping,
-  uptime,
+  uptime
 }: DetailStatCardProps) {
   return (
     <View className="bg-background mb-2 flex flex-row justify-between rounded-lg border border-secondary p-4">
@@ -45,13 +43,18 @@ export function DetailStatCard({
       />
       <StatItem
         title="Uptime"
-        value={`${((uptime.day / 1) * 100).toFixed(1)}%`}
+        value={`${(uptime.day * 100).toFixed(1)}%`}
         timeRange="24h"
       />
       <StatItem
         title="Uptime"
-        value={`${((uptime.month / 1) * 100).toFixed(1)}%`}
+        value={`${(uptime.month * 100).toFixed(1)}%`}
         timeRange="30d"
+      />
+      <StatItem
+        title="Uptime"
+        value={uptime.year ? `${(uptime.year * 100).toFixed(1)}%` : 'N/A'}
+        timeRange="365d"
       />
     </View>
   );

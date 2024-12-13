@@ -4,7 +4,7 @@ import {
   type HeartBeat,
   type ImportantHeartBeat,
   type Monitor,
-} from '@/api/types';
+  type Uptime} from '@/api/types';
 import { log } from '@/lib/log';
 import { sendNotificationImmediately } from '@/lib/notification';
 import { getItem, removeItem, setItem } from '@/lib/storage';
@@ -18,16 +18,13 @@ interface MonitorUpdate {
   heartBeatList?: HeartBeat[];
   importantHeartBeatList?: ImportantHeartBeat[];
   avgPing?: number;
-  uptime: {
-    day: number;
-    month: number;
-  };
+  uptime: Uptime;
 }
 
 const MonitorContext = createContext<MonitorContextType | null>(null);
 
 const convertToHeartbeat = (
-  importantHeartbeat: ImportantHeartBeat,
+  importantHeartbeat: ImportantHeartBeat
 ): HeartBeat => ({
   id: 0,
   monitor_id: importantHeartbeat.monitorID,
@@ -37,7 +34,7 @@ const convertToHeartbeat = (
   status: importantHeartbeat.status,
   msg: importantHeartbeat.msg,
   ping: importantHeartbeat.ping,
-  time: new Date(),
+  time: new Date()
 });
 
 class MonitorStore {
@@ -98,21 +95,26 @@ class MonitorStore {
     if (index === -1) {
       console.warn(
         `Monitor ${id} not found. Current monitors:`,
-        monitors.map((m) => m.id),
+        monitors.map((m) => m.id)
       );
       return;
     }
 
-    const currentUptime = monitors[index].uptime || { day: 0, month: 0 };
+    const currentUptime = monitors[index].uptime || {
+      day: 0,
+      month: 0,
+      year: undefined
+    };
     const updatedUptime = update.uptime
       ? {
           day: update.uptime.day ?? currentUptime.day ?? 0,
           month: update.uptime.month ?? currentUptime.month ?? 0,
+          year: update.uptime.year ?? currentUptime.year ?? undefined
         }
       : currentUptime;
 
     const processHeartbeats = <T extends { time: string | Date }>(
-      heartbeats: T[],
+      heartbeats: T[]
     ): T[] => {
       return heartbeats
         .map((hb) => ({
@@ -126,10 +128,10 @@ class MonitorStore {
                     parseInt(hb.time.slice(8, 10)), // Day
                     parseInt(hb.time.slice(11, 13)), // Hours
                     parseInt(hb.time.slice(14, 16)), // Minutes
-                    parseInt(hb.time.slice(17, 19)), // Seconds
-                  ),
+                    parseInt(hb.time.slice(17, 19)) // Seconds
+                  )
                 )
-              : hb.time,
+              : hb.time
         }))
         .sort((a, b) => b.time.getTime() - a.time.getTime());
     };
@@ -137,7 +139,7 @@ class MonitorStore {
     const updatedMonitor = {
       ...monitors[index],
       ...update,
-      uptime: updatedUptime,
+      uptime: updatedUptime
     };
 
     if (update.heartBeatList) {
@@ -147,7 +149,7 @@ class MonitorStore {
 
     if (update.importantHeartBeatList) {
       updatedMonitor.importantHeartBeatList = processHeartbeats(
-        update.importantHeartBeatList,
+        update.importantHeartBeatList
       );
     }
 
@@ -160,12 +162,12 @@ class MonitorStore {
 
     const hb = convertToHeartbeat(heartbeat);
     const index = monitors.findIndex(
-      (m) => Number(m.id) === Number(hb.monitor_id),
+      (m) => Number(m.id) === Number(hb.monitor_id)
     );
     if (index === -1) {
       console.warn(
         `Monitor ${hb.monitor_id} not found. Current monitors:`,
-        monitors.map((m) => m.id),
+        monitors.map((m) => m.id)
       );
       return;
     }
@@ -177,7 +179,7 @@ class MonitorStore {
     const monitor = monitors[index];
     monitors[index] = {
       ...monitor,
-      heartBeatList: [hb, ...(monitor.heartBeatList || [])],
+      heartBeatList: [hb, ...(monitor.heartBeatList || [])]
     };
 
     if (
@@ -194,13 +196,13 @@ class MonitorStore {
       sendNotificationImmediately(title, body, {
         monitorID: monitor.id,
         monitorName: monitor.name,
-        status: heartbeat.status,
+        status: heartbeat.status
       });
       hb.important = 1;
     }
 
     this.updateMonitor(hb.monitor_id, {
-      heartBeatList: monitors[index].heartBeatList,
+      heartBeatList: monitors[index].heartBeatList
     });
   }
 
@@ -209,7 +211,7 @@ class MonitorStore {
 
     Object.values(data).forEach((monitor) => {
       const index = this.currentMonitors.findIndex(
-        (m) => Number(m.id) === Number(monitor.id),
+        (m) => Number(m.id) === Number(monitor.id)
       );
 
       if (index === -1) {
@@ -220,8 +222,8 @@ class MonitorStore {
           avgPing: 0,
           uptime: {
             day: monitor.uptime?.day ?? 0,
-            month: monitor.uptime?.month ?? 0,
-          },
+            month: monitor.uptime?.month ?? 0
+          }
         });
       } else {
         this.currentMonitors[index] = {
@@ -238,8 +240,8 @@ class MonitorStore {
             month:
               monitor.uptime?.month ??
               this.currentMonitors[index].uptime?.month ??
-              0,
-          },
+              0
+          }
         };
       }
     });
@@ -252,7 +254,7 @@ class MonitorStore {
     const numMonitors = activeMonitors.length;
     const numHeartbeats = activeMonitors.reduce(
       (acc, monitor) => acc + (monitor.heartBeatList?.length || 0),
-      0,
+      0
     );
     const avgHeartbeatsPerMonitor = numMonitors
       ? Number((numHeartbeats / numMonitors).toFixed(1)) // Convert to number
@@ -264,7 +266,7 @@ class MonitorStore {
           (acc[monitor.active ? 'active' : 'inactive'] || 0) + 1;
         return acc;
       },
-      {} as Record<string, number>,
+      {} as Record<string, number>
     );
 
     const avgDayUptime =
@@ -276,7 +278,7 @@ class MonitorStore {
 
     const avgPingTotal = activeMonitors.reduce(
       (acc, m) => acc + (m.avgPing || 0),
-      0,
+      0
     );
     const avgPingOverall = numMonitors ? avgPingTotal / numMonitors : 0;
 
@@ -295,17 +297,17 @@ class MonitorStore {
     }
 
     const downMonitors = activeMonitors.filter(
-      (m) => !isMonitorUp(m.heartBeatList || []),
+      (m) => !isMonitorUp(m.heartBeatList || [])
     );
 
     const upMonitors = activeMonitors.filter((m) =>
-      isMonitorUp(m.heartBeatList || []),
+      isMonitorUp(m.heartBeatList || [])
     );
 
     const inactiveMonitors = this.currentMonitors.filter((m) => !m.active);
 
     const isAllHeartbeatPopulated = activeMonitors.every(
-      (m) => m.heartBeatList && m.heartBeatList.length > 0,
+      (m) => m.heartBeatList && m.heartBeatList.length > 0
     );
 
     const latestImportantEvent = activeMonitors.reduce<{
@@ -317,7 +319,7 @@ class MonitorStore {
         if (!monitor.heartBeatList?.length) return acc;
 
         const importantHeartbeats = monitor.heartBeatList.filter(
-          (hb) => hb.important === 1,
+          (hb) => hb.important === 1
         );
         if (!importantHeartbeats.length) return acc;
 
@@ -335,12 +337,12 @@ class MonitorStore {
           return {
             heartbeat: monitorLatest,
             monitorId: String(monitor.id),
-            monitorName: monitor.name,
+            monitorName: monitor.name
           };
         }
         return acc;
       },
-      { heartbeat: null, monitorId: null, monitorName: '' },
+      { heartbeat: null, monitorId: null, monitorName: '' }
     );
 
     return {
@@ -351,16 +353,16 @@ class MonitorStore {
       statusCounts,
       uptimeStats: {
         avgDay: avgDayUptime.toFixed(2) + '%',
-        avgMonth: avgMonthUptime.toFixed(2) + '%',
+        avgMonth: avgMonthUptime.toFixed(2) + '%'
       },
       pingStats: {
-        avgOverall: Math.round(avgPingOverall) + 'ms',
+        avgOverall: Math.round(avgPingOverall) + 'ms'
       },
       downMonitors,
       upMonitors,
       inactiveMonitors,
       isAllHeartbeatPopulated,
-      latestImportantEvent,
+      latestImportantEvent
     };
   }
 
@@ -448,7 +450,7 @@ export interface MonitorStats {
 
 export function useMonitorStats(): MonitorStats {
   const [stats, setStats] = React.useState(() =>
-    monitorStore.getMonitorStats(),
+    monitorStore.getMonitorStats()
   );
 
   React.useEffect(() => {
