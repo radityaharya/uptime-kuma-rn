@@ -57,39 +57,80 @@ const ChartLabel = React.memo(
   )
 );
 
-const getChartConfig = (
-  isDarkMode: boolean,
-  maxPing: number
-): LineChartPropsType => ({
-  startFillColor: '#1DB954',
-  startOpacity: 0.3,
-  endFillColor: '#1DB954',
-  endOpacity: 0.05,
-  width: Dimensions.get('window').width,
-  height: 220,
-  curved: true,
-  adjustToWidth: true,
-  thickness: 2,
-  color: '#1DB954',
-  maxValue: maxPing,
-  noOfSections: 4,
-  yAxisTextStyle: {
-    color: isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)',
-    fontSize: 10,
-    fontWeight: '500'
+const MonitorChart = React.memo(
+  ({
+    heartBeatList,
+    isDarkMode
+  }: {
+    heartBeatList: HeartBeat[];
+    isDarkMode: boolean;
+  }) => {
+    const transformChartData = React.useMemo(
+      () =>
+        heartBeatList?.map((hb: HeartBeat, index: number) => ({
+          value: hb.ping,
+          hideDataPoint: index % 4 !== 0,
+          customDataPoint:
+            index % 4 === 0 ? () => <ChartDataPoint /> : undefined,
+          labelComponent:
+            index % 12 === 0
+              ? () => (
+                  <ChartLabel
+                    value={hb.time.toLocaleTimeString()}
+                    isDarkMode={isDarkMode}
+                  />
+                )
+              : undefined
+        })) || [],
+      [isDarkMode, heartBeatList]
+    );
+
+    const chartConfig = React.useMemo(
+      (): LineChartPropsType => ({
+        startFillColor: '#1DB954',
+        startOpacity: 0.3,
+        endFillColor: '#1DB954',
+        endOpacity: 0.05,
+        width: Dimensions.get('window').width,
+        height: 220,
+        curved: true,
+        adjustToWidth: true,
+        thickness: 2,
+        color: '#1DB954',
+        maxValue: Math.max(
+          ...(heartBeatList?.map((hb: HeartBeat) => hb.ping) || [0])
+        ),
+        noOfSections: 4,
+        yAxisTextStyle: {
+          color: isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)',
+          fontSize: 10,
+          fontWeight: '500'
+        },
+        spacing: 10,
+        backgroundColor: isDarkMode ? '#000000' : '#fff',
+        rulesColor: isDarkMode ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)',
+        rulesType: 'dash',
+        initialSpacing: 15,
+        yAxisColor: 'transparent',
+        xAxisColor: 'transparent',
+        hideRules: false,
+        hideYAxisText: false,
+        yAxisOffset: 0,
+        rotateLabel: false
+      }),
+      [isDarkMode, heartBeatList]
+    );
+
+    return <LineChart areaChart data={transformChartData} {...chartConfig} />;
   },
-  spacing: 10,
-  backgroundColor: isDarkMode ? '#000000' : '#fff',
-  rulesColor: isDarkMode ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)',
-  rulesType: 'dash',
-  initialSpacing: 15,
-  yAxisColor: 'transparent',
-  xAxisColor: 'transparent',
-  hideRules: false,
-  hideYAxisText: false,
-  yAxisOffset: 0,
-  rotateLabel: false
-});
+  (prevProps, nextProps) => {
+    // Custom comparison to prevent unnecessary rerenders
+    return (
+      prevProps.isDarkMode === nextProps.isDarkMode &&
+      prevProps.heartBeatList === nextProps.heartBeatList
+    );
+  }
+);
 
 // Memoize HeartbeatCard
 const HeartbeatCard = React.memo(({ item }: { item: any }) => {
@@ -156,36 +197,6 @@ export default function MonitorDetails() {
     return () => clearInterval(interval);
   }, [fetchImportantHeartbeats]);
 
-  const transformChartData = React.useMemo(
-    () =>
-      monitor?.heartBeatList?.map((hb: HeartBeat, index: number) => ({
-        value: hb.ping,
-        hideDataPoint: index % 4 !== 0,
-        customDataPoint: index % 4 === 0 ? () => <ChartDataPoint /> : undefined,
-        labelComponent:
-          index % 12 === 0
-            ? () => (
-                <ChartLabel
-                  value={hb.time.toLocaleTimeString()}
-                  isDarkMode={isDarkMode}
-                />
-              )
-            : undefined
-      })) || [],
-    [isDarkMode, monitor?.heartBeatList]
-  );
-
-  const chartConfig = React.useMemo(
-    () =>
-      getChartConfig(
-        isDarkMode,
-        Math.max(
-          ...(monitor?.heartBeatList?.map((hb: HeartBeat) => hb.ping) || [0])
-        )
-      ),
-    [isDarkMode, monitor?.heartBeatList]
-  );
-
   if (!monitor?.importantHeartBeatList) {
     return (
       <View
@@ -229,7 +240,10 @@ export default function MonitorDetails() {
                 average_ping={average_ping}
                 uptime={uptime}
               />
-              <LineChart areaChart data={transformChartData} {...chartConfig} />
+              <MonitorChart
+                heartBeatList={monitor.heartBeatList || []}
+                isDarkMode={isDarkMode}
+              />
               <Text className="mt-4 text-lg font-bold">Important Events</Text>
             </View>
           )}

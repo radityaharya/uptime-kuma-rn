@@ -112,7 +112,7 @@ export function MonitorCard({ monitor, onClick, className }: MonitorCardProps) {
                 />
               </View>
               <Text className="text-xl font-bold tracking-tight text-foreground">
-                {monitor.pathName || monitor.name} {monitor.id}
+                {monitor.pathName || monitor.name}
               </Text>
             </View>
           </View>
