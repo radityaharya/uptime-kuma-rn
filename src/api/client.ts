@@ -10,7 +10,7 @@ import {
   type ImportantHeartBeat,
   type Info,
   type Monitor,
-  type StatusPage,
+  type StatusPage
 } from './types';
 
 interface UptimeKumaOptions {
@@ -38,7 +38,7 @@ export class UptimeKumaClient {
     reconnectionDelay: 1000,
     reconnectionDelayMax: 5000,
     reconnectionAttempts: 10,
-    timeout: 30000,
+    timeout: 10000
   };
 
   private readonly connectionOptions: UptimeKumaOptions;
@@ -48,11 +48,11 @@ export class UptimeKumaClient {
 
   constructor(
     private readonly url: string,
-    options: Partial<UptimeKumaOptions> = {},
+    options: Partial<UptimeKumaOptions> = {}
   ) {
     this.connectionOptions = {
       ...UptimeKumaClient.DEFAULT_OPTIONS,
-      ...options,
+      ...options
     };
   }
 
@@ -100,7 +100,7 @@ export class UptimeKumaClient {
   // Socket Initialization and Management
   private initializeSocket(
     resolve: () => void,
-    reject: (error: Error) => void,
+    reject: (error: Error) => void
   ): void {
     this.socket = io(this.url, this.connectionOptions);
 
@@ -119,7 +119,7 @@ export class UptimeKumaClient {
 
   private handleAuthentication(
     resolve: () => void,
-    reject: (error: Error) => void,
+    reject: (error: Error) => void
   ): void {
     this.setupListeners();
     this.socket?.emit('login', this.credentials, (response: AuthResponse) => {
@@ -137,7 +137,7 @@ export class UptimeKumaClient {
       log.error('Socket connect error:', error.message);
       if (error.message === 'timeout') {
         log.debug(
-          `Connection timed out after ${this.connectionOptions.timeout}ms`,
+          `Connection timed out after ${this.connectionOptions.timeout}ms`
         );
       }
       reject(error);
@@ -187,7 +187,7 @@ export class UptimeKumaClient {
     this.monitorsInitialized = true;
     log.debug(
       'Monitors initialized:',
-      this.monitors.map((m) => m.id),
+      this.monitors.map((m) => m.id)
     );
   }
 
@@ -200,15 +200,15 @@ export class UptimeKumaClient {
       uptime: {
         day: monitor.uptime?.day ?? 0,
         month: monitor.uptime?.month ?? 0,
-        year: monitor.uptime?.year ?? 0,
-      },
+        year: monitor.uptime?.year ?? 0
+      }
     };
   }
 
   private updateExistingMonitors(data: Record<string, Monitor>): void {
     Object.values(data).forEach((monitor) => {
       const index = this.monitors.findIndex(
-        (m) => Number(m.id) === Number(monitor.id),
+        (m) => Number(m.id) === Number(monitor.id)
       );
 
       if (index === -1) {
@@ -216,7 +216,7 @@ export class UptimeKumaClient {
       } else {
         this.monitors[index] = this.mergeMonitorData(
           this.monitors[index],
-          monitor,
+          monitor
         );
       }
     });
@@ -232,8 +232,8 @@ export class UptimeKumaClient {
       uptime: {
         day: update.uptime?.day ?? existing.uptime?.day ?? 0,
         month: update.uptime?.month ?? existing.uptime?.month ?? 0,
-        year: update.uptime?.year ?? existing.uptime?.year ?? 0,
-      },
+        year: update.uptime?.year ?? existing.uptime?.year ?? 0
+      }
     };
   }
 
@@ -241,7 +241,7 @@ export class UptimeKumaClient {
   private handleHeartbeatData<T>(
     monitorId: number,
     data: T[] | [T[], boolean],
-    maxHeartbeats: number = 100,
+    maxHeartbeats: number = 100
   ): T[] {
     const [heartbeats, _isHistory = false] = Array.isArray(data[0])
       ? (data as [T[], boolean])
@@ -256,7 +256,7 @@ export class UptimeKumaClient {
 
   private setHeartBeat(
     monitorId: number,
-    data: HeartBeat[] | [HeartBeat[], boolean],
+    data: HeartBeat[] | [HeartBeat[], boolean]
   ): void {
     this.validateMonitorId(monitorId);
 
@@ -270,7 +270,7 @@ export class UptimeKumaClient {
 
   private setImportantHeartBeatList(
     monitorId: number,
-    data: ImportantHeartBeat[] | [ImportantHeartBeat[], boolean],
+    data: ImportantHeartBeat[] | [ImportantHeartBeat[], boolean]
   ): void {
     this.validateMonitorId(monitorId);
 
@@ -286,7 +286,7 @@ export class UptimeKumaClient {
   private setUptime(
     monitorId: number,
     period: number | string,
-    uptime: number,
+    uptime: number
   ): void {
     const monitor = this.getMonitor(monitorId);
     if (!monitor) return;
@@ -294,7 +294,7 @@ export class UptimeKumaClient {
     const currentUptime = monitor.uptime || {
       day: 0,
       month: 0,
-      year: undefined,
+      year: undefined
     };
     const uptimeUpdate =
       period === 24
@@ -324,7 +324,7 @@ export class UptimeKumaClient {
         const status = {
           url: `${this.url}/status/${statusPage.slug}`,
           isExternal: false,
-          monitors: [],
+          monitors: []
         };
 
         log.debug('Adding status page:', status);
@@ -364,7 +364,7 @@ export class UptimeKumaClient {
 
   public async getMonitorBeats(
     monitorId: number,
-    period?: number,
+    period?: number
   ): Promise<void> {
     return new Promise((resolve, reject) => {
       if (!this.socket?.connected) {
@@ -386,7 +386,7 @@ export class UptimeKumaClient {
   public async getMonitorImportantHeartbeatListPaged(
     monitorId: number,
     offset: number,
-    count: number,
+    count: number
   ): Promise<void> {
     return new Promise((resolve, reject) => {
       if (!this.socket?.connected) {
@@ -395,7 +395,7 @@ export class UptimeKumaClient {
       }
 
       log.debug(
-        `Fetching important heartbeats for monitor ${monitorId} (offset: ${offset}, count: ${count})`,
+        `Fetching important heartbeats for monitor ${monitorId} (offset: ${offset}, count: ${count})`
       );
       this.socket.emit(
         'monitorImportantHeartbeatListPaged',
@@ -410,7 +410,7 @@ export class UptimeKumaClient {
           } else {
             reject(new Error('Failed to fetch important heartbeat list'));
           }
-        },
+        }
       );
     });
   }
@@ -427,7 +427,7 @@ export class UptimeKumaClient {
       avgPing: this.setAvgPing.bind(this),
       uptime: this.setUptime.bind(this),
       heartbeat: this.addHeartbeat.bind(this),
-      statusPageList: this.handleStatusPageList.bind(this),
+      statusPageList: this.handleStatusPageList.bind(this)
     };
 
     Object.entries(handlers).forEach(([event, handler]) => {

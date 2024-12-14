@@ -133,7 +133,7 @@ export function MonitorCard({ monitor, onClick, className }: MonitorCardProps) {
             <HeartbeatHistory
               heartbeats={monitor.heartBeatList}
               interval={monitor.interval}
-              isParent={monitor.parent === null}
+              isParent={monitor.childrenIDs.length > 0}
             />
           </View>
 
