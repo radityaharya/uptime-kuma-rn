@@ -76,7 +76,9 @@ const MonitorChart = React.memo(
             index % 12 === 0
               ? () => (
                   <ChartLabel
-                    value={hb.time.toLocaleTimeString()}
+                    value={
+                      hb.time ? new Date(hb.time).toLocaleTimeString() : ''
+                    }
                     isDarkMode={isDarkMode}
                   />
                 )

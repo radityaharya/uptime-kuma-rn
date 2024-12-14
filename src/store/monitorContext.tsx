@@ -1,3 +1,4 @@
+import debounce from 'lodash/debounce';
 import React, { createContext, useCallback, useContext, useState } from 'react';
 
 import {
@@ -6,6 +7,7 @@ import {
   type Monitor,
   type Uptime
 } from '@/api/types';
+import { log } from '@/lib/log';
 import { sendNotificationImmediately } from '@/lib/notification';
 import { getItem, removeItem, setItem } from '@/lib/storage';
 
@@ -42,6 +44,9 @@ class MonitorStore {
   private settersMap: Set<(monitors: Monitor[]) => void> = new Set();
   private currentMonitors: Monitor[] = getItem('monitors') || [];
   private subscribers: Set<(monitors: Monitor[]) => void> = new Set();
+  private batchUpdates: Set<number> = new Set();
+  private batchTimeout: NodeJS.Timeout | null = null;
+  private BATCH_DELAY = 1000;
 
   constructor() {
     try {
@@ -82,12 +87,16 @@ class MonitorStore {
     try {
       this.currentMonitors = monitors;
       setItem('monitors', monitors);
-      this.settersMap.forEach((setter) => setter(monitors));
-      this.subscribers.forEach((sub) => sub(monitors));
+      this.notifySubscribers();
     } catch (error) {
       console.error('Error setting monitors:', error);
     }
   }
+
+  private notifySubscribers = debounce(() => {
+    this.settersMap.forEach((setter) => setter(this.currentMonitors));
+    this.subscribers.forEach((sub) => sub(this.currentMonitors));
+  }, this.BATCH_DELAY);
 
   updateMonitor(id: number, update: Partial<MonitorUpdate>): void {
     const monitors = this.getMonitors();
@@ -154,7 +163,19 @@ class MonitorStore {
     }
 
     monitors[index] = updatedMonitor;
-    this.setMonitors([...monitors]);
+    this.batchUpdates.add(id);
+    this.scheduleBatchUpdate();
+  }
+
+  private scheduleBatchUpdate() {
+    if (this.batchTimeout) {
+      clearTimeout(this.batchTimeout);
+    }
+    this.batchTimeout = setTimeout(() => {
+      log.info('Batch updating monitors:', this.batchUpdates);
+      this.setMonitors([...this.currentMonitors]);
+      this.batchUpdates.clear();
+    }, this.BATCH_DELAY);
   }
 
   addHeartbeat(heartbeat: ImportantHeartBeat): void {
@@ -374,6 +395,16 @@ class MonitorStore {
     } catch (error) {
       console.error('Error resetting MonitorStore:', error);
     }
+  }
+
+  cleanup() {
+    this.notifySubscribers.cancel();
+    if (this.batchTimeout) {
+      clearTimeout(this.batchTimeout);
+    }
+    this.batchUpdates.clear();
+    this.settersMap.clear();
+    this.subscribers.clear();
   }
 }
 
