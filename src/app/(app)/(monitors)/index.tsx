@@ -70,40 +70,29 @@ const filterAndSortMonitors = (
 };
 
 const groupMonitorsByParent = (monitors: Monitor[]) => {
-  const parentIds = new Set(
-    monitors.filter((m) => m.parent).map((m) => m.parent)
-  );
+  const monitorMap = new Map<number, Monitor>();
+  monitors.forEach((monitor) => monitorMap.set(monitor.id, monitor));
 
-  const grouped = monitors.reduce(
-    (acc, monitor) => {
-      const parent = monitor.parent || 'No Parent';
-      if (!acc[parent]) {
-        acc[parent] = {
-          parentMonitor: monitors.find((m) => m.id === parent),
-          children: []
-        };
-      }
-      if (
-        monitor.id !== parent &&
-        (!parentIds.has(monitor.id) || parent !== 'No Parent')
-      ) {
-        acc[parent].children.push(monitor);
-      }
-      return acc;
-    },
-    {} as Record<
-      string,
-      { parentMonitor: Monitor | undefined; children: Monitor[] }
-    >
-  );
+  const grouped = monitors.reduce((acc, monitor) => {
+    if (monitor.childrenIDs && monitor.childrenIDs.length > 0) {
+      acc.push({
+        title: monitor.name,
+        parentMonitor: monitor,
+        data: monitor.childrenIDs
+          .map((id) => monitorMap.get(id))
+          .filter(Boolean) as Monitor[]
+      });
+    } else if (!monitor.parent) {
+      acc.push({
+        title: 'No Parent',
+        parentMonitor: undefined,
+        data: [monitor]
+      });
+    }
+    return acc;
+  }, [] as MonitorSection[]);
 
-  return Object.entries(grouped).map(
-    ([parent, { parentMonitor, children }]) => ({
-      title: parent,
-      parentMonitor,
-      data: children
-    })
-  );
+  return grouped;
 };
 
 export default function Index() {
