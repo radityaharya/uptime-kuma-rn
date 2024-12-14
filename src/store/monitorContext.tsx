@@ -7,7 +7,6 @@ import {
   type Monitor,
   type Uptime
 } from '@/api/types';
-import { log } from '@/lib/log';
 import { sendNotificationImmediately } from '@/lib/notification';
 import { getItem, removeItem, setItem } from '@/lib/storage';
 
@@ -172,7 +171,6 @@ class MonitorStore {
       clearTimeout(this.batchTimeout);
     }
     this.batchTimeout = setTimeout(() => {
-      log.info('Batch updating monitors:', this.batchUpdates);
       this.setMonitors([...this.currentMonitors]);
       this.batchUpdates.clear();
     }, this.BATCH_DELAY);

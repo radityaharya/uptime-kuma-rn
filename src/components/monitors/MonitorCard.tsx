@@ -146,3 +146,35 @@ export function MonitorCard({ monitor, onClick, className }: MonitorCardProps) {
     </>
   );
 }
+
+export function MonitorCardSkeleton() {
+  return (
+    <View className="animate-pulse">
+      <View className="bg-background flex flex-col overflow-hidden rounded-lg border border-gray-800 bg-gradient-to-br from-gray-800/90 to-gray-900/90 p-4">
+        {/* Header */}
+        <View className="mb-2 flex-row justify-between">
+          <View className="flex-row items-center gap-2">
+            <View className="size-4 rounded-full bg-slate-700" />
+            <View className="h-4 w-16 rounded-full bg-slate-700" />
+          </View>
+        </View>
+
+        {/* Content */}
+        <View className="mb-4 flex flex-col">
+          <View className="mb-2">
+            <View className="h-4 w-16 rounded-full bg-slate-700" />
+          </View>
+          <View className="h-4 w-16 rounded-full bg-slate-700" />
+        </View>
+
+        {/* Footer */}
+        <View>
+          <View className="flex-row flex-wrap gap-2">
+            <View className="h-4 w-16 rounded-full bg-slate-700" />
+            <View className="h-4 w-16 rounded-full bg-slate-700" />
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+}

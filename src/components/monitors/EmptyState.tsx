@@ -1,10 +1,12 @@
-
 import * as React from 'react';
 
-import { Text, View } from '@/components/ui';
+import { View } from '@/components/ui';
 
+import { MonitorCardSkeleton } from './MonitorCard';
 export const EmptyState = React.memo(() => (
   <View className="flex-1 items-center justify-center">
-    <Text className="text-white">No monitors available</Text>
+    {[...Array(4)].map((_, i) => (
+      <MonitorCardSkeleton key={i} />
+    ))}
   </View>
 ));

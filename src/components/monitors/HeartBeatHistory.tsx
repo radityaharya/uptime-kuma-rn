@@ -1,4 +1,5 @@
-import * as React from 'react';
+import React, { useEffect, useRef } from 'react';
+import { Animated } from 'react-native';
 
 import { type HeartbeatData } from '@/api/status/types';
 import { type HeartBeat } from '@/api/types';
@@ -46,9 +47,60 @@ const HeartbeatBar = ({
 
 const PlaceholderBar = () => (
   <View className="items-center justify-end">
-    <View className="h-[30px] w-2 rounded-full bg-gray-600/50" />
+    <View className="h-[20px] w-2 rounded-full bg-gray-600/50" />
   </View>
 );
+
+function AnimatedPlaceholderBars() {
+  const animatedValues = useRef(
+    [...Array(30)].map(() => new Animated.Value(0))
+  ).current;
+
+  useEffect(() => {
+    const animations = animatedValues.map((animatedValue, index) => {
+      return Animated.loop(
+        Animated.sequence([
+          Animated.delay(index * 100),
+          Animated.timing(animatedValue, {
+            toValue: 1,
+            duration: 500,
+            useNativeDriver: true
+          }),
+          Animated.timing(animatedValue, {
+            toValue: 0,
+            duration: 500,
+            useNativeDriver: true
+          })
+        ])
+      );
+    });
+
+    Animated.stagger(100, animations).start();
+  }, [animatedValues]);
+
+  return (
+    <View className="flex-row justify-between">
+      {animatedValues.map((animatedValue, index) => (
+        <Animated.View
+          key={index}
+          style={{
+            opacity: animatedValue,
+            transform: [
+              {
+                scale: animatedValue.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [1, 1.5]
+                })
+              }
+            ]
+          }}
+        >
+          <PlaceholderBar />
+        </Animated.View>
+      ))}
+    </View>
+  );
+}
 
 export function HeartbeatHistory({
   heartbeats = [],
@@ -85,21 +137,25 @@ export function HeartbeatHistory({
   return (
     <View className={`${className}`}>
       <View className="mb-2 flex-row justify-between">
-        {bars.map((item, index) => (
-          <React.Fragment key={index}>
-            {item ? (
-              <HeartbeatBar
-                status={item.status}
-                ping={item.ping || 0}
-                maxPing={maxPing}
-                isParent={isParent}
-              />
-            ) : (
-              <PlaceholderBar />
-            )}
-            {index < bars.length - 1 && <View className="w-1" />}
-          </React.Fragment>
-        ))}
+        {bars.length === 0 ? (
+          <AnimatedPlaceholderBars />
+        ) : (
+          bars.map((item, index) => (
+            <React.Fragment key={index}>
+              {item ? (
+                <HeartbeatBar
+                  status={item.status}
+                  ping={item.ping || 0}
+                  maxPing={maxPing}
+                  isParent={isParent}
+                />
+              ) : (
+                <PlaceholderBar />
+              )}
+              {index < bars.length - 1 && <View className="w-1" />}
+            </React.Fragment>
+          ))
+        )}
       </View>
       <View className="flex-row justify-between">
         <Text className="text-xs opacity-50">
