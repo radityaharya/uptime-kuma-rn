@@ -97,12 +97,11 @@ export const useMonitors = () => {
   }, []);
 
   useEffect(() => {
-    const cleanupPromise = initializeClient();
-    let isComponentMounted = true;
+    initializeClient();
 
     const intervalId = setInterval(async () => {
       const client = clientRef.current;
-      if (!client || !isComponentMounted) return;
+      if (!client) return;
 
       try {
         if (!client.isSocketConnected()) {
@@ -110,18 +109,14 @@ export const useMonitors = () => {
           await client.reinitializeSocket();
         }
       } catch (err) {
-        if (isComponentMounted) {
-          console.error('Failed to reconnect:', err);
-          setError('Connection lost. Attempting to reconnect...');
-        }
+        console.error('Failed to reconnect:', err);
+        setError('Connection lost. Attempting to reconnect...');
       }
     }, 5000);
 
     return () => {
-      isComponentMounted = false;
       clearInterval(intervalId);
-      setError(null);
-      
+      setError(null); // Clear error on unmount
       if (process.env.NODE_ENV === 'production') {
         const client = clientStore.getClient();
         if (client) {
@@ -129,8 +124,6 @@ export const useMonitors = () => {
           clientStore.setClient(null);
         }
       }
-
-      cleanupPromise.catch(() => {});
     };
   }, [initializeClient]);
 
