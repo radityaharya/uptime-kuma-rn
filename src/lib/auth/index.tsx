@@ -28,6 +28,7 @@ const _useAuth = create<AuthState>((set, get) => ({
     monitorStore.reset();
     infoStore.getState().reset();
     clientStore.getClient()?.disconnect();
+    clientStore.getClient()?.destroy();
     clientStore.destroyClient();
 
     removeToken();
@@ -45,11 +46,12 @@ const _useAuth = create<AuthState>((set, get) => ({
       // catch error here
       // Maybe sign_out user!
     }
-  },
+  }
 }));
 
 export const useAuth = createSelectors(_useAuth);
 
 export const signOut = () => _useAuth.getState().signOut();
-export const signIn = (token: AuthCredentials) => _useAuth.getState().signIn(token);
+export const signIn = (token: AuthCredentials) =>
+  _useAuth.getState().signIn(token);
 export const hydrateAuth = () => _useAuth.getState().hydrate();

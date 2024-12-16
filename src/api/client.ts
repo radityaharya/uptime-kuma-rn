@@ -64,7 +64,11 @@ export class UptimeKumaClient {
 
   private cleanupExistingSocket(): void {
     if (this.socket) {
-      this.socket?.removeAllListeners();
+      // Remove all listeners first
+      this.socket.removeAllListeners();
+      // Force close any pending connections
+      this.socket.close();
+      // Disconnect the socket
       this.socket.disconnect();
       this.socket = null;
     }
@@ -455,7 +459,14 @@ export class UptimeKumaClient {
 
   public disconnect(): void {
     this.monitorsInitialized = false;
+    // Clear any stored credentials
+    this.credentials = undefined;
     this.cleanupExistingSocket();
+  }
+
+  public destroy(): void {
+    this.disconnect();
+    monitorStore.cleanup();
   }
 
   public isSocketConnected(): boolean {
