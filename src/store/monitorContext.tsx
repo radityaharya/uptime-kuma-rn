@@ -1,9 +1,11 @@
 import debounce from 'lodash/debounce';
+import memoize from 'lodash/memoize';
 import React, {
   createContext,
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState
 } from 'react';
 
@@ -49,6 +51,55 @@ class MonitorStore {
   private settersMap: Set<(monitors: Monitor[]) => void> = new Set();
   private currentMonitors: Monitor[] = getItem('monitors') || [];
   private subscribers: Set<(monitors: Monitor[]) => void> = new Set();
+
+  private processHeartbeatsMemoized = memoize(
+    <T extends { time: string | Date }>(heartbeats: T[]): T[] => {
+      return heartbeats
+        .map((hb) => ({
+          ...hb,
+          time: typeof hb.time === 'string' ? new Date(hb.time) : hb.time
+        }))
+        .sort((a, b) => b.time.getTime() - a.time.getTime());
+    },
+    (heartbeats) => JSON.stringify(heartbeats.map((h) => h.time))
+  );
+
+  private batchedUpdates: Map<number, Partial<MonitorUpdate>> = new Map();
+  private batchUpdateTimeout: NodeJS.Timeout | null = null;
+
+  private processBatchUpdates = () => {
+    if (this.batchedUpdates.size === 0) return;
+
+    const monitors = [...this.currentMonitors];
+    let hasChanges = false;
+
+    this.batchedUpdates.forEach((update, id) => {
+      const index = monitors.findIndex((m) => Number(m.id) === Number(id));
+      if (index !== -1) {
+        monitors[index] = {
+          ...monitors[index],
+          ...update,
+          heartBeatList: update.heartBeatList
+            ? this.processHeartbeatsMemoized(update.heartBeatList)
+            : monitors[index].heartBeatList
+        };
+        hasChanges = true;
+      }
+    });
+
+    if (hasChanges) {
+      this.currentMonitors = monitors;
+      this.notifySubscribers();
+    }
+
+    this.batchedUpdates.clear();
+    this.batchUpdateTimeout = null;
+  };
+
+  private monitorStatsCache: {
+    monitors: Monitor[];
+    stats: MonitorStats;
+  } | null = null;
 
   constructor() {
     try {
@@ -101,71 +152,12 @@ class MonitorStore {
   }, 500);
 
   updateMonitor(id: number, update: Partial<MonitorUpdate>): void {
-    const monitors = this.getMonitors();
-    const index = monitors.findIndex((m) => Number(m.id) === Number(id));
-    if (index === -1) {
-      console.warn(
-        `Monitor ${id} not found. Current monitors:`,
-        monitors.map((m) => m.id)
-      );
-      return;
+    const existingUpdate = this.batchedUpdates.get(id) || {};
+    this.batchedUpdates.set(id, { ...existingUpdate, ...update });
+
+    if (!this.batchUpdateTimeout) {
+      this.batchUpdateTimeout = setTimeout(this.processBatchUpdates, 50);
     }
-
-    const currentUptime = monitors[index].uptime || {
-      day: 0,
-      month: 0,
-      year: undefined
-    };
-    const updatedUptime = update.uptime
-      ? {
-          day: update.uptime.day ?? currentUptime.day ?? 0,
-          month: update.uptime.month ?? currentUptime.month ?? 0,
-          year: update.uptime.year ?? currentUptime.year ?? undefined
-        }
-      : currentUptime;
-
-    const processHeartbeats = <T extends { time: string | Date }>(
-      heartbeats: T[]
-    ): T[] => {
-      return heartbeats
-        .map((hb) => ({
-          ...hb,
-          time:
-            typeof hb.time === 'string'
-              ? new Date(
-                  Date.UTC(
-                    parseInt(hb.time.slice(0, 4)), // Year
-                    parseInt(hb.time.slice(5, 7)) - 1, // Month (0-indexed)
-                    parseInt(hb.time.slice(8, 10)), // Day
-                    parseInt(hb.time.slice(11, 13)), // Hours
-                    parseInt(hb.time.slice(14, 16)), // Minutes
-                    parseInt(hb.time.slice(17, 19)) // Seconds
-                  )
-                )
-              : hb.time
-        }))
-        .sort((a, b) => b.time.getTime() - a.time.getTime());
-    };
-
-    const updatedMonitor = {
-      ...monitors[index],
-      ...update,
-      uptime: updatedUptime
-    };
-
-    if (update.heartBeatList) {
-      updatedMonitor.heartBeatList = processHeartbeats(update.heartBeatList);
-      updatedMonitor.isUp = updatedMonitor.heartBeatList[0]?.status === 1;
-    }
-
-    if (update.importantHeartBeatList) {
-      updatedMonitor.importantHeartBeatList = processHeartbeats(
-        update.importantHeartBeatList
-      );
-    }
-
-    monitors[index] = updatedMonitor;
-    this.notifySubscribers();
   }
 
   addHeartbeat(heartbeat: ImportantHeartBeat): void {
@@ -260,15 +252,20 @@ class MonitorStore {
     this.notifySubscribers();
   }
 
-  getMonitorStats() {
+  getMonitorStats(): MonitorStats {
+    if (this.monitorStatsCache?.monitors === this.currentMonitors) {
+      return this.monitorStatsCache.stats;
+    }
+
     const activeMonitors = this.currentMonitors.filter((m) => m.active);
     const numMonitors = activeMonitors.length;
+
     const numHeartbeats = activeMonitors.reduce(
       (acc, monitor) => acc + (monitor.heartBeatList?.length || 0),
       0
     );
     const avgHeartbeatsPerMonitor = numMonitors
-      ? Number((numHeartbeats / numMonitors).toFixed(1)) // Convert to number
+      ? Number((numHeartbeats / numMonitors).toFixed(1))
       : 0;
 
     const statusCounts = activeMonitors.reduce(
@@ -356,7 +353,7 @@ class MonitorStore {
       { heartbeat: null, monitorId: null, monitorName: '' }
     );
 
-    return {
+    const stats = {
       totalMonitors: this.currentMonitors.length,
       numMonitors,
       numHeartbeats,
@@ -375,6 +372,13 @@ class MonitorStore {
       isAllHeartbeatPopulated,
       latestImportantEvent
     };
+
+    this.monitorStatsCache = {
+      monitors: this.currentMonitors,
+      stats
+    };
+
+    return stats;
   }
 
   reset() {
@@ -390,23 +394,23 @@ class MonitorStore {
 
   cleanup() {
     this.notifySubscribers.cancel();
-
     this.settersMap.clear();
     this.subscribers.clear();
-
-    this.currentMonitors = [];
   }
 }
 
 export function useMonitorsStore() {
-  const [monitors, setMonitors] = React.useState<Monitor[]>([]);
-
-  React.useEffect(() => {
-    const unsubscribe = monitorStore.subscribe(setMonitors);
-    return () => unsubscribe();
+  const [monitors, setMonitors] = useState<Monitor[]>([]);
+  const setMonitorsCallback = useCallback((newMonitors: Monitor[]) => {
+    setMonitors(newMonitors);
   }, []);
 
-  return monitors;
+  useEffect(() => {
+    const unsubscribe = monitorStore.subscribe(setMonitorsCallback);
+    return () => unsubscribe();
+  }, [setMonitorsCallback]);
+
+  return useMemo(() => monitors, [monitors]);
 }
 
 export function useMonitor(id: number) {
@@ -472,17 +476,17 @@ export interface MonitorStats {
 }
 
 export function useMonitorStats(): MonitorStats {
-  const [stats, setStats] = React.useState(() =>
-    monitorStore.getMonitorStats()
-  );
+  const [stats, setStats] = useState(() => monitorStore.getMonitorStats());
 
-  React.useEffect(() => {
-    const unsubscribe = monitorStore.subscribe(() => {
+  useEffect(() => {
+    const updateStats = debounce(() => {
       setStats(monitorStore.getMonitorStats());
-    });
+    }, 100);
+
+    const unsubscribe = monitorStore.subscribe(updateStats);
     return () => {
       unsubscribe();
-      setStats(monitorStore.getMonitorStats());
+      updateStats.cancel();
     };
   }, []);
 
