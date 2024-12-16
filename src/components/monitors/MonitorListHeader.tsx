@@ -1,3 +1,4 @@
+
 import * as React from 'react';
 import { Pressable } from 'react-native';
 
@@ -7,7 +8,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
 import { ErrorMessage } from './ErrorMessage';
@@ -20,7 +21,7 @@ export type FilterStatus = 'none' | 'up' | 'down';
 const sortFieldLabels: Record<SortField, string> = {
   name: 'Name',
   status: 'Status',
-  uptime: 'Uptime'
+  uptime: 'Uptime',
 };
 
 interface MonitorListHeaderProps {
@@ -32,7 +33,7 @@ interface MonitorListHeaderProps {
   setFilterStatus: (status: FilterStatus) => void;
   totalMonitors: number;
   filteredCount: number;
-  error: string | null;
+  error?: string;
 }
 
 export const MonitorListHeader = ({
@@ -44,7 +45,7 @@ export const MonitorListHeader = ({
   setFilterStatus,
   totalMonitors,
   filteredCount,
-  error
+  error,
 }: MonitorListHeaderProps) => (
   <>
     <View className="pb-14 pt-40">
@@ -66,9 +67,7 @@ export const MonitorListHeader = ({
           </Text>
         </Pressable>
         <Pressable
-          onPress={() =>
-            setFilterStatus(filterStatus === 'down' ? 'none' : 'down')
-          }
+          onPress={() => setFilterStatus(filterStatus === 'down' ? 'none' : 'down')}
           className={`rounded-full border p-4 ${
             filterStatus === 'down'
               ? 'border-red-600 bg-red-500'
