@@ -53,8 +53,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     bundleIdentifier: Env.BUNDLE_ID,
     infoPlist: {
-      UIBackgroundModes: ['fetch', 'processing'],
-      BGTaskSchedulerPermittedIdentifiers: ['com.transistorsoft.fetch'],
+      UIBackgroundModes: ['fetch', 'processing']
     },
   },
   web: {
@@ -79,8 +78,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     'expo-localization',
     'expo-router',
     ['app-icon-badge', appIconBadgeConfig],
-    ['react-native-edge-to-edge'],
-    'react-native-background-fetch',
+    ['react-native-edge-to-edge']
   ],
   extra: {
     ...ClientEnv,
