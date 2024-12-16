@@ -10,6 +10,7 @@ import {
 
 import { type Monitor } from '@/api/types';
 import { EmptyState } from '@/components/monitors/EmptyState';
+import { LoadingState } from '@/components/monitors/LoadingState';
 import { MonitorItem } from '@/components/monitors/MonitorItem';
 import {
   type FilterStatus,
@@ -22,7 +23,6 @@ import { View } from '@/components/ui';
 import { useMonitors } from '@/hooks/use-monitors';
 import { useAuth } from '@/lib';
 import { useMonitorsStore, useMonitorStats } from '@/store/monitorContext';
-import { LoadingState } from '@/components/monitors/LoadingState';
 
 export interface MonitorSection extends SectionListData<Monitor> {
   title: string;
@@ -229,7 +229,7 @@ export default function Index() {
             setFilterStatus={setFilterStatus}
             totalMonitors={stats.totalMonitors}
             filteredCount={filteredMonitors.length}
-            error={error ?? undefined}
+            error={error}
           />
         }
       />

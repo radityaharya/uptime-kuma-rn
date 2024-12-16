@@ -1,5 +1,11 @@
 import debounce from 'lodash/debounce';
-import React, { createContext, useCallback, useContext, useState } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState
+} from 'react';
 
 import {
   type HeartBeat,
@@ -43,9 +49,6 @@ class MonitorStore {
   private settersMap: Set<(monitors: Monitor[]) => void> = new Set();
   private currentMonitors: Monitor[] = getItem('monitors') || [];
   private subscribers: Set<(monitors: Monitor[]) => void> = new Set();
-  private batchUpdates: Set<number> = new Set();
-  private batchTimeout: NodeJS.Timeout | null = null;
-  private BATCH_DELAY = 1000;
 
   constructor() {
     try {
@@ -95,7 +98,7 @@ class MonitorStore {
   private notifySubscribers = debounce(() => {
     this.settersMap.forEach((setter) => setter(this.currentMonitors));
     this.subscribers.forEach((sub) => sub(this.currentMonitors));
-  }, this.BATCH_DELAY);
+  }, 500);
 
   updateMonitor(id: number, update: Partial<MonitorUpdate>): void {
     const monitors = this.getMonitors();
@@ -162,18 +165,7 @@ class MonitorStore {
     }
 
     monitors[index] = updatedMonitor;
-    this.batchUpdates.add(id);
-    this.scheduleBatchUpdate();
-  }
-
-  private scheduleBatchUpdate() {
-    if (this.batchTimeout) {
-      clearTimeout(this.batchTimeout);
-    }
-    this.batchTimeout = setTimeout(() => {
-      this.setMonitors([...this.currentMonitors]);
-      this.batchUpdates.clear();
-    }, this.BATCH_DELAY);
+    this.notifySubscribers();
   }
 
   addHeartbeat(heartbeat: ImportantHeartBeat): void {
@@ -265,6 +257,7 @@ class MonitorStore {
     });
 
     this.setMonitors(this.currentMonitors);
+    this.notifySubscribers();
   }
 
   getMonitorStats() {
@@ -397,12 +390,11 @@ class MonitorStore {
 
   cleanup() {
     this.notifySubscribers.cancel();
-    if (this.batchTimeout) {
-      clearTimeout(this.batchTimeout);
-    }
-    this.batchUpdates.clear();
+
     this.settersMap.clear();
     this.subscribers.clear();
+
+    this.currentMonitors = [];
   }
 }
 
@@ -432,9 +424,12 @@ export function MonitorProvider({ children }: { children: React.ReactNode }) {
     monitorStore.setMonitors(newMonitors);
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const cleanup = monitorStore.registerSetter(setMonitorsState);
-    return cleanup;
+    return () => {
+      cleanup();
+      setMonitorsState([]);
+    };
   }, []);
 
   return (
@@ -482,9 +477,13 @@ export function useMonitorStats(): MonitorStats {
   );
 
   React.useEffect(() => {
-    return monitorStore.subscribe(() => {
+    const unsubscribe = monitorStore.subscribe(() => {
       setStats(monitorStore.getMonitorStats());
     });
+    return () => {
+      unsubscribe();
+      setStats(monitorStore.getMonitorStats());
+    };
   }, []);
 
   return stats;
