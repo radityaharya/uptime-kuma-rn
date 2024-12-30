@@ -1,4 +1,4 @@
-import { formatDistance } from 'date-fns';
+import { differenceInHours, formatDistance } from 'date-fns';
 import { useRouter } from 'expo-router';
 import * as React from 'react';
 import { Pressable } from 'react-native';
@@ -11,6 +11,17 @@ export const LatestImportantEvent = () => {
   const stats = useMonitorStats();
 
   if (!stats.latestImportantEvent || !stats.latestImportantEvent.heartbeat) {
+    return null;
+  }
+
+  const eventTime = stats.latestImportantEvent.heartbeat.time;
+  const hoursDifference = differenceInHours(new Date(), eventTime);
+
+  if (
+    !stats.latestImportantEvent ||
+    !stats.latestImportantEvent.heartbeat ||
+    hoursDifference > 1
+  ) {
     return null;
   }
 
@@ -28,11 +39,7 @@ export const LatestImportantEvent = () => {
       >
         <View className="">
           <Text className="text-xs">
-            {formatDistance(
-              stats.latestImportantEvent.heartbeat.time,
-              new Date(),
-              { addSuffix: true }
-            )}
+            {formatDistance(eventTime, new Date(), { addSuffix: true })}
           </Text>
           <Text className="mb-1 text-sm font-medium text-foreground">
             {stats.latestImportantEvent.monitorName} -{' '}
