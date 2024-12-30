@@ -22,6 +22,7 @@ export const useMonitors = () => {
     setError(null);
     if (!clientRef.current) return;
     try {
+      await clientRef.current.reconnect();
       await clientRef.current.getMonitors();
       await clientRef.current.getHeartbeats();
       setError(null);
@@ -70,7 +71,7 @@ export const useMonitors = () => {
       await client.getMonitors();
       await client.getHeartbeats();
     } catch (error: any) {
-      const errorMessage = error.message.includes('timeout') 
+      const errorMessage = error.message.includes('timeout')
         ? 'Connection timed out. Please check your network connection.'
         : `Connection failed: ${error.message}`;
       setError(errorMessage);
@@ -121,7 +122,7 @@ export const useMonitors = () => {
       isComponentMounted = false;
       clearInterval(intervalId);
       setError(null);
-      
+
       if (process.env.NODE_ENV === 'production') {
         const client = clientStore.getClient();
         if (client) {
@@ -140,6 +141,6 @@ export const useMonitors = () => {
     isLoading,
     isReconnecting,
     refreshMonitors,
-    reconnectClient,
+    reconnectClient
   };
 };

@@ -12,8 +12,7 @@ import React, {
 import {
   type HeartBeat,
   type ImportantHeartBeat,
-  type Monitor,
-  type Uptime
+  type Monitor
 } from '@/api/types';
 import { sendNotificationImmediately } from '@/lib/notification';
 import { getItem, removeItem, setItem } from '@/lib/storage';
@@ -27,7 +26,11 @@ interface MonitorUpdate {
   heartBeatList?: HeartBeat[];
   importantHeartBeatList?: ImportantHeartBeat[];
   avgPing?: number;
-  uptime: Uptime;
+  uptime?: {
+    day?: number;
+    month?: number;
+    year?: number;
+  };
 }
 
 const MonitorContext = createContext<MonitorContextType | null>(null);
@@ -76,12 +79,26 @@ class MonitorStore {
     this.batchedUpdates.forEach((update, id) => {
       const index = monitors.findIndex((m) => Number(m.id) === Number(id));
       if (index !== -1) {
+        const existingMonitor = monitors[index];
+        const currentUptime = existingMonitor.uptime || {
+          day: 0,
+          month: 0,
+          year: 0
+        };
+
         monitors[index] = {
-          ...monitors[index],
+          ...existingMonitor,
           ...update,
+          uptime: update.uptime
+            ? {
+                day: update.uptime.day ?? currentUptime.day,
+                month: update.uptime.month ?? currentUptime.month,
+                year: update.uptime.year ?? currentUptime.year
+              }
+            : currentUptime,
           heartBeatList: update.heartBeatList
             ? this.processHeartbeatsMemoized(update.heartBeatList)
-            : monitors[index].heartBeatList
+            : existingMonitor.heartBeatList
         };
         hasChanges = true;
       }
@@ -152,6 +169,34 @@ class MonitorStore {
   }, 500);
 
   updateMonitor(id: number, update: Partial<MonitorUpdate>): void {
+    const existingMonitor = this.currentMonitors.find(
+      (m) => Number(m.id) === Number(id)
+    );
+    if (!existingMonitor) return;
+
+    if (update.uptime) {
+      const index = this.currentMonitors.findIndex(
+        (m) => Number(m.id) === Number(id)
+      );
+      const currentUptime = existingMonitor.uptime || {
+        day: 0,
+        month: 0,
+        year: 0
+      };
+
+      this.currentMonitors[index] = {
+        ...existingMonitor,
+        uptime: {
+          day: update.uptime.day ?? currentUptime.day,
+          month: update.uptime.month ?? currentUptime.month,
+          year: update.uptime.year ?? currentUptime.year
+        }
+      };
+
+      this.notifySubscribers();
+      return;
+    }
+
     const existingUpdate = this.batchedUpdates.get(id) || {};
     this.batchedUpdates.set(id, { ...existingUpdate, ...update });
 

@@ -295,19 +295,17 @@ export class UptimeKumaClient {
     const monitor = this.getMonitor(monitorId);
     if (!monitor) return;
 
-    const currentUptime = monitor.uptime || {
-      day: 0,
-      month: 0,
-      year: undefined
+    const currentUptime = {
+      day: monitor.uptime?.day ?? 0,
+      month: monitor.uptime?.month ?? 0,
+      year: monitor.uptime?.year ?? 0
     };
-    const uptimeUpdate =
-      period === 24
-        ? { ...currentUptime, day: uptime }
-        : period === 720
-          ? { ...currentUptime, month: uptime }
-          : period === '1y'
-            ? { ...currentUptime, year: uptime }
-            : currentUptime;
+
+    const uptimeUpdate = {
+      day: period === 24 ? uptime : currentUptime.day,
+      month: period === 720 ? uptime : currentUptime.month,
+      year: period === '1y' ? uptime : currentUptime.year
+    };
 
     this.updateMonitor(monitorId, { uptime: uptimeUpdate });
   }

@@ -19,7 +19,7 @@ export const MonitorItem = React.memo(
     }
 
     return (
-      <View className={`mb-2 ${monitor.parent ? '' : ''}`}>
+      <View className="mb-2">
         <MemoizedMonitorCard monitor={monitor} />
       </View>
     );
