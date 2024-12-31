@@ -1,15 +1,16 @@
 import io, { type Socket } from 'socket.io-client';
 
 import { log } from '@/lib/log';
+import { HeartBeat, ImportantHeartBeat, type Monitor } from '@/schemas/monitor';
 import { infoStore } from '@/store/infoStore';
 import { monitorStore } from '@/store/monitorContext';
 import statusStore from '@/store/statusStore';
 
 import {
-  type HeartBeat,
-  type ImportantHeartBeat,
+  // type HeartBeat,
+  // type ImportantHeartBeat,
   type Info,
-  type Monitor,
+  // type Monitor,
   type StatusPage
 } from './types';
 
@@ -342,6 +343,24 @@ export class UptimeKumaClient {
     if (!Number.isInteger(numericId)) {
       throw new Error(`Invalid monitor ID: ${monitorId}`);
     }
+  }
+
+  public async addMonitor(monitor: Monitor): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (!this.socket?.connected) {
+        reject(new Error('Socket not connected'));
+        return;
+      }
+
+      this.socket.emit('addMonitor', monitor, (data: { ok: boolean }) => {
+        if (!data.ok) {
+          reject(new Error('Failed to add monitor'));
+          return;
+        }
+
+        resolve();
+      });
+    });
   }
 
   // Public API Methods

@@ -1,7 +1,7 @@
 import * as React from 'react';
 
-import { type Monitor } from '@/api';
 import { View } from '@/components/ui';
+import { type Monitor } from '@/schemas/monitor';
 
 import { MonitorCard } from './MonitorCard';
 

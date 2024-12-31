@@ -9,13 +9,13 @@ import React, {
   useState
 } from 'react';
 
+import { sendNotificationImmediately } from '@/lib/notification';
+import { getItem, removeItem, setItem } from '@/lib/storage';
 import {
   type HeartBeat,
   type ImportantHeartBeat,
   type Monitor
-} from '@/api/types';
-import { sendNotificationImmediately } from '@/lib/notification';
-import { getItem, removeItem, setItem } from '@/lib/storage';
+} from '@/schemas/monitor';
 
 interface MonitorContextType {
   monitors: Monitor[];
@@ -249,7 +249,7 @@ class MonitorStore {
     }
 
     this.updateMonitor(hb.monitor_id, {
-      heartBeatList: monitors[index].heartBeatList
+      heartBeatList: monitors[index].heartBeatList || undefined
     });
   }
 

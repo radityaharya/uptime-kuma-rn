@@ -9,10 +9,10 @@ import {
 } from 'react-native';
 import { LineChart, type LineChartPropsType } from 'react-native-gifted-charts';
 
-import { type HeartBeat } from '@/api/types';
 import { DetailStatCard } from '@/components/monitors/DetailStatCard';
 import { MonitorCard } from '@/components/monitors/MonitorCard';
 import { Text, View } from '@/components/ui';
+import { type HeartBeat } from '@/schemas/monitor';
 import { clientStore } from '@/store/clientStore';
 import { useMonitor } from '@/store/monitorContext';
 

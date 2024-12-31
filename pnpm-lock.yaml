@@ -17,6 +17,9 @@ importers:
       '@react-native-async-storage/async-storage':
         specifier: 1.23.1
         version: 1.23.1(react-native@0.76.5(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.14)(react@18.3.1))
+      '@react-native-picker/picker':
+        specifier: ^2.10.2
+        version: 2.10.2(react-native@0.76.5(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.14)(react@18.3.1))(react@18.3.1)
       '@rn-primitives/avatar':
         specifier: ^1.1.0
         version: 1.1.0(react-native-web@0.19.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-native@0.76.5(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.14)(react@18.3.1))(react@18.3.1)
@@ -1946,6 +1949,12 @@ packages:
     resolution: {integrity: sha512-Qd2kQ3yi6Y3+AcUlrHxSLlnBvpdCEMVGFlVBneVOjaFaPU61g1huc38g339ysXspwY1QZA2aNhrk/KlHGO+ewA==}
     peerDependencies:
       react-native: ^0.0.0-0 || >=0.60 <1.0
+
+  '@react-native-picker/picker@2.10.2':
+    resolution: {integrity: sha512-kr3OvCRwTYjR/OKlb52k4xmQVU7dPRIALqpyiihexdJxEgvc1smnepgqCeM9oXmNSG4YaV5/RSxFlLC5Z/T/Eg==}
+    peerDependencies:
+      react: '*'
+      react-native: '*'
 
   '@react-native/assets-registry@0.76.5':
     resolution: {integrity: sha512-MN5dasWo37MirVcKWuysRkRr4BjNc81SXwUtJYstwbn8oEkfnwR9DaqdDTo/hHOnTdhafffLIa2xOOHcjDIGEw==}
@@ -10556,6 +10565,11 @@ snapshots:
   '@react-native-async-storage/async-storage@1.23.1(react-native@0.76.5(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.14)(react@18.3.1))':
     dependencies:
       merge-options: 3.0.4
+      react-native: 0.76.5(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.14)(react@18.3.1)
+
+  '@react-native-picker/picker@2.10.2(react-native@0.76.5(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.14)(react@18.3.1))(react@18.3.1)':
+    dependencies:
+      react: 18.3.1
       react-native: 0.76.5(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.14)(react@18.3.1)
 
   '@react-native/assets-registry@0.76.5': {}

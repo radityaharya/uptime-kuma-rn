@@ -3,7 +3,7 @@ import type {
   Control,
   FieldValues,
   Path,
-  RegisterOptions,
+  RegisterOptions
 } from 'react-hook-form';
 import { useController } from 'react-hook-form';
 import type { TextInputProps } from 'react-native';
@@ -19,31 +19,31 @@ const inputTv = tv({
     container: 'mb-2',
     label: 'mb-1 text-lg text-foreground',
     input:
-      'native:h-12 bg-background native:text-lg native:leading-tight web:ring-offset-background h-10 rounded-md border border-input px-3 text-base text-foreground file:border-0 file:bg-transparent file:font-medium placeholder:text-muted-foreground web:flex web:w-full web:py-2 web:focus-visible:outline-none web:focus-visible:ring-2 web:focus-visible:ring-ring web:focus-visible:ring-offset-2 lg:text-sm',
+      'native:h-12 bg-background native:text-lg native:leading-tight web:ring-offset-background h-10 rounded-md border border-input px-3 text-base text-foreground file:border-0 file:bg-transparent file:font-medium placeholder:text-muted-foreground web:flex web:w-full web:py-2 web:focus-visible:outline-none web:focus-visible:ring-2 web:focus-visible:ring-ring web:focus-visible:ring-offset-2 lg:text-sm'
   },
   variants: {
     focused: {
       true: {
-        input: 'border-ring',
-      },
+        input: 'border-ring'
+      }
     },
     error: {
       true: {
         input: 'border-danger-600',
-        label: 'text-danger-600',
-      },
+        label: 'text-danger-600'
+      }
     },
     disabled: {
       true: {
-        input: 'opacity-50',
-      },
-    },
+        input: 'opacity-50'
+      }
+    }
   },
   defaultVariants: {
     focused: false,
     error: false,
-    disabled: false,
-  },
+    disabled: false
+  }
 });
 
 export interface NInputProps extends TextInputProps {
@@ -81,9 +81,9 @@ export const Input = React.forwardRef<NTextInput, NInputProps>((props, ref) => {
       inputTv({
         error: Boolean(error),
         focused: isFocussed,
-        disabled: Boolean(props.disabled),
+        disabled: Boolean(props.disabled)
       }),
-    [error, isFocussed, props.disabled],
+    [error, isFocussed, props.disabled]
   );
 
   return (
@@ -107,7 +107,7 @@ export const Input = React.forwardRef<NTextInput, NInputProps>((props, ref) => {
         style={StyleSheet.flatten([
           { writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr' },
           { textAlign: I18nManager.isRTL ? 'right' : 'left' },
-          inputProps.style,
+          inputProps.style
         ])}
       />
       {error && (
@@ -124,7 +124,7 @@ export const Input = React.forwardRef<NTextInput, NInputProps>((props, ref) => {
 
 // only used with react-hook-form
 export function ControlledInput<T extends FieldValues>(
-  props: ControlledInputProps<T>,
+  props: ControlledInputProps<T>
 ) {
   const { name, control, rules, ...inputProps } = props;
 

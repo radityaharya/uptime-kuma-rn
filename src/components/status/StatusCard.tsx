@@ -1,8 +1,8 @@
 import * as React from 'react';
 
 import { type HeartbeatData, type StatusPageMonitor } from '@/api/status/types';
-import { type Tag } from '@/api/types';
 import { Text, View } from '@/components/ui';
+import { type Tag } from '@/schemas/monitor';
 
 import { HeartbeatHistory } from '../monitors/HeartBeatHistory';
 import { StatusIndicator } from '../monitors/StatusIndicator';
@@ -12,7 +12,7 @@ interface StatusMonitorCardProps {
 }
 
 const MonitorContent: React.FC<{ monitor: StatusPageMonitor }> = ({
-  monitor,
+  monitor
 }) => {
   switch (monitor.type) {
     case 'http':
@@ -54,7 +54,6 @@ function isMonitorUp(heartbeats: HeartbeatData[]): boolean {
 }
 
 export function StatusMonitorCard({ monitor }: StatusMonitorCardProps) {
-
   if (!monitor) return null;
 
   const calculateUptime = () => {
@@ -108,6 +107,7 @@ export function StatusMonitorCard({ monitor }: StatusMonitorCardProps) {
           <HeartbeatHistory
             heartbeats={monitor.heartBeatList}
             interval={monitor.interval}
+            isParent={false}
           />
         </View>
 

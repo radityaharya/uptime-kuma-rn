@@ -86,6 +86,7 @@ export type Monitor = {
   keyword?: string | null;
   invertKeyword: boolean;
   jsonPath: string | null;
+  jsonPathOperator?: string;
 
   // Authentication
   authMethod: string | null;
@@ -124,6 +125,7 @@ export type Monitor = {
   mqttPassword: string;
   mqttTopic: string;
   mqttSuccessMessage: string;
+  mqttCheckType: string;
 
   // RADIUS Settings
   radiusUsername: string | null;
@@ -167,6 +169,13 @@ export type Monitor = {
   expectedValue: string | null;
   hostname: string | null;
   packetSize: number;
+  cacheBust: boolean;
+  remote_browser: any | null;
+  rabbitmqNodes: any[];
+  rabbitmqUsername: string;
+  rabbitmqPassword: string;
+  conditions: any[];
+  snmpVersion: string;
 
   heartBeatList?: HeartBeat[];
   importantHeartBeatList?: ImportantHeartBeat[];
@@ -209,7 +218,8 @@ export type UptimeKumaEvent =
   | 'uptime'
   | 'disconnect'
   | 'certInfo'
-  | 'monitorList';
+  | 'monitorList'
+  | 'add';
 
 export type EventPayloads = {
   [K in UptimeKumaEvent]: any;

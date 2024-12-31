@@ -2,9 +2,9 @@ import { ChevronDown, ChevronUp } from 'lucide-react-native';
 import * as React from 'react';
 import { TouchableOpacity } from 'react-native';
 
-import { type Monitor } from '@/api/types';
 import { Text, View } from '@/components/ui';
 import { cn } from '@/lib';
+import { type Monitor } from '@/schemas/monitor';
 
 import { MonitorCard } from './MonitorCard';
 

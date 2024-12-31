@@ -11,12 +11,19 @@ export default function MonitorsLayout() {
         headerShown: false,
         headerBackButtonDisplayMode: 'generic',
         headerStyle: {
-          backgroundColor: theme.colors.background,
-        },
+          backgroundColor: theme.colors.background
+        }
       }}
     >
       <Stack.Screen name="index" />
-      <Stack.Screen name="[id]" options={{ title: 'Monitor', headerShown: true }} />
+      <Stack.Screen
+        name="[id]"
+        options={{ title: 'Monitor', headerShown: true }}
+      />
+      <Stack.Screen
+        name="edit/[id]"
+        options={{ title: 'Edit Monitor', headerShown: true }}
+      />
     </Stack>
   );
 }

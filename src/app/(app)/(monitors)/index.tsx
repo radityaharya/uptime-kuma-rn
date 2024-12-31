@@ -1,14 +1,15 @@
 /* eslint-disable unused-imports/no-unused-vars */
-import { Redirect } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { Redirect, router } from 'expo-router';
 import * as React from 'react';
 import {
   RefreshControl,
   SectionList,
   type SectionListData,
-  ToastAndroid
+  ToastAndroid,
+  TouchableOpacity
 } from 'react-native';
 
-import { type Monitor } from '@/api/types';
 import { EmptyState } from '@/components/monitors/EmptyState';
 import { LoadingState } from '@/components/monitors/LoadingState';
 import { MonitorItem } from '@/components/monitors/MonitorItem';
@@ -22,6 +23,7 @@ import { SectionHeader } from '@/components/monitors/SectionHeader';
 import { View } from '@/components/ui';
 import { useMonitors } from '@/hooks/use-monitors';
 import { useAuth } from '@/lib';
+import { type Monitor } from '@/schemas/monitor';
 import { useMonitorsStore, useMonitorStats } from '@/store/monitorContext';
 
 export interface MonitorSection extends SectionListData<Monitor> {
@@ -188,6 +190,10 @@ export default function Index() {
     [expandedSections, toggleSection]
   );
 
+  const handleAddMonitor = () => {
+    router.push('/(app)/(monitors)/edit/new');
+  };
+
   if (authStatus === 'unauthenticated') {
     return <Redirect href="/login" />;
   }
@@ -233,6 +239,12 @@ export default function Index() {
           />
         }
       />
+      <TouchableOpacity
+        className="absolute bottom-4 right-4 flex size-16 items-center justify-center rounded-full bg-green-500"
+        onPress={handleAddMonitor}
+      >
+        <Ionicons name="add" size={24} color="white" />
+      </TouchableOpacity>
     </View>
   );
 }

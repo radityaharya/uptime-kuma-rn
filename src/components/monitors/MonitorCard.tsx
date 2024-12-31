@@ -2,9 +2,9 @@ import { useRouter } from 'expo-router';
 import * as React from 'react';
 import { Pressable } from 'react-native';
 
-import { type HeartBeat, type Monitor, type Tag } from '@/api/types';
 import { Text, View } from '@/components/ui';
 import { cn } from '@/lib';
+import { type HeartBeat, type Monitor, type Tag } from '@/schemas/monitor';
 
 import { HeartbeatHistory } from './HeartBeatHistory';
 // import { StatusIndicator } from './StatusIndicator';

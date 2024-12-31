@@ -30,13 +30,14 @@
 
 import type {
   BottomSheetBackdropProps,
-  BottomSheetModalProps,
+  BottomSheetModalProps
 } from '@gorhom/bottom-sheet';
 import { BottomSheetModal, useBottomSheet } from '@gorhom/bottom-sheet';
 import * as React from 'react';
 import { Pressable, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
-import { Path, Svg } from 'react-native-svg';
+
+import { useThemeConfig } from '@/lib/use-theme-config';
 
 import { Text } from './text';
 
@@ -70,18 +71,20 @@ export const Modal = React.forwardRef(
       detached = false,
       ...props
     }: ModalProps,
-    ref: ModalRef,
+    ref: ModalRef
   ) => {
     const detachedProps = React.useMemo(
       () => getDetachedProps(detached),
-      [detached],
+      [detached]
     );
     const modal = useModal();
     const snapPoints = React.useMemo(() => _snapPoints, [_snapPoints]);
 
+    const theme = useThemeConfig();
+
     React.useImperativeHandle(
       ref,
-      () => (modal.ref.current as BottomSheetModal) || null,
+      () => (modal.ref.current as BottomSheetModal) || null
     );
 
     const renderHandleComponent = React.useCallback(
@@ -91,7 +94,7 @@ export const Modal = React.forwardRef(
           <ModalHeader title={title} dismiss={modal.dismiss} />
         </>
       ),
-      [title, modal.dismiss],
+      [title, modal.dismiss]
     );
 
     return (
@@ -104,9 +107,12 @@ export const Modal = React.forwardRef(
         backdropComponent={props.backdropComponent || renderBackdrop}
         enableDynamicSizing={false}
         handleComponent={renderHandleComponent}
+        backgroundStyle={{
+          backgroundColor: theme.colors.background
+        }}
       />
     );
-  },
+  }
 );
 
 /**
@@ -145,7 +151,7 @@ const getDetachedProps = (detached: boolean) => {
     return {
       detached: true,
       bottomInset: 46,
-      style: { marginHorizontal: 16, overflow: 'hidden' },
+      style: { marginHorizontal: 16, overflow: 'hidden' }
     } as Partial<BottomSheetModalProps>;
   }
   return {} as Partial<BottomSheetModalProps>;
@@ -155,43 +161,20 @@ const getDetachedProps = (detached: boolean) => {
  * ModalHeader
  */
 
-const ModalHeader = React.memo(({ title, dismiss }: ModalHeaderProps) => {
+const ModalHeader = React.memo(({ title }: ModalHeaderProps) => {
   return (
     <>
       {title && (
-        <View className="flex-row px-2 py-4">
+        <View className="flex-row py-4">
           <View className="size-[24px]" />
-          <View className="flex-1">
-            <Text className="text-center text-[16px] font-bold text-[#26313D] dark:text-white">
+          <View className="">
+            <Text className="text-[16px] font-bold text-[#26313D] dark:text-white">
               {title}
             </Text>
           </View>
         </View>
       )}
-      <CloseButton close={dismiss} />
+      {/* <CloseButton close={dismiss} /> */}
     </>
   );
 });
-
-const CloseButton = ({ close }: { close: () => void }) => {
-  return (
-    <Pressable
-      onPress={close}
-      className="absolute right-3 top-3 size-[24px] items-center justify-center "
-      hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-      accessibilityLabel="close modal"
-      accessibilityRole="button"
-      accessibilityHint="closes the modal"
-    >
-      <Svg
-        className="fill-neutral-300 dark:fill-white"
-        width={24}
-        height={24}
-        fill="none"
-        viewBox="0 0 24 24"
-      >
-        <Path d="M18.707 6.707a1 1 0 0 0-1.414-1.414L12 10.586 6.707 5.293a1 1 0 0 0-1.414 1.414L10.586 12l-5.293 5.293a1 1 0 1 0 1.414 1.414L12 13.414l5.293 5.293a1 1 0 0 0 1.414-1.414L13.414 12l5.293-5.293Z" />
-      </Svg>
-    </Pressable>
-  );
-};

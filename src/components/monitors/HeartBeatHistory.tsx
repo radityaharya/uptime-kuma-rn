@@ -2,8 +2,8 @@ import React, { useEffect, useRef } from 'react';
 import { Animated } from 'react-native';
 
 import { type HeartbeatData } from '@/api/status/types';
-import { type HeartBeat } from '@/api/types';
 import { Text, View } from '@/components/ui';
+import { type HeartBeat } from '@/schemas/monitor';
 
 interface HeartbeatHistoryProps {
   heartbeats?: HeartBeat[] | HeartbeatData[];
@@ -121,7 +121,7 @@ export function HeartbeatHistory({
   }, [heartbeats, numLastBeats]);
 
   const maxPing = React.useMemo(() => {
-    return Math.max(...filledHeartbeats.map((hb) => hb.ping || 0), 100); // minimum 100ms for scale
+    return Math.max(...filledHeartbeats.map((hb) => hb.ping || 0), 100);
   }, [filledHeartbeats]);
 
   const placeholders = React.useMemo(() => {
