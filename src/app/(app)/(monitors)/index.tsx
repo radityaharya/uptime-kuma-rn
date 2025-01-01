@@ -73,7 +73,7 @@ const filterAndSortMonitors = (
 
 const groupMonitorsByParent = (monitors: Monitor[]) => {
   const monitorMap = new Map<number, Monitor>();
-  monitors.forEach((monitor) => monitorMap.set(monitor.id, monitor));
+  monitors.forEach((monitor) => monitorMap.set(monitor.id!, monitor));
 
   const grouped = monitors.reduce((acc, monitor) => {
     if (monitor.childrenIDs && monitor.childrenIDs.length > 0) {

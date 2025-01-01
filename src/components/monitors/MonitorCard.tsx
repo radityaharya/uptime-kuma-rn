@@ -91,7 +91,7 @@ export function MonitorCard({ monitor, onClick, className }: MonitorCardProps) {
             ? onClick()
             : router.push({
                 pathname: '/(app)/(monitors)/[id]',
-                params: { id: monitor.id.toString() }
+                params: { id: monitor.id!.toString() }
               })
         }
       >

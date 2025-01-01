@@ -1,7 +1,7 @@
 import io, { type Socket } from 'socket.io-client';
 
 import { log } from '@/lib/log';
-import { HeartBeat, ImportantHeartBeat, type Monitor } from '@/schemas/monitor';
+import { type HeartBeat, type ImportantHeartBeat, type Monitor } from '@/schemas/monitor';
 import { infoStore } from '@/store/infoStore';
 import { monitorStore } from '@/store/monitorContext';
 import statusStore from '@/store/statusStore';
@@ -399,7 +399,7 @@ export class UptimeKumaClient {
   }
 
   public async getHeartbeats(): Promise<void> {
-    this.monitors.map((monitor) => this.getMonitorBeats(monitor.id, 2));
+    this.monitors.map((monitor) => this.getMonitorBeats(monitor.id!, 2));
     return Promise.resolve();
   }
 
