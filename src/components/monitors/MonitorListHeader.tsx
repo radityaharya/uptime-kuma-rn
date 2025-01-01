@@ -47,7 +47,7 @@ export const MonitorListHeader = ({
   error
 }: MonitorListHeaderProps) => (
   <>
-    <View className="pb-14 pt-40">
+    <View className="pb-8 pt-40">
       <MonitorSummaryStats />
     </View>
 

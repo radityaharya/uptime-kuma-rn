@@ -297,7 +297,7 @@ class MonitorStore {
     this.notifySubscribers();
   }
 
-  getMonitorStats(): MonitorStats {
+  getMonitorStats(limit: number = 10, offset: number = 0): MonitorStats {
     if (this.monitorStatsCache?.monitors === this.currentMonitors) {
       return this.monitorStatsCache.stats;
     }
@@ -398,6 +398,8 @@ class MonitorStore {
       { heartbeat: null, monitorId: null, monitorName: '' }
     );
 
+    const importantEvents = this.getLatestImportantEvents(limit, offset);
+
     const stats = {
       totalMonitors: this.currentMonitors.length,
       numMonitors,
@@ -415,7 +417,8 @@ class MonitorStore {
       upMonitors,
       inactiveMonitors,
       isAllHeartbeatPopulated,
-      latestImportantEvent
+      latestImportantEvent,
+      importantEvents
     };
 
     this.monitorStatsCache = {
@@ -424,6 +427,32 @@ class MonitorStore {
     };
 
     return stats;
+  }
+
+  getLatestImportantEvents(limit: number = 10, offset: number = 0) {
+    const importantEvents = this.currentMonitors.flatMap(
+      (monitor) =>
+        monitor.heartBeatList
+          ?.filter((hb) => hb.important === 1)
+          .map((hb) => ({
+            monitorId: monitor.id as number,
+            monitorName: monitor.name,
+            heartbeat: hb
+          })) || []
+    );
+
+    // const activeMonitors = this.currentMonitors.filter((m) => m.active);
+    // importantEvents.filter((event) =>
+    //   activeMonitors.some((m) => m.id === event.monitorId)
+    // );
+
+    importantEvents.sort(
+      (a, b) =>
+        new Date(b.heartbeat.time).getTime() -
+        new Date(a.heartbeat.time).getTime()
+    );
+
+    return importantEvents.slice(offset, offset + limit);
   }
 
   reset() {
@@ -518,6 +547,11 @@ export interface MonitorStats {
     monitorId: string | null;
     monitorName: string;
   };
+  importantEvents: {
+    monitorId: number;
+    monitorName: string;
+    heartbeat: HeartBeat;
+  }[];
 }
 
 export function useMonitorStats(): MonitorStats {
@@ -536,4 +570,27 @@ export function useMonitorStats(): MonitorStats {
   }, []);
 
   return stats;
+}
+
+export function useLatestImportantEvents(
+  limit: number = 10,
+  offset: number = 0
+) {
+  const [events, setEvents] = useState(() =>
+    monitorStore.getLatestImportantEvents(limit, offset)
+  );
+
+  useEffect(() => {
+    const updateEvents = debounce(() => {
+      setEvents(monitorStore.getLatestImportantEvents(limit, offset));
+    }, 100);
+
+    const unsubscribe = monitorStore.subscribe(updateEvents);
+    return () => {
+      unsubscribe();
+      updateEvents.cancel();
+    };
+  }, [limit, offset]);
+
+  return events;
 }

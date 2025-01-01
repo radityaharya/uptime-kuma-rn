@@ -6,7 +6,7 @@ import { ActivityIndicator, Animated, StyleSheet } from 'react-native';
 import { Text, View } from '@/components/ui';
 import { type MonitorStats, useMonitorStats } from '@/store/monitorContext';
 
-import { LatestImportantEvent } from './LatestImportantEvent';
+import { LatestImportantEvents } from './LatestImportantEvent';
 
 function _MonitorNumbers({ stats }: { stats: MonitorStats }) {
   return (
@@ -44,26 +44,26 @@ export function MonitorSummaryStats() {
         Animated.timing(pulseAnim, {
           toValue: 1.15,
           duration: 1500,
-          useNativeDriver: true,
+          useNativeDriver: true
         }),
         Animated.timing(pulseAnim, {
           toValue: 1,
           duration: 1500,
-          useNativeDriver: true,
-        }),
+          useNativeDriver: true
+        })
       ]),
       Animated.sequence([
         Animated.timing(opacityAnim, {
           toValue: 0.8,
           duration: 1500,
-          useNativeDriver: true,
+          useNativeDriver: true
         }),
         Animated.timing(opacityAnim, {
           toValue: 0.6,
           duration: 1500,
-          useNativeDriver: true,
-        }),
-      ]),
+          useNativeDriver: true
+        })
+      ])
     ]);
 
     Animated.loop(pulse).start();
@@ -84,8 +84,8 @@ export function MonitorSummaryStats() {
             {
               backgroundColor: isAllUp ? '#22c55e20' : '#ef444420',
               transform: [{ scale: pulseAnim }],
-              opacity: opacityAnim,
-            },
+              opacity: opacityAnim
+            }
           ]}
         />
         <Animated.View
@@ -93,8 +93,8 @@ export function MonitorSummaryStats() {
             styles.innerCircle,
             {
               backgroundColor: isAllUp ? '#22c55e' : '#ef4444',
-              transform: [{ scale: pulseAnim }],
-            },
+              transform: [{ scale: pulseAnim }]
+            }
           ]}
         />
         <View style={styles.iconContainer}>
@@ -117,7 +117,7 @@ export function MonitorSummaryStats() {
           {isAllUp ? 'Everything is running smoothly' : 'Attention required'}
         </Text>
       </View>
-      <LatestImportantEvent />
+      <LatestImportantEvents />
     </View>
   );
 }
@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
     borderRadius: 80,
     position: 'absolute',
     left: -20, // Center relative to inner circle
-    top: -20,
+    top: -20
   },
   innerCircle: {
     width: 120,
@@ -139,19 +139,19 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 4
     },
     shadowOpacity: 0.3,
     shadowRadius: 4.65,
     elevation: 8,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'center'
   },
   iconContainer: {
     position: 'absolute',
     width: 120,
     height: 120,
     alignItems: 'center',
-    justifyContent: 'center',
-  },
+    justifyContent: 'center'
+  }
 });

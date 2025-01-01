@@ -9,42 +9,9 @@ import { useController } from 'react-hook-form';
 import type { TextInputProps } from 'react-native';
 import { I18nManager, StyleSheet, View } from 'react-native';
 import { TextInput as NTextInput } from 'react-native';
-import { tv } from 'tailwind-variants';
 
 import colors from './colors';
 import { Text } from './text';
-
-const inputTv = tv({
-  slots: {
-    container: 'mb-2',
-    label: 'mb-1 text-lg text-foreground',
-    input:
-      'native:h-12 bg-background native:text-lg native:leading-tight web:ring-offset-background h-10 rounded-md border border-input px-3 text-base text-foreground file:border-0 file:bg-transparent file:font-medium placeholder:text-muted-foreground web:flex web:w-full web:py-2 web:focus-visible:outline-none web:focus-visible:ring-2 web:focus-visible:ring-ring web:focus-visible:ring-offset-2 lg:text-sm'
-  },
-  variants: {
-    focused: {
-      true: {
-        input: 'border-ring'
-      }
-    },
-    error: {
-      true: {
-        input: 'border-danger-600',
-        label: 'text-danger-600'
-      }
-    },
-    disabled: {
-      true: {
-        input: 'opacity-50'
-      }
-    }
-  },
-  defaultVariants: {
-    focused: false,
-    error: false,
-    disabled: false
-  }
-});
 
 export interface NInputProps extends TextInputProps {
   label?: string;
@@ -76,22 +43,16 @@ export const Input = React.forwardRef<NTextInput, NInputProps>((props, ref) => {
   const onBlur = React.useCallback(() => setIsFocussed(false), []);
   const onFocus = React.useCallback(() => setIsFocussed(true), []);
 
-  const styles = React.useMemo(
-    () =>
-      inputTv({
-        error: Boolean(error),
-        focused: isFocussed,
-        disabled: Boolean(props.disabled)
-      }),
-    [error, isFocussed, props.disabled]
-  );
+  const inputClassName = `h-10 rounded-md border bg-background px-3 text-base text-foreground placeholder:text-muted-foreground ${
+    isFocussed ? 'border-ring' : 'border-input'
+  } ${error ? 'border-danger-600' : ''} ${props.disabled ? 'opacity-50' : ''}`;
 
   return (
-    <View className={styles.container()}>
+    <View className="mb-2">
       {label && (
         <Text
           testID={testID ? `${testID}-label` : undefined}
-          className={styles.label()}
+          className={`mb-1 text-lg ${error ? 'text-danger-600' : 'text-foreground'}`}
         >
           {label}
         </Text>
@@ -100,7 +61,7 @@ export const Input = React.forwardRef<NTextInput, NInputProps>((props, ref) => {
         testID={testID}
         ref={ref}
         placeholderTextColor={colors.neutral[400]}
-        className={styles.input()}
+        className={inputClassName}
         onBlur={onBlur}
         onFocus={onFocus}
         {...inputProps}
