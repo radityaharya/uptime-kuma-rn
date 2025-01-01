@@ -1,5 +1,6 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { Alert, View } from 'react-native';
+import { View } from 'react-native';
+import { toast } from 'sonner-native';
 
 import { MonitorForm } from '@/components/monitors/form/MonitorForm';
 import {
@@ -30,10 +31,11 @@ export default function EditMonitor() {
 
   const handleSubmit = (data: MonitorFormData) => {
     console.log(isNewMonitor ? 'Creating monitor:' : 'Updating monitor:', data);
-    Alert.alert(
-      isNewMonitor ? 'Monitor Created' : 'Monitor Updated',
-      'Operation completed successfully'
-    );
+    // Alert.alert(
+    //   isNewMonitor ? 'Monitor Created' : 'Monitor Updated',
+    //   'Operation completed successfully'
+    // );
+    toast.success(isNewMonitor ? 'Monitor Created' : 'Monitor Updated');
     router.back();
   };
 

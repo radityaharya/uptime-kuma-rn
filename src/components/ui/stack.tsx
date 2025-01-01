@@ -14,7 +14,7 @@ const STACK_CONFIG = {
   SCALE_FACTOR: 0.05, // Controls how much each card scales down (0.05 = 5% smaller per card)
   MIN_SCALE: 0.8, // Minimum scale for the last card
   OPACITY_STEP: 0.1, // How much opacity decreases per card
-  MAX_VISIBLE_CARDS: 5 // Maximum number of cards to show in stack
+  MAX_VISIBLE_CARDS: 3 // Maximum number of cards to show in stack
 };
 
 interface CardProps {
@@ -33,16 +33,15 @@ function AnimatedCard({
   children
 }: CardProps) {
   const cardStyle = useAnimatedStyle(() => {
+    'worklet';
     const position = (index - activeIndex.value + totalCards) % totalCards;
     const isCurrent = position === 0;
 
-    // Limit the visual position to MAX_VISIBLE_CARDS
     const visualPosition = Math.min(
       position,
       STACK_CONFIG.MAX_VISIBLE_CARDS - 1
     );
 
-    // Apply stack properties based on visual position
     const baseOffset = visualPosition * STACK_CONFIG.CARD_SPACING;
     const scale = Math.max(
       1 - visualPosition * STACK_CONFIG.SCALE_FACTOR,
@@ -73,7 +72,7 @@ function AnimatedCard({
       zIndex,
       display: position < STACK_CONFIG.MAX_VISIBLE_CARDS ? 'flex' : 'none'
     };
-  });
+  }, [index, totalCards]);
 
   return (
     <Animated.View className="absolute w-full" style={cardStyle}>

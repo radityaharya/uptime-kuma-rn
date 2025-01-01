@@ -33,13 +33,23 @@ export function LatestImportantEvent({ event }: LatestImportantEventProps) {
       }
     >
       <View
-        className={`w-full flex-row items-center justify-between rounded-md px-4 py-3 ${event.heartbeat.status === 1 ? 'bg-green-500' : 'bg-red-500'}`}
+        // className={`w-full flex-row items-center justify-between rounded-md px-4 py-3 ${event.heartbeat.status === 1 ? 'bg-green-500' : 'bg-red-500'}`}
+        className={`w-full flex-row items-center justify-start gap-3 rounded-md border border-black/50 bg-card px-4 py-3 dark:border-white/50`}
       >
+        {/* status dot */}
+        <View
+          className={`size-2 rounded-full ${
+            event.heartbeat.status === 1 ? 'bg-green-500' : 'bg-red-500'
+          }`}
+        ></View>
         <View className="">
-          <Text className="text-xs text-white">
+          <Text className="text-xs text-foreground/60">
             {formatDistance(eventTime, new Date(), { addSuffix: true })}
           </Text>
-          <Text className="mb-1 text-sm font-medium text-white">
+          <Text
+            className="clamp-1 mb-1 text-sm font-medium text-foreground"
+            numberOfLines={1}
+          >
             {event.monitorName} - {event.heartbeat.msg.slice(0, 50)}
           </Text>
         </View>
@@ -63,12 +73,12 @@ export function LatestImportantEvents() {
   return (
     <View className="mt-2 w-full">
       <Stacked cards={cards} />
-      <View className="mt-2">
+      <View className="mt-4">
         {/* <View className="w-fit rounded-md bg-secondary p-2 text-sm font-medium text-foreground/60">
           <Text>View all events &gt;</Text>
         </View> */}
         <TouchableOpacity>
-          <Text className="text-sm font-medium text-foreground/60">
+          <Text className="text-sm text-foreground/60">
             View all events &gt;
           </Text>
         </TouchableOpacity>

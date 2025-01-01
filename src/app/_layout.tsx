@@ -10,6 +10,7 @@ import React, { useEffect, useRef } from 'react';
 import { StyleSheet } from 'react-native';
 import FlashMessage from 'react-native-flash-message';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { Toaster } from 'sonner-native';
 
 import { StatusBar } from '@/components/ui';
 import { hydrateAuth, loadSelectedTheme } from '@/lib';
@@ -21,7 +22,7 @@ import { MonitorProvider } from '@/store/monitorContext';
 export { ErrorBoundary } from 'expo-router';
 
 export const unstable_settings = {
-  initialRouteName: '(app)',
+  initialRouteName: '(app)'
 };
 
 hydrateAuth();
@@ -29,7 +30,7 @@ loadSelectedTheme();
 SplashScreen.preventAutoHideAsync();
 SplashScreen.setOptions({
   duration: 500,
-  fade: true,
+  fade: true
 });
 
 export default function RootLayout() {
@@ -48,7 +49,7 @@ export default function RootLayout() {
 function Providers({ children }: { children: React.ReactNode }) {
   const theme = useThemeConfig();
   const notificationListener = useRef<Notifications.EventSubscription | null>(
-    null,
+    null
   );
   const responseListener = useRef<Notifications.EventSubscription | null>(null);
 
@@ -86,6 +87,7 @@ function Providers({ children }: { children: React.ReactNode }) {
           <BottomSheetModalProvider>
             {children}
             <FlashMessage position="top" />
+            <Toaster offset={60} />
           </BottomSheetModalProvider>
         </ThemeProvider>
       </GestureHandlerRootView>
@@ -95,6 +97,6 @@ function Providers({ children }: { children: React.ReactNode }) {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-  },
+    flex: 1
+  }
 });

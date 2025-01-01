@@ -10,6 +10,8 @@ import type { TextInputProps } from 'react-native';
 import { I18nManager, StyleSheet, View } from 'react-native';
 import { TextInput as NTextInput } from 'react-native';
 
+import { useThemeConfig } from '@/lib/use-theme-config';
+
 import colors from './colors';
 import { Text } from './text';
 
@@ -47,6 +49,8 @@ export const Input = React.forwardRef<NTextInput, NInputProps>((props, ref) => {
     isFocussed ? 'border-ring' : 'border-input'
   } ${error ? 'border-danger-600' : ''} ${props.disabled ? 'opacity-50' : ''}`;
 
+  const theme = useThemeConfig();
+
   return (
     <View className="mb-2">
       {label && (
@@ -68,7 +72,13 @@ export const Input = React.forwardRef<NTextInput, NInputProps>((props, ref) => {
         style={StyleSheet.flatten([
           { writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr' },
           { textAlign: I18nManager.isRTL ? 'right' : 'left' },
-          inputProps.style
+          inputProps.style,
+          {
+            color: {
+              light: theme.colors.text,
+              dark: theme.colors.text
+            }[theme.dark ? 'dark' : 'light']
+          }
         ])}
       />
       {error && (
@@ -88,14 +98,22 @@ export function ControlledInput<T extends FieldValues>(
   props: ControlledInputProps<T>
 ) {
   const { name, control, rules, ...inputProps } = props;
-
   const { field, fieldState } = useController({ control, name, rules });
+
   return (
     <Input
       ref={field.ref}
       autoCapitalize="none"
       onChangeText={field.onChange}
-      value={(field.value as string) || ''}
+      onChange={(e: any) => {
+        // Handle web input events
+        if (e?.nativeEvent?.text !== undefined) {
+          field.onChange(e.nativeEvent.text);
+        } else if (e?.target?.value !== undefined) {
+          field.onChange(e.target.value);
+        }
+      }}
+      value={field.value || ''}
       {...inputProps}
       error={fieldState.error?.message}
     />
