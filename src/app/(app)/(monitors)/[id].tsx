@@ -6,6 +6,7 @@ import {
   Dimensions,
   FlatList,
   RefreshControl,
+  TouchableOpacity,
   useColorScheme
 } from 'react-native';
 import { LineChart, type LineChartPropsType } from 'react-native-gifted-charts';
@@ -13,7 +14,7 @@ import { LineChart, type LineChartPropsType } from 'react-native-gifted-charts';
 import { DetailStatCard } from '@/components/monitors/DetailStatCard';
 import { MonitorCard } from '@/components/monitors/MonitorCard';
 import { Text, View } from '@/components/ui';
-import { type HeartBeat,type ImportantHeartBeat } from '@/schemas/monitor';
+import { type HeartBeat, type ImportantHeartBeat } from '@/schemas/monitor';
 import { clientStore } from '@/store/clientStore';
 import { useMonitor } from '@/store/monitorContext';
 
@@ -137,8 +138,11 @@ const MonitorChart = React.memo(
 
 // Memoize HeartbeatCard
 const HeartbeatCard = React.memo(({ item }: { item: ImportantHeartBeat }) => {
+  const [isExpanded, setIsExpanded] = React.useState(false);
+
   return (
-    <View
+    <TouchableOpacity
+      onPress={() => setIsExpanded(!isExpanded)}
       className={`mb-2 w-full flex-row items-center justify-start gap-3 rounded-md border border-black/20 bg-card px-4 py-3 dark:border-white/20`}
     >
       <View
@@ -147,20 +151,36 @@ const HeartbeatCard = React.memo(({ item }: { item: ImportantHeartBeat }) => {
         }`}
       />
       <View>
-        <Text className="text-sm text-foreground opacity-70">
-          {formatDistance(new Date(item.time), new Date(), { addSuffix: true })}
-        </Text>
+        <View className="flex-row items-center gap-2">
+          <Text className="text-sm text-foreground opacity-70">
+            {new Date(item.time).toLocaleTimeString(undefined, {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })}
+          </Text>
+          <Text className="text-xs opacity-70">
+            [
+            {formatDistance(new Date(item.time), new Date(), {
+              addSuffix: true
+            })}
+            ]
+          </Text>
+        </View>
         <Text
-          className="clamp-1 mb-1 font-medium text-foreground"
-          numberOfLines={1}
+          className="mb-1 font-medium text-foreground"
+          numberOfLines={isExpanded ? undefined : 1}
         >
-          {item.msg}
+          {item.msg ||
+            (item.status === 1 ? 'Monitor is up' : 'Monitor is down')}
+        </Text>
+        <Text className="text-xs text-foreground/60">
+          {item.ping ? `${item.ping}ms` : ''}
         </Text>
       </View>
-      <Text className="ml-auto text-xs text-foreground/60">
-        {item.ping ? `${item.ping}ms` : ''}
-      </Text>
-    </View>
+    </TouchableOpacity>
   );
 });
 
@@ -238,6 +258,7 @@ export default function MonitorDetails() {
           keyExtractor={(item) => item.time.toString()}
           removeClippedSubviews={true}
           maxToRenderPerBatch={10}
+          contentContainerStyle={{ paddingBottom: 200 }}
           ListHeaderComponent={() => (
             <View className="mb-4 flex gap-2">
               <DetailStatCard

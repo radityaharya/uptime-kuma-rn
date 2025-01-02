@@ -1,6 +1,13 @@
 import { useRouter } from 'expo-router';
 import * as React from 'react';
-import { Pressable } from 'react-native';
+import { Dimensions, Pressable } from 'react-native';
+import Swipeable, {
+  type SwipeableMethods
+} from 'react-native-gesture-handler/ReanimatedSwipeable';
+import Animated, {
+  type SharedValue,
+  useAnimatedStyle
+} from 'react-native-reanimated';
 
 import { Text, View } from '@/components/ui';
 import { cn } from '@/lib';
@@ -87,74 +94,138 @@ function UptimeBadge({
   );
 }
 
+const SCREEN_WIDTH = Dimensions.get('window').width;
+const SWIPE_THRESHOLD = -SCREEN_WIDTH * 0.25;
+
+const SwipeActions: React.FC<{
+  monitor: Monitor;
+  height: number;
+  progress: SharedValue<number>;
+}> = ({ monitor, height, progress }) => {
+  const router = useRouter();
+
+  const animatedStyle = useAnimatedStyle(() => {
+    const opacity = progress.value;
+    return {
+      opacity,
+      height
+    };
+  });
+
+  return (
+    <Animated.View
+      style={[animatedStyle]}
+      className="border-transparen flex w-1/5 flex-col overflow-hidden rounded-none rounded-tr-md border-y border-r border-black/20 dark:border-white/20"
+    >
+      <Pressable
+        onPress={() => {
+          router.push({
+            pathname: '/(app)/(monitors)/edit/[id]',
+            params: { id: monitor.id!.toString() }
+          });
+        }}
+        className="flex-1 items-center justify-center bg-green-500/90 backdrop-blur-sm"
+      >
+        <Text className="font-medium text-white">Edit</Text>
+      </Pressable>
+      <Pressable
+        onPress={() => {
+          // Handle delete action
+        }}
+        className="flex-1 items-center justify-center bg-red-500/90 backdrop-blur-sm"
+      >
+        <Text className="font-medium text-white">Delete</Text>
+      </Pressable>
+    </Animated.View>
+  );
+};
+
 export function MonitorCard({ monitor, onClick, className }: MonitorCardProps) {
   const router = useRouter();
+  const swipeableRef = React.useRef<SwipeableMethods>(null);
+  const [cardHeight, setCardHeight] = React.useState(0);
 
   if (!monitor) return null;
 
   const isUp = isMonitorUp(monitor.heartBeatList ?? []);
 
   return (
-    <>
-      <Pressable
-        onPress={() =>
-          onClick
-            ? onClick()
-            : router.push({
+    <View className="overflow-hidden rounded-lg">
+      <Swipeable
+        ref={swipeableRef}
+        renderRightActions={(progress) => (
+          <SwipeActions
+            monitor={monitor}
+            height={cardHeight}
+            progress={progress}
+          />
+        )}
+        overshootRight={false}
+        rightThreshold={SWIPE_THRESHOLD}
+      >
+        <Pressable
+          onPress={() => {
+            if (onClick) {
+              onClick();
+            } else {
+              router.push({
                 pathname: '/(app)/(monitors)/[id]',
                 params: { id: monitor.id!.toString() }
-              })
-        }
-      >
-        <View
-          className={cn(
-            'bg-background flex flex-col overflow-hidden rounded-lg border border-black/20 dark:border-white/20 bg-gradient-to-br from-gray-800/90 to-gray-900/90 p-4 transition-all duration-200',
-            !monitor.active && 'opacity-50',
-            className
-          )}
+              });
+            }
+          }}
         >
-          {/* Header */}
-          <View className="mb-2 flex-row justify-between">
-            <View className="flex-row items-center gap-2">
-              <View className="backdrop-blur-sm">
-                <UptimeBadge
-                  uptime={(monitor.uptime?.month || 0) * 100}
-                  className={isUp ? 'bg-green-500' : 'bg-red-500'}
-                />
-              </View>
-              <Text className="text-xl font-bold tracking-tight text-foreground">
-                {monitor.pathName || monitor.name}
-              </Text>
-            </View>
-          </View>
-
-          {/* Content */}
-          <View className="mb-4 flex flex-col">
-            <View className="mb-2">
-              <MonitorContent monitor={monitor} />
-            </View>
-            {monitor.description && (
-              <Text
-                className="border-t border-gray-700/20 
-                text-sm leading-relaxed text-gray-400"
-              >
-                {monitor.description}
-              </Text>
+          <View
+            onLayout={(event) => setCardHeight(event.nativeEvent.layout.height)}
+            className={cn(
+              'bg-card flex flex-col overflow-hidden rounded-lg border border-black/20 dark:border-white/20 bg-gradient-to-br from-gray-800/90 to-gray-900/90 p-4 transition-all duration-200',
+              !monitor.active && 'opacity-50',
+              className
             )}
-            <HeartbeatHistory
-              heartbeats={monitor.heartBeatList}
-              interval={monitor.interval}
-              isParent={monitor.childrenIDs.length > 0}
-            />
-          </View>
+          >
+            {/* Header */}
+            <View className="mb-2 flex-row justify-between">
+              <View className="flex-row items-center gap-2">
+                <View className="backdrop-blur-sm">
+                  <UptimeBadge
+                    uptime={(monitor.uptime?.month || 0) * 100}
+                    className={isUp ? 'bg-green-500' : 'bg-red-500'}
+                  />
+                </View>
+                <Text className="text-xl font-bold tracking-tight text-foreground">
+                  {monitor.pathName || monitor.name}
+                </Text>
+              </View>
+            </View>
 
-          {/* Footer */}
-          <View>
-            <MonitorTags tags={monitor.tags} />
+            {/* Content */}
+            <View className="mb-4 flex flex-col">
+              <View className="mb-2">
+                <MonitorContent monitor={monitor} />
+              </View>
+              {monitor.description && (
+                <Text
+                  className="border-t border-gray-700/20 
+                text-sm leading-relaxed text-gray-400"
+                >
+                  {monitor.description}
+                </Text>
+              )}
+              <HeartbeatHistory
+                heartbeats={monitor.heartBeatList}
+                interval={monitor.interval}
+                isParent={monitor.childrenIDs.length > 0}
+              />
+            </View>
+
+            {/* Footer */}
+            <View>
+              <MonitorTags tags={monitor.tags} />
+            </View>
           </View>
-        </View>
-      </Pressable>
-    </>
+        </Pressable>
+      </Swipeable>
+    </View>
   );
 }
 

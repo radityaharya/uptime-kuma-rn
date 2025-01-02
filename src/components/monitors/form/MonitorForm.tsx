@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Alert, ScrollView, Switch, TouchableOpacity } from 'react-native';
 
@@ -17,21 +18,32 @@ export const MonitorForm = ({
     control,
     handleSubmit,
     watch,
+    reset,
     formState: { errors, isSubmitting }
   } = useForm<MonitorFormData>({
     resolver: zodResolver(monitorFormSchema),
     defaultValues: {
-      type: 'http',
-      name: '',
-      interval: 60,
-      retryInterval: 60,
-      timeout: 48,
-      maxretries: 0,
-      resendInterval: 0,
-      upsideDown: false,
-      ...defaultValues
+      ...defaultValues,
+      type: defaultValues?.type ?? 'http',
+      name: defaultValues?.name ?? '',
+      interval: defaultValues?.interval ?? 60,
+      retryInterval: defaultValues?.retryInterval ?? 60,
+      timeout: defaultValues?.timeout ?? 48,
+      maxretries: defaultValues?.maxretries ?? 0,
+      resendInterval: defaultValues?.resendInterval ?? 0,
+      upsideDown: defaultValues?.upsideDown ?? false
     }
   });
+
+  useEffect(() => {
+    if (defaultValues) {
+      console.log(
+        'Resetting form with default values:',
+        JSON.stringify(defaultValues, null, 2)
+      );
+      reset(defaultValues);
+    }
+  }, [defaultValues, reset]);
 
   const onSubmitForm = handleSubmit(async (data) => {
     try {
@@ -60,7 +72,8 @@ export const MonitorForm = ({
     { label: 'Docker', value: 'docker' },
     { label: 'MySQL', value: 'mysql' },
     { label: 'PostgreSQL', value: 'postgres' },
-    { label: 'MQTT', value: 'mqtt' }
+    { label: 'MQTT', value: 'mqtt' },
+    { label: 'Group', value: 'group' }
   ];
 
   const httpMethodOptions = [
@@ -151,6 +164,30 @@ export const MonitorForm = ({
         control={control}
         name="interval"
         label="Check Interval (seconds)"
+        keyboardType="numeric"
+        placeholder="60"
+      />
+
+      <ControlledInput
+        control={control}
+        name="timeout"
+        label="Timeout (seconds)"
+        keyboardType="numeric"
+        placeholder="48"
+      />
+
+      <ControlledInput
+        control={control}
+        name="maxretries"
+        label="Max Retries"
+        keyboardType="numeric"
+        placeholder="0"
+      />
+
+      <ControlledInput
+        control={control}
+        name="retryInterval"
+        label="Retry Interval (seconds)"
         keyboardType="numeric"
         placeholder="60"
       />

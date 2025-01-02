@@ -56,7 +56,7 @@ export const Input = React.forwardRef<NTextInput, NInputProps>((props, ref) => {
       {label && (
         <Text
           testID={testID ? `${testID}-label` : undefined}
-          className={`mb-1 text-lg ${error ? 'text-danger-600' : 'text-foreground'}`}
+          className={`mb-1 text-base ${error ? 'text-danger-600' : 'text-foreground'}`}
         >
           {label}
         </Text>
@@ -100,6 +100,8 @@ export function ControlledInput<T extends FieldValues>(
   const { name, control, rules, ...inputProps } = props;
   const { field, fieldState } = useController({ control, name, rules });
 
+  const inputValue = field.value != null ? field.value.toString() : '';
+
   return (
     <Input
       ref={field.ref}
@@ -113,7 +115,7 @@ export function ControlledInput<T extends FieldValues>(
           field.onChange(e.target.value);
         }
       }}
-      value={field.value || ''}
+      value={inputValue}
       {...inputProps}
       error={fieldState.error?.message}
     />
