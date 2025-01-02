@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 import { clientStore } from '@/store/clientStore';
-import { infoStore } from '@/store/infoStore';
+import { useInfoStore } from '@/store/infoStore';
 import { monitorStore } from '@/store/monitorContext';
 
 import { createSelectors } from '../utils';
@@ -26,7 +26,7 @@ const _useAuth = create<AuthState>((set, get) => ({
   signOut: () => {
     console.debug('Signing out');
     monitorStore.reset();
-    infoStore.getState().reset();
+    useInfoStore.reset();
     clientStore.getClient()?.disconnect();
     clientStore.getClient()?.destroy();
     clientStore.destroyClient();

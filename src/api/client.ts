@@ -1,8 +1,12 @@
 import io, { type Socket } from 'socket.io-client';
 
 import { log } from '@/lib/log';
-import { type HeartBeat, type ImportantHeartBeat, type Monitor } from '@/schemas/monitor';
-import { infoStore } from '@/store/infoStore';
+import {
+  type HeartBeat,
+  type ImportantHeartBeat,
+  type Monitor
+} from '@/schemas/monitor';
+import { useInfoStore } from '@/store/infoStore';
 import { monitorStore } from '@/store/monitorContext';
 import statusStore from '@/store/statusStore';
 
@@ -442,7 +446,7 @@ export class UptimeKumaClient {
 
     const handlers = {
       monitorList: this.setMonitorList.bind(this),
-      info: (data: Info) => infoStore.setState({ info: data }),
+      info: (data: Info) => useInfoStore.setState(data),
       heartbeatList: this.setHeartBeat.bind(this),
       importantHeartbeatList: this.setImportantHeartBeatList.bind(this),
       avgPing: this.setAvgPing.bind(this),

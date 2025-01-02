@@ -3,6 +3,7 @@ import { Animated } from 'react-native';
 
 import { type HeartbeatData } from '@/api/status/types';
 import { Text, View } from '@/components/ui';
+import { withServerTimezone } from '@/lib/utils';
 import { type HeartBeat } from '@/schemas/monitor';
 
 interface HeartbeatHistoryProps {
@@ -114,7 +115,10 @@ export function HeartbeatHistory({
       ? [...heartbeats]
           .filter((hb) => hb.time)
           .sort(
-            (a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()
+            (a, b) =>
+              // Reverse the sort order to get latest first
+              withServerTimezone(b.time).getTime() -
+              withServerTimezone(a.time).getTime()
           )
           .slice(0, numLastBeats)
       : [];
@@ -160,17 +164,20 @@ export function HeartbeatHistory({
       <View className="flex-row justify-between">
         <Text className="text-xs opacity-50">
           {filledHeartbeats.length
-            ? new Date(heartbeats[0].time).toLocaleTimeString(undefined, {
-                hour: 'numeric',
-                minute: 'numeric'
-              })
+            ? withServerTimezone(filledHeartbeats[0].time).toLocaleTimeString(
+                undefined,
+                {
+                  hour: 'numeric',
+                  minute: 'numeric'
+                }
+              )
             : 'No data'}
         </Text>
         <Text className="text-xs opacity-50">{interval}s</Text>
         <Text className="text-xs opacity-50">
           {filledHeartbeats.length
-            ? new Date(
-                heartbeats[heartbeats.length - 1].time
+            ? withServerTimezone(
+                filledHeartbeats[filledHeartbeats.length - 1].time
               ).toLocaleTimeString(undefined, {
                 hour: 'numeric',
                 minute: 'numeric'

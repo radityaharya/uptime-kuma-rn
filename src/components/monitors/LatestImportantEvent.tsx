@@ -4,6 +4,7 @@ import * as React from 'react';
 import { Pressable } from 'react-native';
 
 import { Text, View } from '@/components/ui';
+import { withServerTimezone } from '@/lib/utils';
 import { type HeartBeat } from '@/schemas/monitor';
 import { useLatestImportantEvents } from '@/store/monitorContext';
 
@@ -20,8 +21,6 @@ interface LatestImportantEventProps {
 export function LatestImportantEvent({ event }: LatestImportantEventProps) {
   const router = useRouter();
   const eventTime = event.heartbeat.time;
-
-  // FIX: event time broken
 
   return (
     <Pressable
@@ -42,7 +41,9 @@ export function LatestImportantEvent({ event }: LatestImportantEventProps) {
         ></View>
         <View className="">
           <Text className="text-xs text-foreground opacity-70">
-            {formatDistance(eventTime, new Date(), { addSuffix: true })}
+            {formatDistance(withServerTimezone(eventTime), new Date(), {
+              addSuffix: true
+            })}
           </Text>
           <Text
             className="clamp-1 mb-1 text-sm font-medium text-foreground"

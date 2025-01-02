@@ -9,13 +9,13 @@ import { LanguageItem } from '@/components/settings/language-item';
 import { ThemeItem } from '@/components/settings/theme-item';
 import { ScrollView, View } from '@/components/ui';
 import { useAuth } from '@/lib';
-import { infoStore } from '@/store/infoStore';
+import { useInfoStore } from '@/store/infoStore';
 
 export default function Settings() {
   const signOut = useAuth.use.signOut();
   const { colorScheme } = useColorScheme();
   const credentials = useAuth.use.credentials();
-  const { info } = infoStore();
+  const { info } = useInfoStore();
 
   const router = useRouter();
 

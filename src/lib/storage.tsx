@@ -1,11 +1,12 @@
 import { MMKV } from 'react-native-mmkv';
 
+
 export const storage = new MMKV();
 
 export function getItem<T>(key: string): T | null {
   try {
     const value = storage.getString(key);
-    return value ? JSON.parse(value) as T : null;
+    return value ? (JSON.parse(value) as T) : null;
   } catch (error) {
     console.error(`Error reading from storage (${key}):`, error);
     return null;

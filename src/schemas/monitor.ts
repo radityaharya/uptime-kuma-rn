@@ -28,7 +28,7 @@ const HeartBeatSchema = z.object({
   status: z.number(),
   msg: z.string(),
   ping: z.number(),
-  time: z.date()
+  time: z.string()
 });
 
 export type HeartBeat = z.infer<typeof HeartBeatSchema>;

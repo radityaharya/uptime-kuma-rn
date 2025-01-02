@@ -14,6 +14,7 @@ import { LineChart, type LineChartPropsType } from 'react-native-gifted-charts';
 import { DetailStatCard } from '@/components/monitors/DetailStatCard';
 import { MonitorCard } from '@/components/monitors/MonitorCard';
 import { Text, View } from '@/components/ui';
+import { withServerTimezone } from '@/lib';
 import { type HeartBeat, type ImportantHeartBeat } from '@/schemas/monitor';
 import { clientStore } from '@/store/clientStore';
 import { useMonitor } from '@/store/monitorContext';
@@ -79,7 +80,9 @@ const MonitorChart = React.memo(
               ? () => (
                   <ChartLabel
                     value={
-                      hb.time ? new Date(hb.time).toLocaleTimeString() : ''
+                      hb.time
+                        ? withServerTimezone(hb.time).toLocaleTimeString()
+                        : ''
                     }
                     isDarkMode={isDarkMode}
                   />
@@ -153,17 +156,13 @@ const HeartbeatCard = React.memo(({ item }: { item: ImportantHeartBeat }) => {
       <View>
         <View className="flex-row items-center gap-2">
           <Text className="text-sm text-foreground opacity-70">
-            {new Date(item.time).toLocaleTimeString(undefined, {
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            })}
+            {item.time
+              ? withServerTimezone(item.time).toLocaleTimeString()
+              : 'No data'}
           </Text>
           <Text className="text-xs opacity-70">
             [
-            {formatDistance(new Date(item.time), new Date(), {
+            {formatDistance(withServerTimezone(item.time), new Date(), {
               addSuffix: true
             })}
             ]
@@ -255,7 +254,7 @@ export default function MonitorDetails() {
         <FlatList
           data={importantHeartBeatList}
           renderItem={({ item }) => <HeartbeatCard item={item} />}
-          keyExtractor={(item) => item.time.toString()}
+          keyExtractor={(item) => withServerTimezone(item.time).toISOString()}
           removeClippedSubviews={true}
           maxToRenderPerBatch={10}
           contentContainerStyle={{ paddingBottom: 200 }}

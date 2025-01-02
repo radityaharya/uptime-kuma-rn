@@ -10,6 +10,10 @@ import React, { useEffect, useRef } from 'react';
 import { StyleSheet } from 'react-native';
 import FlashMessage from 'react-native-flash-message';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import {
+  configureReanimatedLogger,
+  ReanimatedLogLevel
+} from 'react-native-reanimated';
 import { Toaster } from 'sonner-native';
 
 import { StatusBar } from '@/components/ui';
@@ -33,6 +37,10 @@ SplashScreen.setOptions({
   fade: true
 });
 
+configureReanimatedLogger({
+  level: ReanimatedLogLevel.warn,
+  strict: false
+});
 export default function RootLayout() {
   return (
     <Providers>

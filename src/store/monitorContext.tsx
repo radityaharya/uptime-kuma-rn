@@ -1,5 +1,4 @@
 import debounce from 'lodash/debounce';
-import memoize from 'lodash/memoize';
 import React, {
   createContext,
   useCallback,
@@ -46,7 +45,7 @@ const convertToHeartbeat = (
   status: importantHeartbeat.status,
   msg: importantHeartbeat.msg,
   ping: importantHeartbeat.ping,
-  time: new Date()
+  time: importantHeartbeat.time
 });
 
 class MonitorStore {
@@ -54,65 +53,8 @@ class MonitorStore {
   private settersMap: Set<(monitors: Monitor[]) => void> = new Set();
   private currentMonitors: Monitor[] = getItem('monitors') || [];
   private subscribers: Set<(monitors: Monitor[]) => void> = new Set();
-
-  private processHeartbeatsMemoized = memoize(
-    <T extends { time: string | Date }>(heartbeats: T[]): T[] => {
-      return heartbeats
-        .map((hb) => ({
-          ...hb,
-          time: new Date(hb.time)
-        }))
-        .sort((a, b) => b.time.getTime() - a.time.getTime());
-    },
-    (heartbeats) => JSON.stringify(heartbeats.map((h) => h.time))
-  );
-
   private batchedUpdates: Map<number, Partial<MonitorUpdate>> = new Map();
   private batchUpdateTimeout: NodeJS.Timeout | null = null;
-
-  private processBatchUpdates = () => {
-    if (this.batchedUpdates.size === 0) return;
-
-    const monitors = [...this.currentMonitors];
-    let hasChanges = false;
-
-    this.batchedUpdates.forEach((update, id) => {
-      const index = monitors.findIndex((m) => Number(m.id) === Number(id));
-      if (index !== -1) {
-        const existingMonitor = monitors[index];
-        const currentUptime = existingMonitor.uptime || {
-          day: 0,
-          month: 0,
-          year: 0
-        };
-
-        monitors[index] = {
-          ...existingMonitor,
-          ...update,
-          uptime: update.uptime
-            ? {
-                day: update.uptime.day ?? currentUptime.day,
-                month: update.uptime.month ?? currentUptime.month,
-                year: update.uptime.year ?? currentUptime.year
-              }
-            : currentUptime,
-          heartBeatList: update.heartBeatList
-            ? this.processHeartbeatsMemoized(update.heartBeatList)
-            : existingMonitor.heartBeatList
-        };
-        hasChanges = true;
-      }
-    });
-
-    if (hasChanges) {
-      this.currentMonitors = monitors;
-      this.notifySubscribers();
-    }
-
-    this.batchedUpdates.clear();
-    this.batchUpdateTimeout = null;
-  };
-
   private monitorStatsCache: {
     monitors: Monitor[];
     stats: MonitorStats;
@@ -120,16 +62,7 @@ class MonitorStore {
 
   constructor() {
     try {
-      const storedMonitors = getItem<Monitor[]>('monitors') || [];
-      this.currentMonitors = storedMonitors.map((monitor) => ({
-        ...monitor,
-        heartBeatList: monitor.heartBeatList
-          ? this.processHeartbeatsMemoized(monitor.heartBeatList)
-          : [],
-        importantHeartBeatList: monitor.importantHeartBeatList
-          ? this.processHeartbeatsMemoized(monitor.importantHeartBeatList)
-          : []
-      }));
+      this.currentMonitors = getItem<Monitor[]>('monitors') || [];
     } catch (error) {
       console.error('Error initializing MonitorStore:', error);
       this.currentMonitors = [];
@@ -164,19 +97,8 @@ class MonitorStore {
 
   setMonitors(monitors: Monitor[]) {
     try {
-      // Convert dates back to Date objects when loading from storage
-      const processedMonitors = monitors.map((monitor) => ({
-        ...monitor,
-        heartBeatList: monitor.heartBeatList
-          ? this.processHeartbeatsMemoized(monitor.heartBeatList)
-          : [],
-        importantHeartBeatList: monitor.importantHeartBeatList
-          ? this.processHeartbeatsMemoized(monitor.importantHeartBeatList)
-          : []
-      }));
-
-      this.currentMonitors = processedMonitors;
-      setItem('monitors', processedMonitors);
+      this.currentMonitors = monitors;
+      setItem('monitors', monitors);
       this.notifySubscribers();
     } catch (error) {
       console.error('Error setting monitors:', error);
@@ -225,11 +147,51 @@ class MonitorStore {
     }
   }
 
+  private processBatchUpdates = () => {
+    if (this.batchedUpdates.size === 0) return;
+
+    const monitors = [...this.currentMonitors];
+    let hasChanges = false;
+
+    this.batchedUpdates.forEach((update, id) => {
+      const index = monitors.findIndex((m) => Number(m.id) === Number(id));
+      if (index !== -1) {
+        const existingMonitor = monitors[index];
+        const currentUptime = existingMonitor.uptime || {
+          day: 0,
+          month: 0,
+          year: 0
+        };
+
+        monitors[index] = {
+          ...existingMonitor,
+          ...update,
+          uptime: update.uptime
+            ? {
+                day: update.uptime.day ?? currentUptime.day,
+                month: update.uptime.month ?? currentUptime.month,
+                year: update.uptime.year ?? currentUptime.year
+              }
+            : currentUptime
+        };
+        hasChanges = true;
+      }
+    });
+
+    if (hasChanges) {
+      this.currentMonitors = monitors;
+      this.notifySubscribers();
+    }
+
+    this.batchedUpdates.clear();
+    this.batchUpdateTimeout = null;
+  };
+
   addHeartbeat(heartbeat: ImportantHeartBeat): void {
     const monitors = this.getMonitors();
 
     const hb = convertToHeartbeat(heartbeat);
-    hb.time = new Date(hb.time);
+    hb.time = heartbeat.time;
 
     const index = monitors.findIndex(
       (m) => Number(m.id) === Number(hb.monitor_id)
@@ -462,11 +424,6 @@ class MonitorStore {
             heartbeat: hb
           })) || []
     );
-
-    // const activeMonitors = this.currentMonitors.filter((m) => m.active);
-    // importantEvents.filter((event) =>
-    //   activeMonitors.some((m) => m.id === event.monitorId)
-    // );
 
     importantEvents.sort(
       (a, b) =>
