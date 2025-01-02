@@ -13,7 +13,8 @@ import { getItem, removeItem, setItem } from '@/lib/storage';
 import {
   type HeartBeat,
   type ImportantHeartBeat,
-  type Monitor
+  type Monitor,
+  type Tag
 } from '@/schemas/monitor';
 
 interface MonitorContextType {
@@ -52,6 +53,8 @@ class MonitorStore {
   private static instance: MonitorStore;
   private settersMap: Set<(monitors: Monitor[]) => void> = new Set();
   private currentMonitors: Monitor[] = getItem('monitors') || [];
+
+  private currentTags: Tag[] = getItem('tags') || [];
   private subscribers: Set<(monitors: Monitor[]) => void> = new Set();
   private batchedUpdates: Map<number, Partial<MonitorUpdate>> = new Map();
   private batchUpdateTimeout: NodeJS.Timeout | null = null;
@@ -102,6 +105,19 @@ class MonitorStore {
       this.notifySubscribers();
     } catch (error) {
       console.error('Error setting monitors:', error);
+    }
+  }
+
+  getTags() {
+    return this.currentTags;
+  }
+
+  setTags(tags: Tag[]) {
+    try {
+      this.currentTags = tags;
+      setItem('tags', tags);
+    } catch (error) {
+      console.error('Error setting tags:', error);
     }
   }
 

@@ -1,11 +1,13 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Alert, ScrollView, Switch, TouchableOpacity } from 'react-native';
+import { Alert, Switch, TouchableOpacity } from 'react-native';
 
 import { ControlledInput, Text, View } from '@/components/ui';
 import { ControlledModalSelect } from '@/components/ui/modal-select';
+import { MultiSelectTags } from '@/components/ui/multi-select-tags';
 import { type MonitorFormData, monitorFormSchema } from '@/schemas/monitor';
+import { monitorStore } from '@/store/monitorContext';
 
 export const MonitorForm = ({
   onSubmit,
@@ -34,6 +36,8 @@ export const MonitorForm = ({
       upsideDown: defaultValues?.upsideDown ?? false
     }
   });
+
+  const tags = monitorStore.getTags();
 
   useEffect(() => {
     if (defaultValues) {
@@ -141,7 +145,7 @@ export const MonitorForm = ({
   };
 
   return (
-    <ScrollView className="p-4">
+    <View className="p-4 pb-20">
       <View className="mb-4">
         <ControlledModalSelect
           control={control}
@@ -203,6 +207,8 @@ export const MonitorForm = ({
         )}
       />
 
+      <MultiSelectTags control={control} name="tags" label="Tags" tags={tags} />
+
       <TouchableOpacity
         className="items-center rounded-lg bg-green-500 p-4 disabled:opacity-50"
         onPress={
@@ -216,6 +222,26 @@ export const MonitorForm = ({
           {isSubmitting ? 'Saving...' : 'Save Monitor'}
         </Text>
       </TouchableOpacity>
-    </ScrollView>
+
+      {/* <Stack.Screen
+        options={{
+          headerRight: () => (
+            <TouchableOpacity
+              className="items-center rounded-lg bg-green-500 p-2 disabled:opacity-50"
+              onPress={
+                isSubmitting || Object.keys(errors).length > 0
+                  ? handleDisabledPress
+                  : onSubmitForm
+              }
+              disabled={isSubmitting}
+            >
+              <Text className="text-base font-bold text-white">
+                {isSubmitting ? 'Saving...' : 'Save Monitor'}
+              </Text>
+            </TouchableOpacity>
+          )
+        }}
+      /> */}
+    </View>
   );
 };

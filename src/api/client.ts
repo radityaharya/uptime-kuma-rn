@@ -356,14 +356,40 @@ export class UptimeKumaClient {
         return;
       }
 
-      this.socket.emit('addMonitor', monitor, (data: { ok: boolean }) => {
-        if (!data.ok) {
-          reject(new Error('Failed to add monitor'));
-          return;
-        }
+      this.socket.emit(
+        'addMonitor',
+        monitor,
+        (data: { ok: boolean; msg?: string; monitorID?: number }) => {
+          if (!data.ok) {
+            reject(new Error('Failed to add monitor'));
+            return;
+          }
 
-        resolve();
-      });
+          resolve();
+        }
+      );
+    });
+  }
+
+  public async EditMonitor(monitor: Monitor): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (!this.socket?.connected) {
+        reject(new Error('Socket not connected'));
+        return;
+      }
+
+      this.socket.emit(
+        'editMonitor',
+        monitor,
+        (data: { ok: boolean; msg?: string; monitorID?: number }) => {
+          if (!data.ok) {
+            reject(new Error('Failed to edit monitor'));
+            return;
+          }
+
+          resolve();
+        }
+      );
     });
   }
 
@@ -399,6 +425,25 @@ export class UptimeKumaClient {
 
       this.socket.emit('getMonitorBeats', { monitorID: monitorId, period });
       resolve();
+    });
+  }
+
+  public async getTags(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (!this.socket?.connected) {
+        reject(new Error('Socket not connected'));
+        return;
+      }
+
+      this.socket.emit('getTags', (data: { ok: boolean; tags: any[] }) => {
+        if (!data.ok) {
+          reject(new Error('Failed to fetch tags'));
+          return;
+        }
+        console.log(data);
+        monitorStore.setTags(data.tags);
+        resolve();
+      });
     });
   }
 
@@ -510,6 +555,7 @@ export class UptimeKumaClient {
       // Refresh data after reconnection
       await this.getMonitors();
       await this.getHeartbeats();
+      await this.getTags();
     } catch (error) {
       log.error('Failed to reinitialize socket:', error);
       throw error;

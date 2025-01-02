@@ -70,6 +70,7 @@ export const useMonitors = () => {
       clientStore.setClient(client);
       await client.getMonitors();
       await client.getHeartbeats();
+      await client.getTags();
     } catch (error: any) {
       const errorMessage = error.message.includes('timeout')
         ? 'Connection timed out. Please check your network connection.'

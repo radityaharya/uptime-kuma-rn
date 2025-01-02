@@ -45,9 +45,9 @@ export type ImportantHeartBeat = z.infer<typeof ImportantHeartBeatSchema>;
 
 const TagSchema = z.object({
   id: z.number(),
-  monitor_id: z.number(),
-  tag_id: z.number(),
-  value: z.string(),
+  monitor_id: z.number().optional(),
+  tag_id: z.number().optional(),
+  value: z.string().optional(),
   name: z.string(),
   color: z.string()
 });
