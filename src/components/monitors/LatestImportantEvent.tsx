@@ -1,7 +1,7 @@
 import { formatDistance } from 'date-fns';
 import { useRouter } from 'expo-router';
 import * as React from 'react';
-import { Pressable, TouchableOpacity } from 'react-native';
+import { Pressable } from 'react-native';
 
 import { Text, View } from '@/components/ui';
 import { type HeartBeat } from '@/schemas/monitor';
@@ -33,17 +33,15 @@ export function LatestImportantEvent({ event }: LatestImportantEventProps) {
       }
     >
       <View
-        // className={`w-full flex-row items-center justify-between rounded-md px-4 py-3 ${event.heartbeat.status === 1 ? 'bg-green-500' : 'bg-red-500'}`}
-        className={`w-full flex-row items-center justify-start gap-3 rounded-md border border-black/50 bg-card px-4 py-3 dark:border-white/50`}
+        className={`w-full flex-row items-center justify-start gap-3 rounded-md border border-black/20 bg-card px-4 py-3 dark:border-white/20`}
       >
-        {/* status dot */}
         <View
           className={`size-2 rounded-full ${
             event.heartbeat.status === 1 ? 'bg-green-500' : 'bg-red-500'
           }`}
         ></View>
         <View className="">
-          <Text className="text-xs text-foreground/60">
+          <Text className="text-xs text-foreground opacity-70">
             {formatDistance(eventTime, new Date(), { addSuffix: true })}
           </Text>
           <Text
@@ -71,18 +69,8 @@ export function LatestImportantEvents() {
   ));
 
   return (
-    <View className="mt-2 w-full">
+    <View className="mb-4 w-full">
       <Stacked cards={cards} />
-      <View className="mt-4">
-        {/* <View className="w-fit rounded-md bg-secondary p-2 text-sm font-medium text-foreground/60">
-          <Text>View all events &gt;</Text>
-        </View> */}
-        <TouchableOpacity>
-          <Text className="text-sm text-foreground/60">
-            View all events &gt;
-          </Text>
-        </TouchableOpacity>
-      </View>
     </View>
   );
 }

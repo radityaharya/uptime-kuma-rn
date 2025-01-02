@@ -7,7 +7,7 @@ import Animated, {
   withSpring
 } from 'react-native-reanimated';
 
-const SCROLL_LIMIT = 10; // Maximum translation distance
+const SCROLL_LIMIT = 5; // Maximum translation distance
 const RESISTANCE = 0.15; // Resistance factor for over-scrolling
 const STACK_CONFIG = {
   CARD_SPACING: -8, // Controls vertical spacing between cards (negative for upward stacking)

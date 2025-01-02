@@ -1,14 +1,7 @@
+/* eslint-disable unused-imports/no-unused-vars */
 import * as React from 'react';
-import { Pressable } from 'react-native';
 
-import { Text, View } from '@/components/ui';
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
+import { View } from '@/components/ui';
 
 import { ErrorMessage } from './ErrorMessage';
 import { MonitorSummaryStats } from './MonitorSummary';
@@ -47,10 +40,11 @@ export const MonitorListHeader = ({
   error
 }: MonitorListHeaderProps) => (
   <>
-    <View className="pb-8 pt-40">
+    {/* <ActivityDot className="mt-10 justify-end" /> */}
+    <View className="pb-8 pt-32">
       <MonitorSummaryStats />
     </View>
-
+    {/* 
     <View className="mb-4 flex-row items-center justify-between">
       <View className="flex-row gap-1">
         <Pressable
@@ -106,12 +100,12 @@ export const MonitorListHeader = ({
           <Text>{sortOrder === 'asc' ? '↑' : '↓'}</Text>
         </Pressable>
       </View>
-    </View>
+    </View> */}
 
-    <View className="mb-2 text-sm opacity-50">
-      <Text>
+    <View className="text-sm opacity-50">
+      {/* <Text>
         {filteredCount} of {totalMonitors} Monitors
-      </Text>
+      </Text> */}
     </View>
     {error ? <ErrorMessage error={error} /> : null}
   </>

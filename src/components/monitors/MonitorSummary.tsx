@@ -8,26 +8,31 @@ import { type MonitorStats, useMonitorStats } from '@/store/monitorContext';
 
 import { LatestImportantEvents } from './LatestImportantEvent';
 
-function _MonitorNumbers({ stats }: { stats: MonitorStats }) {
+function MonitorNumbers({ stats }: { stats: MonitorStats }) {
+  const upMonitors =
+    stats.totalMonitors -
+    stats.downMonitors.length -
+    stats.inactiveMonitors.length;
+
   return (
-    <View className="w-full flex-row justify-between rounded-xl bg-secondary p-2">
-      <View className="flex flex-col items-center justify-center rounded-lg p-4">
-        <Text className="text-2xl font-bold text-foreground">
-          {stats.totalMonitors}
+    <View className="w-full flex-row justify-between gap-2">
+      <View className="flex-1 flex-col items-center justify-center rounded-md border border-black/20 bg-card p-2 dark:border-white/20">
+        <Text className="text-xl font-extrabold text-green-500 dark:text-green-500">
+          {upMonitors}
         </Text>
-        <Text className="text-sm text-foreground/90">Total</Text>
+        <Text className="text-xs text-foreground/60">Up</Text>
       </View>
-      <View className="flex flex-col items-center justify-center rounded-lg p-4">
-        <Text className="text-2xl font-bold text-foreground">
+      <View className="flex-1 flex-col items-center justify-center rounded-md border border-black/20 bg-card p-2 dark:border-white/20">
+        <Text className="text-xl font-extrabold text-red-500 dark:text-red-500">
           {stats.downMonitors.length}
         </Text>
-        <Text className="text-sm text-foreground/90">Down</Text>
+        <Text className="text-xs text-foreground/60">Down</Text>
       </View>
-      <View className="flex flex-col items-center justify-center rounded-lg p-4">
-        <Text className="text-2xl font-bold text-foreground">
+      <View className="flex-1 flex-col items-center justify-center rounded-md border border-black/20 bg-card p-2 dark:border-white/20">
+        <Text className="text-xl font-extrabold text-gray-500 dark:text-gray-500">
           {stats.inactiveMonitors.length}
         </Text>
-        <Text className="text-sm text-foreground/90">Inactive</Text>
+        <Text className="text-xs text-foreground/60">Paused</Text>
       </View>
     </View>
   );
@@ -111,13 +116,18 @@ export function MonitorSummaryStats() {
       </View>
       <View className="mb-10 mt-14 items-center">
         <Text className="text-2xl font-bold text-foreground">
-          {isAllUp ? 'All Systems Up' : `${numOfDownMonitors} Monitors Down`}
+          {isAllUp
+            ? 'All Systems Operational'
+            : `${numOfDownMonitors} Monitor${numOfDownMonitors > 1 ? 's' : ''} Down`}
         </Text>
-        <Text className="mt-2 text-sm text-foreground/90">
-          {isAllUp ? 'Everything is running smoothly' : 'Attention required'}
+        <Text className="mt-2 text-sm text-foreground/90 dark:text-foreground/50">
+          {isAllUp
+            ? `${stats.totalMonitors} monitor${stats.totalMonitors > 1 ? 's' : ''} online`
+            : `${stats.totalMonitors - numOfDownMonitors} of ${stats.totalMonitors} monitor${stats.totalMonitors > 1 ? 's' : ''} responding`}
         </Text>
       </View>
       <LatestImportantEvents />
+      <MonitorNumbers stats={stats} />
     </View>
   );
 }

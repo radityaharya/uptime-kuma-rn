@@ -6,7 +6,9 @@ import { twMerge } from 'tailwind-merge';
 import type { TxKeyPath } from '@/lib/i18n';
 import { translate } from '@/lib/i18n';
 
-export const TextClassContext = React.createContext<string | undefined>(undefined);
+export const TextClassContext = React.createContext<string | undefined>(
+  undefined
+);
 interface Props extends TextProps {
   className?: string;
   tx?: TxKeyPath;
@@ -23,20 +25,20 @@ export const Text = ({
     () =>
       twMerge(
         'text-base text-black  dark:text-white  font-inter font-normal',
-        className,
+        className
       ),
-    [className],
+    [className]
   );
 
   const nStyle = React.useMemo(
     () =>
       StyleSheet.flatten([
         {
-          writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
+          writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr'
         },
-        style,
+        style
       ]) as TextStyle,
-    [style],
+    [style]
   );
   return (
     <NNText className={textStyle} style={nStyle} {...props}>

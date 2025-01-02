@@ -60,7 +60,7 @@ class MonitorStore {
       return heartbeats
         .map((hb) => ({
           ...hb,
-          time: typeof hb.time === 'string' ? new Date(hb.time) : hb.time
+          time: new Date(hb.time)
         }))
         .sort((a, b) => b.time.getTime() - a.time.getTime());
     },
@@ -120,7 +120,16 @@ class MonitorStore {
 
   constructor() {
     try {
-      this.currentMonitors = getItem<Monitor[]>('monitors') || [];
+      const storedMonitors = getItem<Monitor[]>('monitors') || [];
+      this.currentMonitors = storedMonitors.map((monitor) => ({
+        ...monitor,
+        heartBeatList: monitor.heartBeatList
+          ? this.processHeartbeatsMemoized(monitor.heartBeatList)
+          : [],
+        importantHeartBeatList: monitor.importantHeartBeatList
+          ? this.processHeartbeatsMemoized(monitor.importantHeartBeatList)
+          : []
+      }));
     } catch (error) {
       console.error('Error initializing MonitorStore:', error);
       this.currentMonitors = [];
@@ -155,8 +164,19 @@ class MonitorStore {
 
   setMonitors(monitors: Monitor[]) {
     try {
-      this.currentMonitors = monitors;
-      setItem('monitors', monitors);
+      // Convert dates back to Date objects when loading from storage
+      const processedMonitors = monitors.map((monitor) => ({
+        ...monitor,
+        heartBeatList: monitor.heartBeatList
+          ? this.processHeartbeatsMemoized(monitor.heartBeatList)
+          : [],
+        importantHeartBeatList: monitor.importantHeartBeatList
+          ? this.processHeartbeatsMemoized(monitor.importantHeartBeatList)
+          : []
+      }));
+
+      this.currentMonitors = processedMonitors;
+      setItem('monitors', processedMonitors);
       this.notifySubscribers();
     } catch (error) {
       console.error('Error setting monitors:', error);
@@ -209,6 +229,8 @@ class MonitorStore {
     const monitors = this.getMonitors();
 
     const hb = convertToHeartbeat(heartbeat);
+    hb.time = new Date(hb.time);
+
     const index = monitors.findIndex(
       (m) => Number(m.id) === Number(hb.monitor_id)
     );

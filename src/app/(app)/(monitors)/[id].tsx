@@ -1,3 +1,4 @@
+import { formatDistance } from 'date-fns';
 import { useLocalSearchParams } from 'expo-router';
 import * as React from 'react';
 import {
@@ -12,7 +13,7 @@ import { LineChart, type LineChartPropsType } from 'react-native-gifted-charts';
 import { DetailStatCard } from '@/components/monitors/DetailStatCard';
 import { MonitorCard } from '@/components/monitors/MonitorCard';
 import { Text, View } from '@/components/ui';
-import { type HeartBeat } from '@/schemas/monitor';
+import { type HeartBeat,type ImportantHeartBeat } from '@/schemas/monitor';
 import { clientStore } from '@/store/clientStore';
 import { useMonitor } from '@/store/monitorContext';
 
@@ -135,28 +136,30 @@ const MonitorChart = React.memo(
 );
 
 // Memoize HeartbeatCard
-const HeartbeatCard = React.memo(({ item }: { item: any }) => {
+const HeartbeatCard = React.memo(({ item }: { item: ImportantHeartBeat }) => {
   return (
-    <View className={`mb-2 rounded-lg border border-secondary p-4`}>
-      <Text className="text-sm text-gray-500">
-        {item.time
-          ? new Date(item.time).toLocaleDateString('en-US', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-              hour: 'numeric',
-              minute: 'numeric',
-              second: 'numeric',
-              timeZoneName: 'short'
-            })
-          : ''}
+    <View
+      className={`mb-2 w-full flex-row items-center justify-start gap-3 rounded-md border border-black/20 bg-card px-4 py-3 dark:border-white/20`}
+    >
+      <View
+        className={`size-2 rounded-full ${
+          item.status === 1 ? 'bg-green-500' : 'bg-red-500'
+        }`}
+      />
+      <View>
+        <Text className="text-sm text-foreground opacity-70">
+          {formatDistance(new Date(item.time), new Date(), { addSuffix: true })}
+        </Text>
+        <Text
+          className="clamp-1 mb-1 font-medium text-foreground"
+          numberOfLines={1}
+        >
+          {item.msg}
+        </Text>
+      </View>
+      <Text className="ml-auto text-xs text-foreground/60">
+        {item.ping ? `${item.ping}ms` : ''}
       </Text>
-      <Text className={`text-lg font-bold text-foreground`}>
-        {item.status === 1 ? 'Up' : 'Down'}
-      </Text>
-      <Text className="text-sm">Ping: {item.ping} ms</Text>
-      <Text className="text-sm">Message: {item.msg}</Text>
     </View>
   );
 });

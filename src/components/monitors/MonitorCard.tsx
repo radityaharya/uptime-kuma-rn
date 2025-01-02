@@ -15,13 +15,29 @@ interface MonitorCardProps {
   className?: string;
 }
 
+const MonitorTypeBadge: React.FC<{ type: string }> = ({ type }) => {
+  return (
+    <View className="items-center justify-center rounded-md border border-black/20 px-3 backdrop-blur-sm dark:border-white/20">
+      <Text className="text-sm font-medium text-foreground">{type}</Text>
+    </View>
+  );
+};
+
 const MonitorContent: React.FC<{ monitor: Monitor }> = ({ monitor }) => {
   switch (monitor.type) {
     case 'http':
-      return <Text className="font-medium text-foreground">{monitor.url}</Text>;
+      return (
+        <View className="flex-row items-center gap-2">
+          <MonitorTypeBadge type={monitor.type} />
+          <Text className="text-foreground">{monitor.url}</Text>
+        </View>
+      );
     case 'ping':
       return (
-        <Text className="font-medium text-foreground">{monitor.hostname}</Text>
+        <View className="flex-row items-center gap-2">
+          <MonitorTypeBadge type={monitor.type} />
+          <Text className="text-foreground">{monitor.hostname}</Text>
+        </View>
       );
     default:
       return null;
@@ -37,10 +53,10 @@ const MonitorTags: React.FC<{ tags: Tag[] }> = ({ tags }) => {
       {tags.map((tag) => (
         <View
           key={tag.id || tag.tag_id}
-          className="rounded-full px-3 text-foreground/80 backdrop-blur-sm"
+          className="rounded-full px-3 py-0.5 text-foreground/80 backdrop-blur-sm"
           style={{ backgroundColor: tag.color ?? 'gray' }}
         >
-          <Text className="text-sm font-medium text-gray-200">{tag.name}</Text>
+          <Text className="text-sm font-medium text-white">{tag.name}</Text>
         </View>
       ))}
     </View>
@@ -63,13 +79,8 @@ function UptimeBadge({
   className?: string;
 }) {
   return (
-    <View
-      className={cn(
-        'rounded-full px-3 text-foreground/80 backdrop-blur-sm',
-        className
-      )}
-    >
-      <Text className="text-sm font-medium text-gray-200">
+    <View className={cn('rounded-full px-3 backdrop-blur-sm', className)}>
+      <Text className="text-sm font-medium text-white">
         {uptime.toFixed(2)}%
       </Text>
     </View>
@@ -97,7 +108,7 @@ export function MonitorCard({ monitor, onClick, className }: MonitorCardProps) {
       >
         <View
           className={cn(
-            'bg-background flex flex-col overflow-hidden rounded-lg border border-gray-800 bg-gradient-to-br from-gray-800/90 to-gray-900/90 p-4 transition-all duration-200',
+            'bg-background flex flex-col overflow-hidden rounded-lg border border-black/20 dark:border-white/20 bg-gradient-to-br from-gray-800/90 to-gray-900/90 p-4 transition-all duration-200',
             !monitor.active && 'opacity-50',
             className
           )}
@@ -124,7 +135,7 @@ export function MonitorCard({ monitor, onClick, className }: MonitorCardProps) {
             </View>
             {monitor.description && (
               <Text
-                className="border-t border-gray-700/50 
+                className="border-t border-gray-700/20 
                 text-sm leading-relaxed text-gray-400"
               >
                 {monitor.description}

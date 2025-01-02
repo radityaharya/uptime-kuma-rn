@@ -32,7 +32,7 @@ export const SectionHeader = React.memo(
           <TouchableOpacity
             onPress={onToggle}
             className={cn(
-              'bg-background items-center justify-center rounded-lg rounded-t-none border border-t-0 border-gray-800 bg-gradient-to-br from-gray-800/90 to-gray-900/90 pb-2',
+              'bg-background items-center justify-center rounded-lg rounded-t-none border border-t-0 dark:border-white/20 border-black/20 bg-gradient-to-br from-gray-800/90 to-gray-900/90 pb-2',
               parentMonitor.active ? 'opacity-100' : 'opacity-50'
             )}
           >
