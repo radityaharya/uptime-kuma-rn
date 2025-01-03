@@ -17,10 +17,16 @@ import {
 import { Toaster } from 'sonner-native';
 
 import { StatusBar } from '@/components/ui';
-import { hydrateAuth, loadSelectedTheme } from '@/lib';
+import { loadSelectedTheme, useAuth } from '@/lib';
+import { startBackgroundService } from '@/lib/background-service';
 import { log } from '@/lib/log';
-import { registerForPushNotificationsAsync } from '@/lib/notification';
+import {
+  cancelAllScheduledNotifications,
+  handleNotificationResponse,
+  registerForPushNotificationsAsync
+} from '@/lib/notification';
 import { useThemeConfig } from '@/lib/use-theme-config';
+import { clientStore } from '@/store/clientStore';
 import { MonitorProvider } from '@/store/monitorContext';
 
 export { ErrorBoundary } from 'expo-router';
@@ -29,7 +35,6 @@ export const unstable_settings = {
   initialRouteName: '(app)'
 };
 
-hydrateAuth();
 loadSelectedTheme();
 SplashScreen.preventAutoHideAsync();
 SplashScreen.setOptions({
@@ -41,7 +46,44 @@ configureReanimatedLogger({
   level: ReanimatedLogLevel.warn,
   strict: false
 });
+
 export default function RootLayout() {
+  const auth = useAuth();
+  const [isReady, setIsReady] = React.useState(false);
+
+  useEffect(() => {
+    const initializeApp = async () => {
+      if (auth.status === 'authenticated' || auth.status === 'idle') {
+        try {
+          await startBackgroundService();
+          const maxAttempts = 10;
+          let attempts = 0;
+          while (attempts < maxAttempts) {
+            const client = clientStore.getClient();
+            if (client?.isSocketConnected()) {
+              break;
+            }
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+            attempts++;
+          }
+          setIsReady(true);
+          await SplashScreen.hideAsync();
+        } catch (error) {
+          log.error('Failed to initialize app:', error);
+          setIsReady(true);
+          await SplashScreen.hideAsync();
+        }
+      }
+      log.debug('Auth status:', auth.status);
+    };
+
+    initializeApp();
+  }, [auth.status]);
+
+  if (!isReady) {
+    return null;
+  }
+
   return (
     <Providers>
       <Stack>
@@ -61,17 +103,22 @@ function Providers({ children }: { children: React.ReactNode }) {
   const responseListener = useRef<Notifications.EventSubscription | null>(null);
 
   useEffect(() => {
-    registerForPushNotificationsAsync();
+    const setup = async () => {
+      await cancelAllScheduledNotifications();
+      await registerForPushNotificationsAsync();
 
-    notificationListener.current =
-      Notifications.addNotificationReceivedListener((notification) => {
-        log.info('Notification received:', notification);
-      });
+      notificationListener.current =
+        Notifications.addNotificationReceivedListener((notification) => {
+          log.debug('Received notification:', notification);
+        });
 
-    responseListener.current =
-      Notifications.addNotificationResponseReceivedListener((response) => {
-        log.info('Notification response:', response);
-      });
+      responseListener.current =
+        Notifications.addNotificationResponseReceivedListener(
+          handleNotificationResponse
+        );
+    };
+
+    setup();
 
     return () => {
       if (notificationListener.current) {

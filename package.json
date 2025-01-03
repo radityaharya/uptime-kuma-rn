@@ -72,6 +72,7 @@
     "react-hook-form": "^7.53.0",
     "react-i18next": "^15.0.1",
     "react-native": "0.76.5",
+    "react-native-bg-actions": "^1.0.17",
     "react-native-edge-to-edge": "^1.1.2",
     "react-native-flash-message": "^0.4.2",
     "react-native-gesture-handler": "~2.20.2",

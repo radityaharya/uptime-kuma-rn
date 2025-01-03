@@ -1,6 +1,7 @@
 import io, { type Socket } from 'socket.io-client';
 
 import { log } from '@/lib/log';
+import { sendNotificationImmediately } from '@/lib/notification';
 import {
   type HeartBeat,
   type ImportantHeartBeat,
@@ -165,7 +166,7 @@ export class UptimeKumaClient {
   }
 
   // Monitor Management
-  private get monitors(): Monitor[] {
+  public get monitors(): Monitor[] {
     return monitorStore.getMonitors();
   }
 
@@ -273,8 +274,48 @@ export class UptimeKumaClient {
     this.updateMonitor(monitorId, { heartBeatList: heartbeats });
   }
 
-  private addHeartbeat(heartbeat: ImportantHeartBeat): void {
-    monitorStore.addHeartbeat(heartbeat);
+  private getLatestHeartbeat(monitor: Monitor): HeartBeat | undefined {
+    if (!monitor.heartBeatList?.length) return undefined;
+
+    return monitor.heartBeatList.reduce((latest, current) => {
+      const currentTime = new Date(current.time).getTime();
+      const latestTime = new Date(latest.time).getTime();
+      return currentTime > latestTime ? current : latest;
+    }, monitor.heartBeatList[0]);
+  }
+
+  private async handleHeartbeat(heartbeat: ImportantHeartBeat): Promise<void> {
+    try {
+      const monitor = this.monitors.find((m) => m.id === heartbeat.monitorID);
+      if (!monitor) return;
+
+      const previousHeartbeat = this.getLatestHeartbeat(monitor);
+      const previousStatus = previousHeartbeat?.status;
+
+      monitorStore.addHeartbeat(heartbeat);
+
+      if (previousStatus !== undefined && previousStatus !== heartbeat.status) {
+        log.info(
+          `Monitor ${monitor.name} status changed from ${previousStatus} to ${heartbeat.status}`
+        );
+
+        if (heartbeat.status === 0) {
+          await sendNotificationImmediately(
+            'Monitor Down',
+            `${monitor.name} is currently down!`,
+            { monitorId: monitor.id }
+          );
+        } else if (heartbeat.status === 1 && previousStatus === 0) {
+          await sendNotificationImmediately(
+            'Monitor Up',
+            `${monitor.name} is back online!`,
+            { monitorId: monitor.id }
+          );
+        }
+      }
+    } catch (error) {
+      log.error('Failed to handle heartbeat:', error);
+    }
   }
 
   private setImportantHeartBeatList(
@@ -496,8 +537,12 @@ export class UptimeKumaClient {
       importantHeartbeatList: this.setImportantHeartBeatList.bind(this),
       avgPing: this.setAvgPing.bind(this),
       uptime: this.setUptime.bind(this),
-      heartbeat: this.addHeartbeat.bind(this),
-      statusPageList: this.handleStatusPageList.bind(this)
+      heartbeat: this.handleHeartbeat.bind(this), // Update to use new handler
+      statusPageList: this.handleStatusPageList.bind(this),
+      // Add pong handler
+      pong: () => {
+        log.debug('Received pong from server');
+      }
     };
 
     Object.entries(handlers).forEach(([event, handler]) => {

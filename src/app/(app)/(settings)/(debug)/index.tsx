@@ -1,5 +1,4 @@
 import * as Application from 'expo-application';
-import { scheduleNotificationAsync } from 'expo-notifications';
 import { useRouter } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import React from 'react';
@@ -8,6 +7,7 @@ import { Platform } from 'react-native';
 import { Item } from '@/components/settings/item';
 import { ItemsContainer } from '@/components/settings/items-container';
 import { ScrollView, View } from '@/components/ui';
+import { sendNotificationImmediately } from '@/lib/notification';
 import statusStore from '@/store/statusStore';
 
 export default function Debug() {
@@ -45,13 +45,10 @@ export default function Debug() {
             <Item
               text="debug.send_test_notification"
               onPress={() => {
-                scheduleNotificationAsync({
-                  content: {
-                    title: 'Test notification',
-                    body: 'This is a test notification',
-                  },
-                  trigger: null,
-                });
+                sendNotificationImmediately(
+                  'Test Notification',
+                  'This is a test notification'
+                );
               }}
               className={`rounded-xl p-4 ${
                 colorScheme === 'dark' ? 'bg-white/5' : 'bg-black/5'

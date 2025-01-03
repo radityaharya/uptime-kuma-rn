@@ -8,7 +8,6 @@ import React, {
   useState
 } from 'react';
 
-import { sendNotificationImmediately } from '@/lib/notification';
 import { getItem, removeItem, setItem } from '@/lib/storage';
 import {
   type HeartBeat,
@@ -228,25 +227,6 @@ class MonitorStore {
       ...monitor,
       heartBeatList: [hb, ...(monitor.heartBeatList || [])]
     };
-
-    if (
-      monitor.heartBeatList &&
-      monitor.heartBeatList[0] &&
-      monitor.heartBeatList[0].status !== heartbeat.status
-    ) {
-      const title = `${monitor.name} is ${
-        heartbeat.status === 1 ? 'up' : 'down'
-      }!`;
-      const body = `Your monitor ${monitor.name} is ${
-        heartbeat.status === 1 ? 'up' : 'down'
-      }!`;
-      sendNotificationImmediately(title, body, {
-        monitorID: monitor.id,
-        monitorName: monitor.name,
-        status: heartbeat.status
-      });
-      hb.important = 1;
-    }
 
     this.updateMonitor(hb.monitor_id, {
       heartBeatList: monitors[index].heartBeatList || undefined

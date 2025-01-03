@@ -14,6 +14,7 @@ import { cn } from '@/lib';
 import { type HeartBeat, type Monitor, type Tag } from '@/schemas/monitor';
 
 import { HeartbeatHistory } from './HeartBeatHistory';
+
 // import { StatusIndicator } from './StatusIndicator';
 
 interface MonitorCardProps {
