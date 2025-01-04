@@ -4,17 +4,17 @@ import { StorageAccessFramework } from 'expo-file-system';
 import {
   consoleTransport,
   logger,
-  type transportFunctionType,
+  type transportFunctionType
 } from 'react-native-logs';
+import { toast } from 'sonner-native';
 
 import { checkAndGetPermissionGrantedFolderURI } from './fs';
-import { sendNotificationImmediately } from './notification';
 
 // Constants
 const LOG_CONFIG = {
   MAX_SIZE: 5 * 1024 * 1024,
   MAX_FILES: 5,
-  PREFIX: 'app-log',
+  PREFIX: 'app-log'
 } as const;
 
 // Type definitions
@@ -85,7 +85,7 @@ const cleanOldLogs = async (logDir: string) => {
 };
 
 const customFileTransport: transportFunctionType<customTransportProps> = async (
-  props,
+  props
 ) => {
   try {
     const { level, msg, rawMsg } = props;
@@ -102,8 +102,8 @@ const customFileTransport: transportFunctionType<customTransportProps> = async (
       timestamp: date.toISOString(),
       metadata: {
         // @ts-ignore
-        env: global.__DEV__ ? 'development' : 'production',
-      },
+        env: global.__DEV__ ? 'development' : 'production'
+      }
     };
 
     let existingContent = '';
@@ -122,8 +122,8 @@ const customFileTransport: transportFunctionType<customTransportProps> = async (
       logPath,
       existingContent + JSON.stringify(logEntry) + '\n',
       {
-        encoding: FileSystem.EncodingType.UTF8,
-      },
+        encoding: FileSystem.EncodingType.UTF8
+      }
     );
 
     await cleanOldLogs(logDir);
@@ -134,7 +134,7 @@ const customFileTransport: transportFunctionType<customTransportProps> = async (
 };
 
 export async function getLogs(
-  params: LogQueryParams = {},
+  params: LogQueryParams = {}
 ): Promise<LogEntry[]> {
   try {
     const logDir = await ensureDirectoryExists();
@@ -221,14 +221,14 @@ export async function exportLogs() {
     const fileUri = await StorageAccessFramework.createFileAsync(
       permissionUri,
       filename,
-      'application/json',
+      'application/json'
     );
 
     await FileSystem.writeAsStringAsync(fileUri, logText, {
-      encoding: FileSystem.EncodingType.UTF8,
+      encoding: FileSystem.EncodingType.UTF8
     });
 
-    sendNotificationImmediately('Logs exported', `Logs exported to ${fileUri}`);
+    toast('Log Exported');
 
     return fileUri;
   } catch (error) {
@@ -245,9 +245,9 @@ export const log = logger.createLogger({
       debug: 'blue',
       error: 'red',
       info: 'green',
-      warn: 'yellow',
-    },
-  },
+      warn: 'yellow'
+    }
+  }
 });
 
 export function setLogLevel(level: LogLevel) {

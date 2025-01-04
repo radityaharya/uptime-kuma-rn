@@ -3,6 +3,7 @@ import { Linking } from 'react-native';
 import { twMerge } from 'tailwind-merge';
 import type { StoreApi, UseBoundStore } from 'zustand';
 
+import { type HeartBeat,type ImportantHeartBeat } from '@/schemas/monitor';
 import { useInfoStore } from '@/store/infoStore';
 
 export function openLinkInBrowser(url: string) {
@@ -51,3 +52,12 @@ export const formatDateTime = (time?: string | Date) => {
   };
   return date.toLocaleDateString(undefined, options);
 };
+
+export const convertToHeartbeat = (
+  importantHeartbeat: ImportantHeartBeat
+): HeartBeat => ({
+  ...importantHeartbeat,
+  id: 0,
+  down_count: 0,
+  monitor_id: importantHeartbeat.monitorID
+});

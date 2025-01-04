@@ -47,7 +47,7 @@ export async function sendNotificationImmediately(
     const timestamp = Date.now();
     log.info('Sending notification:', { title, body, data, timestamp });
 
-    toast.success(title);
+    toast.success(body);
 
     const result = await Notifications.scheduleNotificationAsync({
       content: {

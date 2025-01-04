@@ -3,8 +3,8 @@ import { ScrollView, Text } from 'react-native';
 import { toast } from 'sonner-native';
 
 import { MonitorForm } from '@/components/monitors/form/MonitorForm';
+import { useMonitor } from '@/hooks/use-monitors';
 import { type MonitorFormData } from '@/schemas/monitor';
-import { useMonitor } from '@/store/monitorContext';
 
 const defaultNewMonitorValues: Partial<MonitorFormData> = {
   type: 'http',

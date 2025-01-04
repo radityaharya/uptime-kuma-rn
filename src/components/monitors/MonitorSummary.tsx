@@ -4,7 +4,8 @@ import React from 'react';
 import { ActivityIndicator, Animated, StyleSheet } from 'react-native';
 
 import { Text, View } from '@/components/ui';
-import { type MonitorStats, useMonitorStats } from '@/store/monitorContext';
+import { useMonitorStats } from '@/hooks/use-monitors';
+import { type MonitorStats } from '@/store/monitorStore';
 
 import { LatestImportantEvents } from './LatestImportantEvent';
 

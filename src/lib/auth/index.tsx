@@ -2,8 +2,9 @@ import { create } from 'zustand';
 
 import { clientStore } from '@/store/clientStore';
 import { useInfoStore } from '@/store/infoStore';
-import { monitorStore } from '@/store/monitorContext';
+import { monitorStore } from '@/store/monitorStore';
 
+import { stopBackgroundService } from '../background-service';
 import { createSelectors } from '../utils';
 import type { AuthCredentials } from './utils';
 import { getToken, removeToken, setToken } from './utils';
@@ -30,6 +31,7 @@ const _useAuth = create<AuthState>((set, get) => ({
     clientStore.getClient()?.disconnect();
     clientStore.getClient()?.destroy();
     clientStore.destroyClient();
+    stopBackgroundService();
 
     removeToken();
     set({ status: 'unauthenticated', credentials: null });

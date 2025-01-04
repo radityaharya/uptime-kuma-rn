@@ -1,4 +1,6 @@
-import BackgroundService from 'react-native-bg-actions';
+import BackgroundService, {
+  type BackgroundTaskOptions
+} from 'react-native-bg-actions';
 
 import { UptimeKumaClient } from '@/api/client';
 import { getToken } from '@/lib/auth/utils';
@@ -9,29 +11,6 @@ import { notificationStore } from '@/store/notificationStore';
 const sleep = (time: number) =>
   new Promise<void>((resolve) => setTimeout(() => resolve(), time));
 
-interface BackgroundTaskOptions {
-  taskName: string;
-  taskTitle: string;
-  taskDesc: string;
-  taskIcon: {
-    name: string;
-    type: string;
-    package?: string;
-  };
-  color: string;
-  parameters: {
-    delay: number;
-  };
-  linkingURI?: string;
-  progressBar?: {
-    max: number;
-    value: number;
-    indeterminate?: boolean;
-  };
-  enableHeadless?: boolean;
-  enableServiceTracking?: boolean;
-}
-
 const backgroundOptions: BackgroundTaskOptions = {
   taskName: 'UptimeKumaMonitor',
   taskTitle: 'Uptime Kuma Monitor',
@@ -41,21 +20,12 @@ const backgroundOptions: BackgroundTaskOptions = {
     type: 'mipmap'
   },
   color: '#FF231F7C',
-  parameters: {
-    delay: 60000
-  },
-  linkingURI: 'uptimekuma://', // Deep linking URI
-  // progressBar: {
-  //   max: 100,
-  //   value: 0,
-  //   indeterminate: true
-  // },
-  enableHeadless: true,
-  enableServiceTracking: true
+  linkingURI: 'uptimekuma://' // Deep linking URI
 };
 
 const KEEPALIVE_INTERVAL = 30000; // 30 seconds
 const RECONNECT_DELAY = 5000; // 5 seconds
+const DEFAULT_DELAY = 60000; // 1 minute
 // const NOTIFICATION_COOLDOWN = 1 * 60 * 1000; // 5 minutes
 // let lastNotificationTime = 0;
 
@@ -69,7 +39,7 @@ const RECONNECT_DELAY = 5000; // 5 seconds
 // };
 
 const backgroundTask = async (taskData?: { delay: number }) => {
-  const delay = taskData?.delay ?? backgroundOptions.parameters.delay;
+  const delay = taskData?.delay ?? DEFAULT_DELAY;
   let keepAliveInterval: NodeJS.Timeout | null = null;
   let isRunning = true;
 
@@ -82,12 +52,12 @@ const backgroundTask = async (taskData?: { delay: number }) => {
 
   try {
     while (isRunning && BackgroundService.isRunning()) {
+      console.log('Background task iteration');
       try {
         const client = clientStore.getClient();
 
         if (!client || !client.isSocketConnected()) {
           log.debug('Socket disconnected, attempting to reconnect...');
-          await sleep(RECONNECT_DELAY);
           await initializeBackgroundClient();
           continue;
         }
@@ -103,6 +73,10 @@ const backgroundTask = async (taskData?: { delay: number }) => {
 
         await client.getMonitors();
         await client.getHeartbeats();
+
+        updateBackgroundNotification(
+          `Monitoring ${client.monitors.length} services`
+        );
 
         await sleep(delay);
       } catch (iterationError) {
@@ -133,8 +107,8 @@ const initializeBackgroundClient = async (): Promise<void> => {
     if (!client) {
       client = new UptimeKumaClient(token.host, {
         timeout: 5000,
-        reconnectionDelay: 1000,
-        reconnectionDelayMax: 3000
+        reconnectionDelay: 500,
+        reconnectionDelayMax: 2000
       });
       clientStore.setClient(client);
     }
@@ -170,7 +144,7 @@ export const startBackgroundService = async (delay?: number): Promise<void> => {
   const options = {
     ...backgroundOptions,
     parameters: {
-      delay: delay || backgroundOptions.parameters.delay
+      delay: delay || DEFAULT_DELAY
     }
   };
 
@@ -201,7 +175,10 @@ export const updateBackgroundNotification = async (
   description: string
 ): Promise<void> => {
   try {
-    await BackgroundService.updateNotification({ taskDesc: description });
+    await BackgroundService.updateNotification({
+      ...backgroundOptions,
+      taskDesc: description
+    });
   } catch (error) {
     log.error('Failed to update background notification:', error);
   }

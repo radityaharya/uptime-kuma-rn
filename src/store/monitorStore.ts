@@ -1,25 +1,13 @@
 import debounce from 'lodash/debounce';
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState
-} from 'react';
 
 import { getItem, removeItem, setItem } from '@/lib/storage';
+import { convertToHeartbeat } from '@/lib/utils';
 import {
   type HeartBeat,
   type ImportantHeartBeat,
   type Monitor,
   type Tag
 } from '@/schemas/monitor';
-
-interface MonitorContextType {
-  monitors: Monitor[];
-  setMonitors: (monitors: Monitor[]) => void;
-}
 
 interface MonitorUpdate {
   heartBeatList?: HeartBeat[];
@@ -32,27 +20,38 @@ interface MonitorUpdate {
   };
 }
 
-const MonitorContext = createContext<MonitorContextType | null>(null);
-
-const convertToHeartbeat = (
-  importantHeartbeat: ImportantHeartBeat
-): HeartBeat => ({
-  id: 0,
-  monitor_id: importantHeartbeat.monitorID,
-  down_count: 0,
-  duration: importantHeartbeat.duration,
-  important: importantHeartbeat.important,
-  status: importantHeartbeat.status,
-  msg: importantHeartbeat.msg,
-  ping: importantHeartbeat.ping,
-  time: importantHeartbeat.time
-});
-
+export interface MonitorStats {
+  totalMonitors: number;
+  numMonitors: number;
+  numHeartbeats: number;
+  avgHeartbeatsPerMonitor: number;
+  statusCounts: Record<string, number>;
+  uptimeStats: {
+    avgDay: string;
+    avgMonth: string;
+  };
+  pingStats: {
+    avgOverall: string;
+  };
+  downMonitors: Monitor[];
+  upMonitors: Monitor[];
+  inactiveMonitors: Monitor[];
+  isAllHeartbeatPopulated: boolean;
+  latestImportantEvent: {
+    heartbeat: HeartBeat | null;
+    monitorId: string | null;
+    monitorName: string;
+  };
+  importantEvents: {
+    monitorId: number;
+    monitorName: string;
+    heartbeat: HeartBeat;
+  }[];
+}
 class MonitorStore {
   private static instance: MonitorStore;
   private settersMap: Set<(monitors: Monitor[]) => void> = new Set();
   private currentMonitors: Monitor[] = getItem('monitors') || [];
-
   private currentTags: Tag[] = getItem('tags') || [];
   private subscribers: Set<(monitors: Monitor[]) => void> = new Set();
   private batchedUpdates: Map<number, Partial<MonitorUpdate>> = new Map();
@@ -61,14 +60,16 @@ class MonitorStore {
     monitors: Monitor[];
     stats: MonitorStats;
   } | null = null;
+  private flushInterval: NodeJS.Timeout | null = null;
 
-  constructor() {
+  private constructor() {
     try {
       this.currentMonitors = getItem<Monitor[]>('monitors') || [];
     } catch (error) {
       console.error('Error initializing MonitorStore:', error);
       this.currentMonitors = [];
     }
+    this.startFlushInterval();
   }
 
   static getInstance() {
@@ -100,8 +101,8 @@ class MonitorStore {
   setMonitors(monitors: Monitor[]) {
     try {
       this.currentMonitors = monitors;
-      setItem('monitors', monitors);
       this.notifySubscribers();
+      this.flushToStorage();
     } catch (error) {
       console.error('Error setting monitors:', error);
     }
@@ -114,7 +115,7 @@ class MonitorStore {
   setTags(tags: Tag[]) {
     try {
       this.currentTags = tags;
-      setItem('tags', tags);
+      this.flushToStorage();
     } catch (error) {
       console.error('Error setting tags:', error);
     }
@@ -237,11 +238,11 @@ class MonitorStore {
     console.debug('Setting monitor list', Object.keys(data).length, 'monitors');
 
     Object.values(data).forEach((monitor) => {
-      const index = this.currentMonitors.findIndex(
+      const existingMonitor = this.currentMonitors.find(
         (m) => Number(m.id) === Number(monitor.id)
       );
 
-      if (index === -1) {
+      if (!existingMonitor) {
         this.currentMonitors.push({
           ...monitor,
           id: Number(monitor.id),
@@ -249,25 +250,21 @@ class MonitorStore {
           avgPing: 0,
           uptime: {
             day: monitor.uptime?.day ?? 0,
-            month: monitor.uptime?.month ?? 0
+            month: monitor.uptime?.month ?? 0,
+            year: monitor.uptime?.year ?? 0
           }
         });
       } else {
-        this.currentMonitors[index] = {
-          ...this.currentMonitors[index],
+        this.currentMonitors[this.currentMonitors.indexOf(existingMonitor)] = {
+          ...existingMonitor,
           ...monitor,
           id: Number(monitor.id),
-          heartBeatList: this.currentMonitors[index].heartBeatList,
-          avgPing: this.currentMonitors[index].avgPing,
+          heartBeatList: existingMonitor.heartBeatList,
+          avgPing: existingMonitor.avgPing,
           uptime: {
-            day:
-              monitor.uptime?.day ??
-              this.currentMonitors[index].uptime?.day ??
-              0,
-            month:
-              monitor.uptime?.month ??
-              this.currentMonitors[index].uptime?.month ??
-              0
+            day: monitor.uptime?.day ?? existingMonitor.uptime?.day ?? 0,
+            month: monitor.uptime?.month ?? existingMonitor.uptime?.month ?? 0,
+            year: monitor.uptime?.year ?? existingMonitor.uptime?.year ?? 0
           }
         };
       }
@@ -332,11 +329,9 @@ class MonitorStore {
     const downMonitors = activeMonitors.filter(
       (m) => !isMonitorUp(m.heartBeatList || [])
     );
-
     const upMonitors = activeMonitors.filter((m) =>
       isMonitorUp(m.heartBeatList || [])
     );
-
     const inactiveMonitors = this.currentMonitors.filter((m) => !m.active);
 
     const isAllHeartbeatPopulated = activeMonitors.every(
@@ -430,12 +425,17 @@ class MonitorStore {
     return importantEvents.slice(offset, offset + limit);
   }
 
+  getMonitor(id: number): Monitor | undefined {
+    return this.currentMonitors.find((m) => Number(m.id) === Number(id));
+  }
+
   reset() {
     try {
       this.currentMonitors = [];
       this.settersMap.clear();
       this.subscribers.clear();
       removeItem('monitors');
+      removeItem('tags');
     } catch (error) {
       console.error('Error resetting MonitorStore:', error);
     }
@@ -445,127 +445,24 @@ class MonitorStore {
     this.notifySubscribers.cancel();
     this.settersMap.clear();
     this.subscribers.clear();
+    if (this.flushInterval) {
+      clearInterval(this.flushInterval);
+    }
+  }
+
+  private startFlushInterval() {
+    this.flushInterval = setInterval(() => {
+      this.flushToStorage();
+    }, 60000);
+  }
+
+  private flushToStorage() {
+    try {
+      setItem('monitors', this.currentMonitors);
+      setItem('tags', this.currentTags);
+    } catch (error) {
+      console.error('Error flushing to storage:', error);
+    }
   }
 }
-
-export function useMonitorsStore() {
-  const [monitors, setMonitors] = useState<Monitor[]>([]);
-  const setMonitorsCallback = useCallback((newMonitors: Monitor[]) => {
-    setMonitors(newMonitors);
-  }, []);
-
-  useEffect(() => {
-    const unsubscribe = monitorStore.subscribe(setMonitorsCallback);
-    return () => unsubscribe();
-  }, [setMonitorsCallback]);
-
-  return useMemo(() => monitors, [monitors]);
-}
-
-export function useMonitor(id: number) {
-  const monitors = useMonitorsStore();
-  return monitors.find((m) => m.id === id);
-}
-
 export const monitorStore = MonitorStore.getInstance();
-
-export function MonitorProvider({ children }: { children: React.ReactNode }) {
-  const [monitors, setMonitorsState] = useState<Monitor[]>([]);
-
-  const setMonitors = useCallback((newMonitors: Monitor[]) => {
-    setMonitorsState(newMonitors);
-    monitorStore.setMonitors(newMonitors);
-  }, []);
-
-  useEffect(() => {
-    const cleanup = monitorStore.registerSetter(setMonitorsState);
-    return () => {
-      cleanup();
-      setMonitorsState([]);
-    };
-  }, []);
-
-  return (
-    <MonitorContext.Provider value={{ monitors, setMonitors }}>
-      {children}
-    </MonitorContext.Provider>
-  );
-}
-
-export function useMonitorContext() {
-  const context = useContext(MonitorContext);
-  if (!context) {
-    throw new Error('useMonitorContext must be used within a MonitorProvider');
-  }
-  return context;
-}
-
-export interface MonitorStats {
-  totalMonitors: number;
-  numMonitors: number;
-  numHeartbeats: number;
-  avgHeartbeatsPerMonitor: number;
-  statusCounts: Record<string, number>;
-  uptimeStats: {
-    avgDay: string;
-    avgMonth: string;
-  };
-  pingStats: {
-    avgOverall: string;
-  };
-  downMonitors: Monitor[];
-  upMonitors: Monitor[];
-  inactiveMonitors: Monitor[];
-  isAllHeartbeatPopulated: boolean;
-  latestImportantEvent: {
-    heartbeat: HeartBeat | null;
-    monitorId: string | null;
-    monitorName: string;
-  };
-  importantEvents: {
-    monitorId: number;
-    monitorName: string;
-    heartbeat: HeartBeat;
-  }[];
-}
-
-export function useMonitorStats(): MonitorStats {
-  const [stats, setStats] = useState(() => monitorStore.getMonitorStats());
-
-  useEffect(() => {
-    const updateStats = debounce(() => {
-      setStats(monitorStore.getMonitorStats());
-    }, 100);
-
-    const unsubscribe = monitorStore.subscribe(updateStats);
-    return () => {
-      unsubscribe();
-      updateStats.cancel();
-    };
-  }, []);
-
-  return stats;
-}
-
-export function useLatestImportantEvents(
-  limit: number = 10,
-  offset: number = 0
-) {
-  const [events, setEvents] = useState(() =>
-    monitorStore.getLatestImportantEvents(limit, offset)
-  );
-
-  useEffect(() => {
-    const updateEvents = debounce(() => {
-      setEvents(monitorStore.getLatestImportantEvents(limit, offset));
-    }, 100);
-
-    const unsubscribe = monitorStore.subscribe(updateEvents);
-    return () => {
-      unsubscribe();
-      updateEvents.cancel();
-    };
-  }, [limit, offset]);
-
-  return events;
-}

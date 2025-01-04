@@ -8,7 +8,7 @@ import {
   type Monitor
 } from '@/schemas/monitor';
 import { useInfoStore } from '@/store/infoStore';
-import { monitorStore } from '@/store/monitorContext';
+import { monitorStore } from '@/store/monitorStore';
 import statusStore from '@/store/statusStore';
 
 import {
@@ -208,9 +208,18 @@ export class UptimeKumaClient {
       heartBeatList: [],
       avgPing: 0,
       uptime: {
-        day: monitor.uptime?.day ?? 0,
-        month: monitor.uptime?.month ?? 0,
-        year: monitor.uptime?.year ?? 0
+        day:
+          monitor.uptime?.day ??
+          monitorStore.getMonitor(Number(monitor.id))?.uptime?.day ??
+          0,
+        month:
+          monitor.uptime?.month ??
+          monitorStore.getMonitor(Number(monitor.id))?.uptime?.month ??
+          0,
+        year:
+          monitor.uptime?.year ??
+          monitorStore.getMonitor(Number(monitor.id))?.uptime?.year ??
+          0
       }
     };
   }

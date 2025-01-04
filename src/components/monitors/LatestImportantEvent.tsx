@@ -4,9 +4,9 @@ import * as React from 'react';
 import { Pressable } from 'react-native';
 
 import { Text, View } from '@/components/ui';
+import { useLatestImportantEvents } from '@/hooks/use-monitors';
 import { withServerTimezone } from '@/lib/utils';
 import { type HeartBeat } from '@/schemas/monitor';
-import { useLatestImportantEvents } from '@/store/monitorContext';
 
 import { Stacked } from '../ui/stack';
 

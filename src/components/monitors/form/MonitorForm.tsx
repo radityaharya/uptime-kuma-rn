@@ -7,7 +7,7 @@ import { ControlledInput, Text, View } from '@/components/ui';
 import { ControlledModalSelect } from '@/components/ui/modal-select';
 import { MultiSelectTags } from '@/components/ui/multi-select-tags';
 import { type MonitorFormData, monitorFormSchema } from '@/schemas/monitor';
-import { monitorStore } from '@/store/monitorContext';
+import { monitorStore } from '@/store/monitorStore';
 
 export const MonitorForm = ({
   onSubmit,

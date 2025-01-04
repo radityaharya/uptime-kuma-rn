@@ -2,8 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Animated, View } from 'react-native';
 import { twMerge } from 'tailwind-merge';
 
-import { useMonitorsStore } from '@/store/monitorContext';
-
+import { useMonitors } from '@/hooks/use-monitors';
 
 interface ActivityDotProps {
   className?: string;
@@ -11,7 +10,7 @@ interface ActivityDotProps {
 export function ActivityDot({ className }: ActivityDotProps) {
   const scale = useRef(new Animated.Value(1)).current;
   const opacity = useRef(new Animated.Value(1)).current;
-  const monitors = useMonitorsStore();
+  const { monitors } = useMonitors();
 
   const pulse = () => {
     Animated.sequence([

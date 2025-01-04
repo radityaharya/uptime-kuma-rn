@@ -24,6 +24,7 @@
     "ios": "expo run:ios"
   },
   "dependencies": {
+    "@dev-plugins/react-native-mmkv": "^0.1.0",
     "@gorhom/bottom-sheet": "^5",
     "@hookform/resolvers": "^3.9.0",
     "@react-native-async-storage/async-storage": "1.23.1",

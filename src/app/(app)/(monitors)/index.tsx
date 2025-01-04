@@ -24,7 +24,6 @@ import { View } from '@/components/ui';
 import { useMonitors } from '@/hooks/use-monitors';
 import { useAuth } from '@/lib';
 import { type Monitor } from '@/schemas/monitor';
-import { useMonitorsStore, useMonitorStats } from '@/store/monitorContext';
 
 export interface MonitorSection extends SectionListData<Monitor> {
   title: string;
@@ -99,14 +98,13 @@ const groupMonitorsByParent = (monitors: Monitor[]) => {
 
 export default function Index() {
   const [refreshing, setRefreshing] = React.useState(false);
-  const { error, isLoading, refreshMonitors, reconnectClient } = useMonitors();
-  const monitors = useMonitorsStore();
-  const stats = useMonitorStats();
+  const { error, isLoading, refreshMonitors, reconnectClient, monitors } =
+    useMonitors();
   const hasMonitors = monitors && monitors.length > 0;
 
-  const [sortOrder, setSortOrder] = React.useState<SortOrder>('asc');
-  const [sortField, setSortField] = React.useState<SortField>('name');
-  const [filterStatus, setFilterStatus] = React.useState<FilterStatus>('none');
+  const [sortOrder] = React.useState<SortOrder>('asc');
+  const [sortField] = React.useState<SortField>('name');
+  const [filterStatus] = React.useState<FilterStatus>('none');
   const [expandedSections, setExpandedSections] = React.useState<
     Record<string, boolean>
   >({});
@@ -225,19 +223,7 @@ export default function Index() {
         }
         removeClippedSubviews={true}
         ListEmptyComponent={!hasMonitors && !isLoading ? <EmptyState /> : null}
-        ListHeaderComponent={
-          <MonitorListHeader
-            sortOrder={sortOrder}
-            setSortOrder={setSortOrder}
-            sortField={sortField}
-            setSortField={setSortField}
-            filterStatus={filterStatus}
-            setFilterStatus={setFilterStatus}
-            totalMonitors={stats.totalMonitors}
-            filteredCount={filteredMonitors.length}
-            error={error}
-          />
-        }
+        ListHeaderComponent={<MonitorListHeader error={error} />}
       />
       <TouchableOpacity
         className="absolute bottom-4 right-4 flex size-16 items-center justify-center rounded-full bg-green-500"

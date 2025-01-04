@@ -14,10 +14,10 @@ import { LineChart, type LineChartPropsType } from 'react-native-gifted-charts';
 import { DetailStatCard } from '@/components/monitors/DetailStatCard';
 import { MonitorCard } from '@/components/monitors/MonitorCard';
 import { Text, View } from '@/components/ui';
+import { useMonitor } from '@/hooks/use-monitors';
 import { withServerTimezone } from '@/lib';
 import { type HeartBeat, type ImportantHeartBeat } from '@/schemas/monitor';
 import { clientStore } from '@/store/clientStore';
-import { useMonitor } from '@/store/monitorContext';
 
 const LoadingSkeleton = React.memo(() => (
   <View className="flex-1 items-center justify-center">
@@ -26,7 +26,6 @@ const LoadingSkeleton = React.memo(() => (
   </View>
 ));
 
-// Chart Components
 const ChartDataPoint = React.memo(() => (
   <View
     style={{
@@ -131,7 +130,6 @@ const MonitorChart = React.memo(
     return <LineChart areaChart data={transformChartData} {...chartConfig} />;
   },
   (prevProps, nextProps) => {
-    // Custom comparison to prevent unnecessary rerenders
     return (
       prevProps.isDarkMode === nextProps.isDarkMode &&
       prevProps.heartBeatList === nextProps.heartBeatList

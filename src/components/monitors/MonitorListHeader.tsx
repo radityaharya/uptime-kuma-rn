@@ -17,26 +17,26 @@ const sortFieldLabels: Record<SortField, string> = {
 };
 
 interface MonitorListHeaderProps {
-  sortOrder: SortOrder;
-  setSortOrder: (order: SortOrder) => void;
-  sortField: SortField;
-  setSortField: (field: SortField) => void;
-  filterStatus: FilterStatus;
-  setFilterStatus: (status: FilterStatus) => void;
-  totalMonitors: number;
-  filteredCount: number;
+  // sortOrder: SortOrder;
+  // setSortOrder: (order: SortOrder) => void;
+  // sortField: SortField;
+  // setSortField: (field: SortField) => void;
+  // filterStatus: FilterStatus;
+  // setFilterStatus: (status: FilterStatus) => void;
+  // totalMonitors: number;
+  // filteredCount: number;
   error: string | null;
 }
 
 export const MonitorListHeader = ({
-  sortOrder,
-  setSortOrder,
-  sortField,
-  setSortField,
-  filterStatus,
-  setFilterStatus,
-  totalMonitors,
-  filteredCount,
+  // sortOrder,
+  // setSortOrder,
+  // sortField,
+  // setSortField,
+  // filterStatus,
+  // setFilterStatus,
+  // totalMonitors,
+  // filteredCount,
   error
 }: MonitorListHeaderProps) => (
   <>

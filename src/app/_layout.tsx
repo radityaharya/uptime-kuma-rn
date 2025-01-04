@@ -1,10 +1,11 @@
 import '../../global.css';
 
+import { useMMKVDevTools } from '@dev-plugins/react-native-mmkv';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { ThemeProvider } from '@react-navigation/native';
 import { PortalHost } from '@rn-primitives/portal';
 import * as Notifications from 'expo-notifications';
-import { Stack } from 'expo-router';
+import { Redirect, Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import React, { useEffect, useRef } from 'react';
 import { StyleSheet } from 'react-native';
@@ -25,9 +26,9 @@ import {
   handleNotificationResponse,
   registerForPushNotificationsAsync
 } from '@/lib/notification';
+import { storage } from '@/lib/storage';
 import { useThemeConfig } from '@/lib/use-theme-config';
 import { clientStore } from '@/store/clientStore';
-import { MonitorProvider } from '@/store/monitorContext';
 
 export { ErrorBoundary } from 'expo-router';
 
@@ -51,30 +52,36 @@ export default function RootLayout() {
   const auth = useAuth();
   const [isReady, setIsReady] = React.useState(false);
 
+  useMMKVDevTools({ storage: storage });
+
   useEffect(() => {
     const initializeApp = async () => {
-      if (auth.status === 'authenticated' || auth.status === 'idle') {
-        try {
-          await startBackgroundService();
-          const maxAttempts = 10;
-          let attempts = 0;
-          while (attempts < maxAttempts) {
-            const client = clientStore.getClient();
-            if (client?.isSocketConnected()) {
-              break;
-            }
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-            attempts++;
-          }
-          setIsReady(true);
-          await SplashScreen.hideAsync();
-        } catch (error) {
-          log.error('Failed to initialize app:', error);
-          setIsReady(true);
-          await SplashScreen.hideAsync();
-        }
-      }
       log.debug('Auth status:', auth.status);
+      switch (auth.status) {
+        case 'unauthenticated':
+          await SplashScreen.hideAsync();
+          return <Redirect href="/login" />;
+        default:
+          try {
+            await startBackgroundService();
+            const maxAttempts = 10;
+            let attempts = 0;
+            while (attempts < maxAttempts) {
+              const client = clientStore.getClient();
+              if (client?.isSocketConnected()) {
+                break;
+              }
+              await new Promise((resolve) => setTimeout(resolve, 1000));
+              attempts++;
+            }
+            setIsReady(true);
+            await SplashScreen.hideAsync();
+          } catch (error) {
+            log.error('Failed to initialize app:', error);
+            setIsReady(true);
+            await SplashScreen.hideAsync();
+          }
+      }
     };
 
     initializeApp();
@@ -131,7 +138,7 @@ function Providers({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <MonitorProvider>
+    <>
       <StatusBar />
       <GestureHandlerRootView
         style={styles.container}
@@ -145,7 +152,7 @@ function Providers({ children }: { children: React.ReactNode }) {
           </BottomSheetModalProvider>
         </ThemeProvider>
       </GestureHandlerRootView>
-    </MonitorProvider>
+    </>
   );
 }
 
