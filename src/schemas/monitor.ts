@@ -24,7 +24,7 @@ const HeartBeatSchema = z.object({
   monitor_id: z.number(),
   down_count: z.number(),
   duration: z.number(),
-  important: z.number(),
+  important: z.union([z.boolean(), z.number()]),
   status: z.number(),
   msg: z.string(),
   ping: z.number(),

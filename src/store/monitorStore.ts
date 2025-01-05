@@ -232,6 +232,14 @@ class MonitorStore {
     this.updateMonitor(hb.monitor_id, {
       heartBeatList: monitors[index].heartBeatList || undefined
     });
+
+    const isImportant =
+      heartbeat.important === true || heartbeat.important === 1;
+    if (isImportant) {
+      this.monitorStatsCache = null;
+      this.notifySubscribers();
+      console.debug('Important event detected:', heartbeat);
+    }
   }
 
   setMonitorList(data: Record<string, Monitor>): void {
@@ -347,7 +355,7 @@ class MonitorStore {
         if (!monitor.heartBeatList?.length) return acc;
 
         const importantHeartbeats = monitor.heartBeatList.filter(
-          (hb) => hb.important === 1
+          (hb) => hb.important === true || hb.important === 1
         );
         if (!importantHeartbeats.length) return acc;
 
@@ -408,7 +416,7 @@ class MonitorStore {
     const importantEvents = this.currentMonitors.flatMap(
       (monitor) =>
         monitor.heartBeatList
-          ?.filter((hb) => hb.important === 1)
+          ?.filter((hb) => hb.important === true || hb.important === 1)
           .map((hb) => ({
             monitorId: monitor.id as number,
             monitorName: monitor.name,
