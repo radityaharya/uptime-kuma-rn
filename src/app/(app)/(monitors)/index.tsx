@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 
 import { EmptyState } from '@/components/monitors/EmptyState';
-import { LoadingState } from '@/components/monitors/LoadingState';
+// import { LoadingState } from '@/components/monitors/LoadingState';
 import { MonitorItem } from '@/components/monitors/MonitorItem';
 import {
   type FilterStatus,
@@ -196,13 +196,13 @@ export default function Index() {
     return <Redirect href="/login" />;
   }
 
-  if (isLoading) {
-    return (
-      <LoadingState
-        message={error ? 'Error loading monitors' : 'Loading monitors...'}
-      />
-    );
-  }
+  // if (isLoading) {
+  //   return (
+  //     <LoadingState
+  //       message={error ? 'Error loading monitors' : 'Loading monitors...'}
+  //     />
+  //   );
+  // }
 
   return (
     <View className="bg-background flex-1">
@@ -222,7 +222,7 @@ export default function Index() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
         removeClippedSubviews={true}
-        ListEmptyComponent={!hasMonitors && !isLoading ? <EmptyState /> : null}
+        ListEmptyComponent={<EmptyState />}
         ListHeaderComponent={<MonitorListHeader error={error} />}
       />
       <TouchableOpacity

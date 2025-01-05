@@ -201,17 +201,14 @@ export function MonitorCard({ monitor, onClick, className }: MonitorCardProps) {
 
             {/* Content */}
             <View className="mb-4 flex flex-col">
-              <View className="mb-2">
-                <MonitorContent monitor={monitor} />
-              </View>
               {monitor.description && (
-                <Text
-                  className="border-t border-gray-700/20 
-                text-sm leading-relaxed text-gray-400"
-                >
+                <Text className="mb-2 text-sm opacity-80">
                   {monitor.description}
                 </Text>
               )}
+              <View className="mb-2">
+                <MonitorContent monitor={monitor} />
+              </View>
               <HeartbeatHistory
                 heartbeats={monitor.heartBeatList}
                 interval={monitor.interval}
@@ -232,30 +229,33 @@ export function MonitorCard({ monitor, onClick, className }: MonitorCardProps) {
 
 export function MonitorCardSkeleton() {
   return (
-    <View className="animate-pulse">
-      <View className="bg-background flex flex-col overflow-hidden rounded-lg border border-gray-800 bg-gradient-to-br from-gray-800/90 to-gray-900/90 p-4">
+    <View className="w-full overflow-hidden rounded-lg">
+      <View className="flex flex-col overflow-hidden rounded-lg border border-black/20 bg-card bg-gradient-to-br from-gray-800/90 to-gray-900/90 p-4 opacity-50 transition-all duration-200 dark:border-white/20">
         {/* Header */}
         <View className="mb-2 flex-row justify-between">
           <View className="flex-row items-center gap-2">
-            <View className="size-4 rounded-full bg-slate-700" />
-            <View className="h-4 w-16 rounded-full bg-slate-700" />
+            <View className="h-6 w-12 animate-pulse rounded-full bg-gray-700/50" />
+            <View className="h-6 w-32 animate-pulse rounded-full bg-gray-700/50" />
           </View>
         </View>
 
         {/* Content */}
         <View className="mb-4 flex flex-col">
-          <View className="mb-2">
-            <View className="h-4 w-16 rounded-full bg-slate-700" />
+          <View className="mb-2 h-4 w-3/4 animate-pulse rounded-full bg-gray-700/50" />
+          <View className="h-4 w-1/2 animate-pulse rounded-full bg-gray-700/50" />
+          <View className="mt-4 flex-row justify-between">
+            {[...Array(30)].map((_, index) => (
+              <View key={index} className="items-center justify-end">
+                <View className="h-[20px] w-2 rounded-full bg-gray-600/50" />
+              </View>
+            ))}
           </View>
-          <View className="h-4 w-16 rounded-full bg-slate-700" />
         </View>
 
         {/* Footer */}
-        <View>
-          <View className="flex-row flex-wrap gap-2">
-            <View className="h-4 w-16 rounded-full bg-slate-700" />
-            <View className="h-4 w-16 rounded-full bg-slate-700" />
-          </View>
+        <View className="flex-row flex-wrap gap-2">
+          <View className="h-4 w-16 animate-pulse rounded-full bg-gray-700/50" />
+          <View className="h-4 w-16 animate-pulse rounded-full bg-gray-700/50" />
         </View>
       </View>
     </View>

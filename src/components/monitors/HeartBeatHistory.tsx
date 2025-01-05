@@ -52,7 +52,7 @@ const PlaceholderBar = () => (
   </View>
 );
 
-function AnimatedPlaceholderBars() {
+export function AnimatedPlaceholderBars() {
   const animatedValues = useRef(
     [...Array(30)].map(() => new Animated.Value(0))
   ).current;
