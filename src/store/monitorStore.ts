@@ -50,6 +50,7 @@ export interface MonitorStats {
 }
 class MonitorStore {
   private static instance: MonitorStore;
+  private static readonly MAX_REGULAR_HEARTBEATS = 100;
   private settersMap: Set<(monitors: Monitor[]) => void> = new Set();
   private currentMonitors: Monitor[] = getItem('monitors') || [];
   private currentTags: Tag[] = getItem('tags') || [];
@@ -102,7 +103,7 @@ class MonitorStore {
     try {
       this.currentMonitors = monitors;
       this.notifySubscribers();
-      this.flushToStorage();
+      this.flushToStorage(true);
     } catch (error) {
       console.error('Error setting monitors:', error);
     }
@@ -197,11 +198,26 @@ class MonitorStore {
     if (hasChanges) {
       this.currentMonitors = monitors;
       this.notifySubscribers();
+      this.flushToStorage(true);
     }
 
     this.batchedUpdates.clear();
     this.batchUpdateTimeout = null;
   };
+
+  private trimHeartbeatList(heartbeats: HeartBeat[]): HeartBeat[] {
+    if (!heartbeats?.length) return [];
+
+    const important = heartbeats.filter(
+      (hb) => hb.important === true || hb.important === 1
+    );
+    const regular = heartbeats.filter((hb) => !hb.important);
+
+    return [
+      ...important,
+      ...regular.slice(0, MonitorStore.MAX_REGULAR_HEARTBEATS)
+    ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+  }
 
   addHeartbeat(heartbeat: ImportantHeartBeat): void {
     const monitors = this.getMonitors();
@@ -224,9 +240,11 @@ class MonitorStore {
     hb.id = id;
 
     const monitor = monitors[index];
+    const newHeartbeatList = [hb, ...(monitor.heartBeatList || [])];
+
     monitors[index] = {
       ...monitor,
-      heartBeatList: [hb, ...(monitor.heartBeatList || [])]
+      heartBeatList: this.trimHeartbeatList(newHeartbeatList)
     };
 
     this.updateMonitor(hb.monitor_id, {
@@ -239,6 +257,8 @@ class MonitorStore {
       this.monitorStatsCache = null;
       this.notifySubscribers();
       console.debug('Important event detected:', heartbeat);
+    } else {
+      this.notifySubscribers();
     }
   }
 
@@ -254,7 +274,7 @@ class MonitorStore {
         this.currentMonitors.push({
           ...monitor,
           id: Number(monitor.id),
-          heartBeatList: [],
+          heartBeatList: this.trimHeartbeatList([]),
           avgPing: 0,
           uptime: {
             day: monitor.uptime?.day ?? 0,
@@ -267,7 +287,9 @@ class MonitorStore {
           ...existingMonitor,
           ...monitor,
           id: Number(monitor.id),
-          heartBeatList: existingMonitor.heartBeatList,
+          heartBeatList: this.trimHeartbeatList(
+            existingMonitor.heartBeatList || []
+          ),
           avgPing: existingMonitor.avgPing,
           uptime: {
             day: monitor.uptime?.day ?? existingMonitor.uptime?.day ?? 0,
@@ -459,18 +481,60 @@ class MonitorStore {
   }
 
   private startFlushInterval() {
+    if (this.flushInterval) {
+      clearInterval(this.flushInterval);
+    }
     this.flushInterval = setInterval(() => {
       this.flushToStorage();
-    }, 60000);
+    }, 30000);
   }
 
-  private flushToStorage() {
+  private flushToStorage(immediate = false) {
     try {
-      setItem('monitors', this.currentMonitors);
-      setItem('tags', this.currentTags);
+      const dataToStore = {
+        timestamp: Date.now(),
+        monitors: this.currentMonitors,
+        tags: this.currentTags
+      };
+
+      if (immediate) {
+        setItem('monitors', this.currentMonitors);
+        setItem('tags', this.currentTags);
+        setItem('lastSync', Date.now());
+      } else {
+        this.debouncedFlush(dataToStore);
+      }
     } catch (error) {
       console.error('Error flushing to storage:', error);
     }
+  }
+
+  private debouncedFlush = debounce((data: any) => {
+    try {
+      setItem('monitors', data.monitors);
+      setItem('tags', data.tags);
+      setItem('lastSync', data.timestamp);
+    } catch (error) {
+      console.error('Error in debounced flush:', error);
+    }
+  }, 1000);
+
+  private verifyStorageSync(): boolean {
+    try {
+      const storedMonitors = getItem<Monitor[]>('monitors');
+      const lastSync = getItem<number>('lastSync');
+
+      if (!storedMonitors || !lastSync) return false;
+
+      return true;
+    } catch (error) {
+      console.error('Error verifying storage sync:', error);
+      return false;
+    }
+  }
+
+  private currentMonitorObjectSize(): number {
+    return JSON.stringify(this.currentMonitors).length;
   }
 }
 export const monitorStore = MonitorStore.getInstance();
