@@ -12,7 +12,7 @@ interface MultiSelectTagsProps {
   label: string;
   control: Control<any>;
   required?: boolean;
-  defaultValue?: string[];
+  defaultValue?: Tag[];
   className?: string;
 }
 
@@ -31,7 +31,7 @@ export function MultiSelectTags({
       control={control}
       defaultValue={defaultValue}
       rules={{ required }}
-      render={({ field: { value, onChange } }) => (
+      render={({ field: { value = defaultValue, onChange } }) => (
         <View className="mb-4">
           <View className="mb-2 flex-row justify-between">
             {label && (
@@ -49,25 +49,27 @@ export function MultiSelectTags({
                 key={tag.id}
                 className={twMerge(
                   'rounded-full py-1.5 px-3',
-                  value?.includes(tag.id) ? 'opacity-100' : 'opacity-60'
+                  value?.some((v: Tag) => v.id === tag.id)
+                    ? 'opacity-100'
+                    : 'opacity-60'
                 )}
                 style={{
                   backgroundColor: tag.color
                 }}
                 onPress={() => {
                   const newValue = value || [];
-                  const index = newValue.indexOf(tag.id);
+                  const index = newValue.findIndex((v: Tag) => v.id === tag.id);
                   if (index === -1) {
-                    onChange([...newValue, tag.id]);
+                    onChange([...newValue, tag]);
                   } else {
-                    onChange(newValue.filter((v: number) => v !== tag.id));
+                    onChange(newValue.filter((v: Tag) => v.id !== tag.id));
                   }
                 }}
               >
                 <Text
                   className={twMerge(
                     'text-sm text-white',
-                    value?.includes(tag.value) && 'font-bold'
+                    value?.some((v: Tag) => v.id === tag.id) && 'font-bold'
                   )}
                 >
                   {tag.name}

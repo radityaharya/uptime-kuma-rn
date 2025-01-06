@@ -9,12 +9,34 @@ import { MultiSelectTags } from '@/components/ui/multi-select-tags';
 import { type MonitorFormData, monitorFormSchema } from '@/schemas/monitor';
 import { monitorStore } from '@/store/monitorStore';
 
+const monitorTypeOptions = [
+  { label: 'HTTP(s)', value: 'http' },
+  { label: 'Ping', value: 'ping' },
+  { label: 'Port', value: 'port' },
+  { label: 'DNS', value: 'dns' },
+  { label: 'Docker', value: 'docker' },
+  { label: 'MySQL', value: 'mysql' },
+  { label: 'PostgreSQL', value: 'postgres' },
+  { label: 'MQTT', value: 'mqtt' },
+  { label: 'Group', value: 'group' }
+];
+
+const httpMethodOptions = [
+  { label: 'GET', value: 'GET' },
+  { label: 'POST', value: 'POST' },
+  { label: 'PUT', value: 'PUT' },
+  { label: 'DELETE', value: 'DELETE' },
+  { label: 'HEAD', value: 'HEAD' },
+  { label: 'OPTIONS', value: 'OPTIONS' },
+  { label: 'PATCH', value: 'PATCH' }
+];
+
 export const MonitorForm = ({
   onSubmit,
   defaultValues
 }: {
   onSubmit: (data: MonitorFormData) => void;
-  defaultValues?: Partial<MonitorFormData>;
+  defaultValues: Partial<MonitorFormData> | undefined;
 }) => {
   const {
     control,
@@ -24,17 +46,7 @@ export const MonitorForm = ({
     formState: { errors, isSubmitting }
   } = useForm<MonitorFormData>({
     resolver: zodResolver(monitorFormSchema),
-    defaultValues: {
-      ...defaultValues,
-      type: defaultValues?.type ?? 'http',
-      name: defaultValues?.name ?? '',
-      interval: defaultValues?.interval ?? 60,
-      retryInterval: defaultValues?.retryInterval ?? 60,
-      timeout: defaultValues?.timeout ?? 48,
-      maxretries: defaultValues?.maxretries ?? 0,
-      resendInterval: defaultValues?.resendInterval ?? 0,
-      upsideDown: defaultValues?.upsideDown ?? false
-    }
+    defaultValues
   });
 
   const tags = monitorStore.getTags();
@@ -67,28 +79,6 @@ export const MonitorForm = ({
   };
 
   const monitorType = watch('type');
-
-  const monitorTypeOptions = [
-    { label: 'HTTP(s)', value: 'http' },
-    { label: 'Ping', value: 'ping' },
-    { label: 'Port', value: 'port' },
-    { label: 'DNS', value: 'dns' },
-    { label: 'Docker', value: 'docker' },
-    { label: 'MySQL', value: 'mysql' },
-    { label: 'PostgreSQL', value: 'postgres' },
-    { label: 'MQTT', value: 'mqtt' },
-    { label: 'Group', value: 'group' }
-  ];
-
-  const httpMethodOptions = [
-    { label: 'GET', value: 'GET' },
-    { label: 'POST', value: 'POST' },
-    { label: 'PUT', value: 'PUT' },
-    { label: 'DELETE', value: 'DELETE' },
-    { label: 'HEAD', value: 'HEAD' },
-    { label: 'OPTIONS', value: 'OPTIONS' },
-    { label: 'PATCH', value: 'PATCH' }
-  ];
 
   const renderTypeSpecificFields = () => {
     switch (monitorType) {
@@ -141,6 +131,9 @@ export const MonitorForm = ({
             />
           </>
         );
+
+      default:
+        return null;
     }
   };
 
@@ -222,26 +215,6 @@ export const MonitorForm = ({
           {isSubmitting ? 'Saving...' : 'Save Monitor'}
         </Text>
       </TouchableOpacity>
-
-      {/* <Stack.Screen
-        options={{
-          headerRight: () => (
-            <TouchableOpacity
-              className="items-center rounded-lg bg-green-500 p-2 disabled:opacity-50"
-              onPress={
-                isSubmitting || Object.keys(errors).length > 0
-                  ? handleDisabledPress
-                  : onSubmitForm
-              }
-              disabled={isSubmitting}
-            >
-              <Text className="text-base font-bold text-white">
-                {isSubmitting ? 'Saving...' : 'Save Monitor'}
-              </Text>
-            </TouchableOpacity>
-          )
-        }}
-      /> */}
     </View>
   );
 };

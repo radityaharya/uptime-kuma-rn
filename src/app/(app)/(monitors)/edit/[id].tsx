@@ -3,8 +3,8 @@ import { ScrollView, Text } from 'react-native';
 import { toast } from 'sonner-native';
 
 import { MonitorForm } from '@/components/monitors/form/MonitorForm';
-import { useMonitor } from '@/hooks/use-monitors';
 import { type MonitorFormData } from '@/schemas/monitor';
+import { monitorStore } from '@/store/monitorStore';
 
 const defaultNewMonitorValues: Partial<MonitorFormData> = {
   type: 'http',
@@ -20,57 +20,61 @@ const defaultNewMonitorValues: Partial<MonitorFormData> = {
   tags: []
 };
 
+const getDefaultValues = (isNewMonitor: boolean, monitor?: MonitorFormData): Partial<MonitorFormData> => {
+  if (isNewMonitor || !monitor) {
+    return defaultNewMonitorValues;
+  }
+
+  const baseValues = {
+    type: monitor.type,
+    name: monitor.name,
+    description: monitor.description,
+    interval: monitor.interval,
+    timeout: monitor.timeout,
+    maxretries: monitor.maxretries,
+    retryInterval: monitor.retryInterval,
+    resendInterval: monitor.resendInterval,
+    upsideDown: monitor.upsideDown,
+    notificationIDList: monitor.notificationIDList,
+    tags: monitor.tags?.map((tag) => ({
+      ...tag,
+      id: tag.tag_id as number
+    })) || []
+  };
+
+  switch (monitor.type) {
+    case 'http':
+      return {
+        ...baseValues,
+        url: monitor.url,
+        method: monitor.method
+      };
+    case 'ping':
+      return {
+        ...baseValues,
+        hostname: monitor.hostname
+      };
+    case 'port':
+      return {
+        ...baseValues,
+        hostname: monitor.hostname,
+        port: monitor.port
+      };
+    default:
+      return baseValues;
+  }
+};
+
 export default function EditMonitor() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const monitor = useMonitor(Number(id ?? 0));
+  const monitor = monitorStore.getMonitor(Number(id ?? 0));
   const isNewMonitor = id === 'new';
 
   const handleSubmit = (data: MonitorFormData) => {
     console.log(isNewMonitor ? 'Creating monitor:' : 'Updating monitor:', data);
     toast.success(isNewMonitor ? 'Monitor Created' : 'Monitor Updated');
     router.back();
-  };
-
-  const getDefaultValues = (): Partial<MonitorFormData> => {
-    if (isNewMonitor || !monitor) {
-      return defaultNewMonitorValues;
-    }
-
-    const baseValues = {
-      type: monitor.type,
-      name: monitor.name,
-      description: monitor.description,
-      interval: monitor.interval,
-      timeout: monitor.timeout,
-      maxretries: monitor.maxretries,
-      retryInterval: monitor.retryInterval,
-      resendInterval: monitor.resendInterval,
-      upsideDown: monitor.upsideDown,
-      notificationIDList: monitor.notificationIDList
-    };
-
-    switch (monitor.type) {
-      case 'http':
-        return {
-          ...baseValues,
-          url: monitor.url,
-          method: monitor.method
-        };
-      case 'ping':
-        return {
-          ...baseValues,
-          hostname: monitor.hostname
-        };
-      case 'port':
-        return {
-          ...baseValues,
-          hostname: monitor.hostname,
-          port: monitor.port
-        };
-      default:
-        return baseValues;
-    }
   };
 
   if (!isNewMonitor && !monitor) {
@@ -91,7 +95,7 @@ export default function EditMonitor() {
             : `Edit Monitor: ${monitor?.name}`
         }}
       />
-      <MonitorForm onSubmit={handleSubmit} defaultValues={getDefaultValues()} />
+      <MonitorForm onSubmit={handleSubmit} defaultValues={getDefaultValues(isNewMonitor, monitor)} />
     </ScrollView>
   );
 }
