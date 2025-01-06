@@ -1,9 +1,10 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { ScrollView, Text } from 'react-native';
-import { toast } from 'sonner-native';
 
 import { MonitorForm } from '@/components/monitors/form/MonitorForm';
+import { useMonitorMutation } from '@/hooks/use-monitor-mutation';
 import { type MonitorFormData } from '@/schemas/monitor';
+import { clientStore } from '@/store/clientStore';
 import { monitorStore } from '@/store/monitorStore';
 
 const defaultNewMonitorValues: Partial<MonitorFormData> = {
@@ -20,12 +21,16 @@ const defaultNewMonitorValues: Partial<MonitorFormData> = {
   tags: []
 };
 
-const getDefaultValues = (isNewMonitor: boolean, monitor?: MonitorFormData): Partial<MonitorFormData> => {
+const getDefaultValues = (
+  isNewMonitor: boolean,
+  monitor?: MonitorFormData
+): Partial<MonitorFormData> => {
   if (isNewMonitor || !monitor) {
     return defaultNewMonitorValues;
   }
 
   const baseValues = {
+    id: monitor.id,
     type: monitor.type,
     name: monitor.name,
     description: monitor.description,
@@ -36,10 +41,12 @@ const getDefaultValues = (isNewMonitor: boolean, monitor?: MonitorFormData): Par
     resendInterval: monitor.resendInterval,
     upsideDown: monitor.upsideDown,
     notificationIDList: monitor.notificationIDList,
-    tags: monitor.tags?.map((tag) => ({
-      ...tag,
-      id: tag.tag_id as number
-    })) || []
+    path: monitor.pathName,
+    tags:
+      monitor.tags?.map((tag) => ({
+        ...tag,
+        id: tag.tag_id as number
+      })) || []
   };
 
   switch (monitor.type) {
@@ -47,7 +54,8 @@ const getDefaultValues = (isNewMonitor: boolean, monitor?: MonitorFormData): Par
       return {
         ...baseValues,
         url: monitor.url,
-        method: monitor.method
+        method: monitor.method,
+        accepted_statuscodes: monitor.accepted_statuscodes
       };
     case 'ping':
       return {
@@ -70,11 +78,16 @@ export default function EditMonitor() {
   const router = useRouter();
   const monitor = monitorStore.getMonitor(Number(id ?? 0));
   const isNewMonitor = id === 'new';
+  const { mutateMonitor } = useMonitorMutation(isNewMonitor);
+
+  const client = clientStore.getClient();
+  if (!client) {
+    router.back();
+    return;
+  }
 
   const handleSubmit = (data: MonitorFormData) => {
-    console.log(isNewMonitor ? 'Creating monitor:' : 'Updating monitor:', data);
-    toast.success(isNewMonitor ? 'Monitor Created' : 'Monitor Updated');
-    router.back();
+    mutateMonitor(data);
   };
 
   if (!isNewMonitor && !monitor) {
@@ -95,7 +108,10 @@ export default function EditMonitor() {
             : `Edit Monitor: ${monitor?.name}`
         }}
       />
-      <MonitorForm onSubmit={handleSubmit} defaultValues={getDefaultValues(isNewMonitor, monitor)} />
+      <MonitorForm
+        onSubmit={handleSubmit}
+        defaultValues={getDefaultValues(isNewMonitor, monitor)}
+      />
     </ScrollView>
   );
 }

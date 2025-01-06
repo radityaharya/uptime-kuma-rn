@@ -108,7 +108,8 @@ const httpMonitor = baseMonitorSchema.extend({
   proxyId: z.number().nullable().optional(),
   authMethod: z.string().nullable().optional(),
   basic_auth_user: z.string().nullable().optional(),
-  basic_auth_pass: z.string().nullable().optional()
+  basic_auth_pass: z.string().nullable().optional(),
+  accepted_statuscodes: z.array(z.string()).optional()
 });
 
 export type HttpMonitorFormData = z.infer<typeof httpMonitor>;

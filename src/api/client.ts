@@ -399,6 +399,59 @@ export class UptimeKumaClient {
     }
   }
 
+  public async addMonitorTag(monitorId: number, tag_id: number): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (!this.socket?.connected) {
+        reject(new Error('Socket not connected'));
+        return;
+      }
+
+      this.socket.emit(
+        'addMonitorTag',
+        tag_id,
+        monitorId,
+        '',
+        (data: { ok: boolean; msg?: string }) => {
+          if (!data.ok) {
+            log.error('Failed to add tag:', data.msg);
+            reject(new Error('Failed to add tag'));
+            return;
+          }
+          log.debug('Tag added successfully');
+          resolve();
+        }
+      );
+    });
+  }
+
+  public async deleteMonitorTag(
+    monitorId: number,
+    tag_id: number
+  ): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (!this.socket?.connected) {
+        reject(new Error('Socket not connected'));
+        return;
+      }
+
+      this.socket.emit(
+        'deleteMonitorTag',
+        tag_id,
+        monitorId,
+        '',
+        (data: { ok: boolean; msg?: string }) => {
+          if (!data.ok) {
+            log.error('Failed to delete tag:', data.msg);
+            reject(new Error('Failed to delete tag'));
+            return;
+          }
+          log.debug('Tag deleted successfully');
+          resolve();
+        }
+      );
+    });
+  }
+
   public async addMonitor(monitor: Monitor): Promise<void> {
     return new Promise((resolve, reject) => {
       if (!this.socket?.connected) {
@@ -421,8 +474,9 @@ export class UptimeKumaClient {
     });
   }
 
-  public async EditMonitor(monitor: Monitor): Promise<void> {
+  public async editMonitor(monitor: Monitor): Promise<void> {
     return new Promise((resolve, reject) => {
+      log.debug('Editing monitor:', monitor);
       if (!this.socket?.connected) {
         reject(new Error('Socket not connected'));
         return;
@@ -433,10 +487,11 @@ export class UptimeKumaClient {
         monitor,
         (data: { ok: boolean; msg?: string; monitorID?: number }) => {
           if (!data.ok) {
+            log.error('Failed to edit monitor:', data.msg);
             reject(new Error('Failed to edit monitor'));
             return;
           }
-
+          log.debug('Monitor edited successfully', data);
           resolve();
         }
       );
@@ -541,6 +596,10 @@ export class UptimeKumaClient {
 
     const handlers = {
       monitorList: this.setMonitorList.bind(this),
+      updateMonitorIntoList: (data: Monitor) => {
+        log.debug('Received updated monitor:', data);
+        this.updateMonitor(data.id as number, data);
+      },
       info: (data: Info) => useInfoStore.setState(data),
       heartbeatList: this.setHeartBeat.bind(this),
       importantHeartbeatList: this.setImportantHeartBeatList.bind(this),
