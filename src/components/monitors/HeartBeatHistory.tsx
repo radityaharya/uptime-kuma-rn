@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Animated } from 'react-native';
 
 import { type HeartbeatData } from '@/api/status/types';
@@ -53,9 +53,9 @@ const PlaceholderBar = () => (
 );
 
 export function AnimatedPlaceholderBars() {
-  const animatedValues = useRef(
+  const [animatedValues] = useState(() =>
     [...Array(30)].map(() => new Animated.Value(0))
-  ).current;
+  );
 
   useEffect(() => {
     const animations = animatedValues.map((animatedValue, index) => {

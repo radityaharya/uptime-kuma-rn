@@ -9,7 +9,6 @@ export const WIDTH = width;
 export const HEIGHT = height;
 
 export const showError = (error: AxiosError) => {
-  console.log(JSON.stringify(error?.response?.data));
   const description = extractError(error?.response?.data).trimEnd();
 
   showMessage({
@@ -17,7 +16,7 @@ export const showError = (error: AxiosError) => {
     description,
     type: 'danger',
     duration: 4000,
-    icon: 'danger',
+    icon: 'danger'
   });
 };
 
@@ -25,7 +24,7 @@ export const showErrorMessage = (message: string = 'Something went wrong ') => {
   showMessage({
     message,
     type: 'danger',
-    duration: 4000,
+    duration: 4000
   });
 };
 

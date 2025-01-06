@@ -6,13 +6,16 @@ import Swipeable, {
 } from 'react-native-gesture-handler/ReanimatedSwipeable';
 import Animated, {
   type SharedValue,
-  useAnimatedStyle
+  useAnimatedStyle,
+  withSpring,
+  withTiming
 } from 'react-native-reanimated';
 
 import { Text, View } from '@/components/ui';
 import { cn } from '@/lib';
 import { type HeartBeat, type Monitor, type Tag } from '@/schemas/monitor';
 
+import { DetailStatCard } from './DetailStatCard';
 import { HeartbeatHistory } from './HeartBeatHistory';
 
 // import { StatusIndicator } from './StatusIndicator';
@@ -21,6 +24,7 @@ interface MonitorCardProps {
   monitor: Monitor;
   onClick?: () => void;
   className?: string;
+  expanded?: boolean;
 }
 
 const MonitorTypeBadge: React.FC<{ type: string }> = ({ type }) => {
@@ -141,10 +145,30 @@ const SwipeActions: React.FC<{
   );
 };
 
-export function MonitorCard({ monitor, onClick, className }: MonitorCardProps) {
+export function MonitorCard({
+  monitor,
+  onClick,
+  className,
+  expanded
+}: MonitorCardProps) {
   const router = useRouter();
   const swipeableRef = React.useRef<SwipeableMethods>(null);
   const [cardHeight, setCardHeight] = React.useState(0);
+  const [showStats, setShowStats] = React.useState(false);
+
+  const animatedStyles = useAnimatedStyle(() => {
+    return {
+      opacity: withTiming(showStats ? 1 : 0, { duration: 200 }),
+      transform: [
+        {
+          translateY: withSpring(showStats ? 0 : -20, {
+            damping: 15,
+            stiffness: 150
+          })
+        }
+      ]
+    };
+  }, [showStats]);
 
   if (!monitor) return null;
 
@@ -175,6 +199,8 @@ export function MonitorCard({ monitor, onClick, className }: MonitorCardProps) {
               });
             }
           }}
+          onLongPress={() => setShowStats(true)}
+          onPressOut={() => setShowStats(false)}
         >
           <View
             onLayout={(event) => setCardHeight(event.nativeEvent.layout.height)}
@@ -201,7 +227,7 @@ export function MonitorCard({ monitor, onClick, className }: MonitorCardProps) {
 
             {/* Content */}
             <View className="mb-4 flex flex-col">
-              {monitor.description && (
+              {expanded && monitor.description && (
                 <Text className="mb-2 text-sm opacity-80">
                   {monitor.description}
                 </Text>
@@ -216,6 +242,22 @@ export function MonitorCard({ monitor, onClick, className }: MonitorCardProps) {
               />
             </View>
 
+            <Animated.View style={animatedStyles}>
+              {showStats && (
+                <DetailStatCard
+                  current_ping={
+                    monitor.heartBeatList ? monitor.heartBeatList[0].ping : 0
+                  }
+                  average_ping={monitor.avgPing}
+                  uptime={{
+                    day: monitor.uptime?.day ?? 0,
+                    month: monitor.uptime?.month ?? 0,
+                    year: monitor.uptime?.year ?? 0
+                  }}
+                />
+              )}
+            </Animated.View>
+
             {/* Footer */}
             <View>
               <MonitorTags tags={monitor.tags} />
@@ -223,41 +265,6 @@ export function MonitorCard({ monitor, onClick, className }: MonitorCardProps) {
           </View>
         </Pressable>
       </Swipeable>
-    </View>
-  );
-}
-
-export function MonitorCardSkeleton() {
-  return (
-    <View className="w-full overflow-hidden rounded-lg">
-      <View className="flex flex-col overflow-hidden rounded-lg border border-black/20 bg-card bg-gradient-to-br from-gray-800/90 to-gray-900/90 p-4 opacity-50 transition-all duration-200 dark:border-white/20">
-        {/* Header */}
-        <View className="mb-2 flex-row justify-between">
-          <View className="flex-row items-center gap-2">
-            <View className="h-6 w-12 animate-pulse rounded-full bg-gray-700/50" />
-            <View className="h-6 w-32 animate-pulse rounded-full bg-gray-700/50" />
-          </View>
-        </View>
-
-        {/* Content */}
-        <View className="mb-4 flex flex-col">
-          <View className="mb-2 h-4 w-3/4 animate-pulse rounded-full bg-gray-700/50" />
-          <View className="h-4 w-1/2 animate-pulse rounded-full bg-gray-700/50" />
-          <View className="mt-4 flex-row justify-between">
-            {[...Array(30)].map((_, index) => (
-              <View key={index} className="items-center justify-end">
-                <View className="h-[20px] w-2 rounded-full bg-gray-600/50" />
-              </View>
-            ))}
-          </View>
-        </View>
-
-        {/* Footer */}
-        <View className="flex-row flex-wrap gap-2">
-          <View className="h-4 w-16 animate-pulse rounded-full bg-gray-700/50" />
-          <View className="h-4 w-16 animate-pulse rounded-full bg-gray-700/50" />
-        </View>
-      </View>
     </View>
   );
 }

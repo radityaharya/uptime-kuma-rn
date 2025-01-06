@@ -545,7 +545,6 @@ export class UptimeKumaClient {
           reject(new Error('Failed to fetch tags'));
           return;
         }
-        console.log(data);
         monitorStore.setTags(data.tags);
         resolve();
       });

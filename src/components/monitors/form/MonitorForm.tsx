@@ -6,6 +6,7 @@ import { Alert, Switch, TouchableOpacity } from 'react-native';
 import { ControlledInput, Text, View } from '@/components/ui';
 import { ControlledModalSelect } from '@/components/ui/modal-select';
 import { MultiSelectTags } from '@/components/ui/multi-select-tags';
+import { log } from '@/lib/log';
 import { type MonitorFormData, monitorFormSchema } from '@/schemas/monitor';
 import { monitorStore } from '@/store/monitorStore';
 
@@ -53,10 +54,7 @@ export const MonitorForm = ({
 
   useEffect(() => {
     if (defaultValues) {
-      console.log(
-        'Resetting form with default values:',
-        JSON.stringify(defaultValues, null, 2)
-      );
+      log.debug('Resetting form with default values:', defaultValues);
       reset(defaultValues);
     }
   }, [defaultValues, reset]);
