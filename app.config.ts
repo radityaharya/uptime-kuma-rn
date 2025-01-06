@@ -10,14 +10,14 @@ const appIconBadgeConfig: AppIconBadgeConfig = {
     {
       text: Env.APP_ENV,
       type: 'banner',
-      color: 'white',
+      color: 'white'
     },
     {
       text: Env.VERSION.toString(),
       type: 'ribbon',
-      color: 'white',
-    },
-  ],
+      color: 'white'
+    }
+  ]
 };
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
@@ -34,31 +34,32 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   newArchEnabled: true,
   updates: {
     fallbackToCacheTimeout: 0,
-    url: 'https://u.expo.dev/5a4a75b1-5ff3-4613-be1f-f78c422ac5fa',
+    url: 'https://u.expo.dev/5a4a75b1-5ff3-4613-be1f-f78c422ac5fa'
   },
   runtimeVersion: {
-    policy: 'appVersion',
+    policy: 'appVersion'
   },
   assetBundlePatterns: ['**/*'],
   experiments: {
     typedRoutes: true,
+    reactCompiler: true
   },
   android: {
     adaptiveIcon: {
       foregroundImage: './assets/icon.png',
-      backgroundColor: '#000000',
+      backgroundColor: '#000000'
     },
-    package: Env.PACKAGE,
+    package: Env.PACKAGE
   },
   ios: {
     bundleIdentifier: Env.BUNDLE_ID,
     infoPlist: {
       UIBackgroundModes: ['fetch', 'processing']
-    },
+    }
   },
   web: {
     favicon: './assets/favicon.png',
-    bundler: 'metro',
+    bundler: 'metro'
   },
   plugins: [
     [
@@ -66,14 +67,14 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       {
         backgroundColor: '#000000',
         image: './assets/splash.png',
-        imageWidth: 150,
-      },
+        imageWidth: 150
+      }
     ],
     [
       'expo-font',
       {
-        fonts: ['./assets/fonts/Inter.ttf'],
-      },
+        fonts: ['./assets/fonts/Inter.ttf']
+      }
     ],
     'expo-localization',
     'expo-router',
@@ -83,7 +84,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   extra: {
     ...ClientEnv,
     eas: {
-      projectId: Env.EAS_PROJECT_ID,
-    },
-  },
+      projectId: Env.EAS_PROJECT_ID
+    }
+  }
 });

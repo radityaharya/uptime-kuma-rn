@@ -8,13 +8,13 @@ module.exports = {
     'unused-imports',
     'tailwindcss',
     'simple-import-sort',
-    'eslint-plugin-react-compiler',
+    'eslint-plugin-react-compiler'
   ],
   parserOptions: {
-    project: './tsconfig.json',
+    project: './tsconfig.json'
   },
   rules: {
-    'max-params': ['error', 5], 
+    'max-params': ['error', 5],
     'react/display-name': 'off',
     'react/no-inline-styles': 'off',
     'react/destructuring-assignment': 'off',
@@ -25,16 +25,16 @@ module.exports = {
       {
         prefer: 'type-imports',
         fixStyle: 'inline-type-imports',
-        disallowTypeAnnotations: true,
-      },
+        disallowTypeAnnotations: true
+      }
     ],
     'import/prefer-default-export': 'off',
     'import/no-cycle': ['error', { maxDepth: '∞' }],
     'tailwindcss/classnames-order': [
       'warn',
       {
-        officialSorting: true,
-      },
+        officialSorting: true
+      }
     ],
     'simple-import-sort/imports': 'error',
     'simple-import-sort/exports': 'error',
@@ -46,9 +46,10 @@ module.exports = {
       {
         argsIgnorePattern: '^_',
         varsIgnorePattern: '^_',
-        caughtErrorsIgnorePattern: '^_',
-      },
+        caughtErrorsIgnorePattern: '^_'
+      }
     ],
+    'react-compiler/react-compiler': 'error'
   },
   overrides: [
     {
@@ -58,35 +59,35 @@ module.exports = {
         'i18n-json/valid-message-syntax': [
           2,
           {
-            syntax: path.resolve('./scripts/i18next-syntax-validation.js'),
-          },
+            syntax: path.resolve('./scripts/i18next-syntax-validation.js')
+          }
         ],
         'i18n-json/valid-json': 2,
         'i18n-json/sorted-keys': [
           2,
           {
             order: 'asc',
-            indentSpaces: 2,
-          },
+            indentSpaces: 2
+          }
         ],
         'i18n-json/identical-keys': [
           2,
           {
-            filePath: path.resolve('./src/translations/en.json'),
-          },
+            filePath: path.resolve('./src/translations/en.json')
+          }
         ],
         'prettier/prettier': [
           0,
           {
             singleQuote: true,
-            endOfLine: 'auto',
-          },
-        ],
-      },
+            endOfLine: 'auto'
+          }
+        ]
+      }
     },
     {
       files: ['**/__tests__/**/*.[jt]s?(x)', '**/?(*.)+(spec|test).[jt]s?(x)'],
-      extends: ['plugin:testing-library/react'],
-    },
-  ],
+      extends: ['plugin:testing-library/react']
+    }
+  ]
 };
