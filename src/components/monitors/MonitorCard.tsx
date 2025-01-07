@@ -60,6 +60,10 @@ const MonitorContent: React.FC<{ monitor: Monitor }> = ({ monitor }) => {
 
 const MonitorTags: React.FC<{ tags: Tag[] }> = ({ tags }) => {
   if (!tags) return null;
+  if (tags.length === 0) return null;
+  tags = [...new Set(tags.map((tag) => tag.tag_id))].map(
+    (id) => tags.find((tag) => tag.tag_id === id)!
+  );
   return (
     <View className="flex-row flex-wrap gap-2">
       {tags.map((tag) => (
