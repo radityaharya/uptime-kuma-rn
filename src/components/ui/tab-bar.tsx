@@ -5,13 +5,13 @@ import React from 'react';
 import { Pressable, useWindowDimensions, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
-  withSpring,
+  withSpring
 } from 'react-native-reanimated';
 
 export const CustomTabBar = ({
   state,
   navigation,
-  descriptors,
+  descriptors
 }: BottomTabBarProps) => {
   const { colorScheme } = useColorScheme();
   const { width } = useWindowDimensions();
@@ -21,22 +21,27 @@ export const CustomTabBar = ({
     return segments[0].replace(/^\((.+)\)$/, '$1');
   };
 
+  const mainRoutes = React.useMemo(() => {
+    if (!state?.routes) return [];
+    return state.routes.filter((route) => {
+      if (!route?.name) return false;
+      const routeParts = route.name.split('/');
+      return (
+        routeParts.length === 1 ||
+        (routeParts.length === 2 && routeParts[1] === 'index')
+      );
+    });
+  }, [state?.routes]);
+
   const getActiveIndex = () => {
+    if (!state?.routes || !state?.index || mainRoutes.length === 0) return 0;
     const currentRootRoute = getRootRouteName(state.routes[state.index].name);
     return mainRoutes.findIndex(
-      (route) => getRootRouteName(route.name) === currentRootRoute,
+      (route) => getRootRouteName(route.name) === currentRootRoute
     );
   };
 
-  const mainRoutes = state.routes.filter((route) => {
-    const routeParts = route.name.split('/');
-    return (
-      routeParts.length === 1 ||
-      (routeParts.length === 2 && routeParts[1] === 'index')
-    );
-  });
-
-  const tabWidth = width / mainRoutes.length;
+  const tabWidth = mainRoutes.length > 0 ? width / mainRoutes.length : width;
   const activeIndex = getActiveIndex();
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -44,11 +49,13 @@ export const CustomTabBar = ({
       {
         translateX: withSpring(activeIndex * tabWidth, {
           damping: 15,
-          stiffness: 100,
-        }),
-      },
-    ],
+          stiffness: 100
+        })
+      }
+    ]
   }));
+
+  if (mainRoutes.length === 0) return null;
 
   return (
     <View className="bg-background h-20 flex-row">
@@ -58,7 +65,7 @@ export const CustomTabBar = ({
       />
       {mainRoutes.map((route: Route<string>, _index: number) => {
         const currentRootRoute = getRootRouteName(
-          state.routes[state.index].name,
+          state.routes[state.index].name
         );
         const routeRootName = getRootRouteName(route.name);
         const isFocused = currentRootRoute === routeRootName;
