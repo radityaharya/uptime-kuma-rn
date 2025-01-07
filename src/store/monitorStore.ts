@@ -50,7 +50,7 @@ export interface MonitorStats {
 }
 class MonitorStore {
   private static instance: MonitorStore;
-  private static readonly MAX_REGULAR_HEARTBEATS = 100;
+  private static readonly MAX_REGULAR_HEARTBEATS = 30;
   private settersMap: Set<(monitors: Monitor[]) => void> = new Set();
   private currentMonitors: Monitor[] = getItem('monitors') || [];
   private currentTags: Tag[] = getItem('tags') || [];

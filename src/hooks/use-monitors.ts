@@ -1,5 +1,5 @@
 import debounce from 'lodash/debounce';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { useAuth } from '@/lib/auth';
 import { type Monitor } from '@/schemas/monitor';
@@ -12,11 +12,9 @@ export const useMonitors = () => {
   const [isReconnecting] = useState(false);
   const auth = useAuth();
 
-  const monitorsRef = useRef<Monitor[]>([]);
-  const [, setMonitors] = useState<Monitor[]>([]);
+  const [monitors, setMonitors] = useState<Monitor[]>([]);
 
   const setMonitorsCallback = useCallback((newMonitors: Monitor[]) => {
-    monitorsRef.current = newMonitors;
     setMonitors(newMonitors);
   }, []);
 
@@ -53,19 +51,18 @@ export const useMonitors = () => {
       return;
     }
 
-    if (monitorsRef.current.length > 0) {
+    if (monitors.length > 0) {
       setIsLoading(false);
       return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [auth.status, monitorsRef.current]);
+  }, [auth.status, monitors]);
 
   const reconnectClient = useCallback(() => {
     clientStore.getClient()?.reconnect();
   }, []);
 
   return {
-    monitors: monitorsRef.current,
+    monitors,
     error,
     isLoading,
     isReconnecting,
