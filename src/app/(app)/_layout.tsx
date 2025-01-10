@@ -1,31 +1,25 @@
 /* eslint-disable react/no-unstable-nested-components */
-import { Redirect, SplashScreen, Tabs } from 'expo-router';
+import { Redirect, Tabs } from 'expo-router';
 import { RssIcon } from 'lucide-react-native';
-import React, { useCallback, useEffect } from 'react';
+import React from 'react';
 
 import {
   Feed as FeedIcon,
-  Settings as SettingsIcon,
+  Settings as SettingsIcon
 } from '@/components/ui/icons';
 import { CustomTabBar } from '@/components/ui/tab-bar';
+import { useMonitors } from '@/hooks/use-monitors';
 import { useAuth } from '@/lib';
 
 export default function TabLayout() {
   const status = useAuth.use.status();
-  const authStatus = useAuth.use.status();
-  const hideSplash = useCallback(async () => {
-    await SplashScreen.hideAsync();
-  }, []);
+  const { isLoading } = useMonitors();
 
-  useEffect(() => {
-    if (status !== 'idle') {
-      setTimeout(() => {
-        hideSplash();
-      }, 1000);
-    }
-  }, [hideSplash, status]);
+  if (status === 'idle' || isLoading) {
+    return null;
+  }
 
-  if (authStatus === 'unauthenticated') {
+  if (status === 'unauthenticated') {
     return <Redirect href="/login" />;
   }
 
@@ -34,7 +28,7 @@ export default function TabLayout() {
       tabBar={(props) => <CustomTabBar {...props} />}
       screenOptions={{
         headerTransparent: true,
-        headerShown: false,
+        headerShown: false
       }}
     >
       <Tabs.Screen
@@ -43,7 +37,7 @@ export default function TabLayout() {
           title: 'Monitors',
           tabBarButtonTestID: 'index-tab',
           tabBarIcon: FeedIcon,
-          href: '/(monitors)',
+          href: '/(monitors)'
         }}
       />
       <Tabs.Screen
@@ -52,7 +46,7 @@ export default function TabLayout() {
           title: 'Status Pages',
           tabBarButtonTestID: 'status-tab',
           tabBarIcon: RssIcon,
-          href: '/(status)',
+          href: '/(status)'
         }}
       />
       <Tabs.Screen
@@ -61,7 +55,7 @@ export default function TabLayout() {
           title: 'Settings',
           tabBarButtonTestID: 'settings-tab',
           tabBarIcon: SettingsIcon,
-          href: '/(settings)/index',
+          href: '/(settings)/index'
         }}
       />
     </Tabs>

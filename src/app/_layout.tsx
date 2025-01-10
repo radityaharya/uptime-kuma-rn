@@ -5,7 +5,7 @@ import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { ThemeProvider } from '@react-navigation/native';
 import { PortalHost } from '@rn-primitives/portal';
 import * as Notifications from 'expo-notifications';
-import { Redirect, Stack } from 'expo-router';
+import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import React, { useEffect, useRef } from 'react';
 import { StyleSheet } from 'react-native';
@@ -51,36 +51,46 @@ configureReanimatedLogger({
 export default function RootLayout() {
   const auth = useAuth();
   const [isReady, setIsReady] = React.useState(false);
+  const hasHydrated = React.useRef(false);
 
   useMMKVDevTools({ storage: storage });
 
   useEffect(() => {
     const initializeApp = async () => {
-      log.debug('Auth status:', auth.status);
-      switch (auth.status) {
-        case 'unauthenticated':
-          await SplashScreen.hideAsync();
-          return <Redirect href="/login" />;
-        default:
-          try {
-            await startBackgroundService();
+      try {
+        if (!hasHydrated.current) {
+          hasHydrated.current = true;
+          await auth.hydrate();
+        }
+
+        log.debug('Auth status:', auth.status);
+
+        if (auth.status === 'authenticated') {
+          await startBackgroundService();
+          await new Promise<void>((resolve, reject) => {
             const maxAttempts = 10;
             let attempts = 0;
-            while (attempts < maxAttempts) {
+
+            const checkClient = () => {
               const client = clientStore.getClient();
               if (client?.isSocketConnected()) {
-                break;
+                resolve();
+              } else if (attempts >= maxAttempts) {
+                reject(new Error('Failed to connect client'));
+              } else {
+                attempts++;
+                setTimeout(checkClient, 1000);
               }
-              await new Promise((resolve) => setTimeout(resolve, 1000));
-              attempts++;
-            }
-            setIsReady(true);
-            await SplashScreen.hideAsync();
-          } catch (error) {
-            log.error('Failed to initialize app:', error);
-            setIsReady(true);
-            await SplashScreen.hideAsync();
-          }
+            };
+
+            checkClient();
+          });
+        }
+      } catch (error) {
+        log.error('Failed to initialize app:', error);
+      } finally {
+        setIsReady(true);
+        await SplashScreen.hideAsync();
       }
     };
 
