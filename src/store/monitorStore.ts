@@ -1,5 +1,6 @@
 import debounce from 'lodash/debounce';
 
+import { databaseService } from '@/lib/db';
 import { getItem, removeItem, setItem } from '@/lib/storage';
 import { convertToHeartbeat } from '@/lib/utils';
 import {
@@ -99,11 +100,15 @@ class MonitorStore {
     return this.currentMonitors;
   }
 
-  setMonitors(monitors: Monitor[]) {
+  async setMonitors(monitors: Monitor[]) {
     try {
       this.currentMonitors = monitors;
       this.notifySubscribers();
       this.flushToStorage(true);
+
+      for (const monitor of monitors) {
+        await databaseService.upsertMonitor(monitor);
+      }
     } catch (error) {
       console.error('Error setting monitors:', error);
     }
@@ -113,10 +118,19 @@ class MonitorStore {
     return this.currentTags;
   }
 
-  setTags(tags: Tag[]) {
+  async setTags(tags: Tag[]) {
     try {
       this.currentTags = tags;
       this.flushToStorage();
+
+      // Add tags to database
+      for (const tag of tags) {
+        await databaseService.upsertTag({
+          id: tag.id,
+          name: tag.name,
+          color: tag.color
+        });
+      }
     } catch (error) {
       console.error('Error setting tags:', error);
     }
@@ -260,6 +274,22 @@ class MonitorStore {
     } else {
       this.notifySubscribers();
     }
+
+    // Add heartbeat to the database
+    databaseService
+      .addHeartbeat({
+        monitor_id: hb.monitor_id,
+        status: hb.status,
+        time: hb.time,
+        msg: hb.msg,
+        important: Boolean(hb.important),
+        ping: hb.ping || 0,
+        duration: hb.duration || 0,
+        down_count: hb.down_count || 0
+      })
+      .catch((error) => {
+        console.error('Error adding heartbeat to database:', error);
+      });
   }
 
   setMonitorList(data: Record<string, Monitor>): void {
@@ -283,9 +313,14 @@ class MonitorStore {
           }
         });
       } else {
-        this.currentMonitors[this.currentMonitors.indexOf(existingMonitor)] = {
+        const mergedMonitor = {
           ...existingMonitor,
-          ...monitor,
+          ...Object.fromEntries(
+            Object.entries(monitor).map(([key, value]) => [
+              key,
+              value === null ? undefined : value
+            ])
+          ),
           id: Number(monitor.id),
           heartBeatList: this.trimHeartbeatList(
             existingMonitor.heartBeatList || []
@@ -297,6 +332,8 @@ class MonitorStore {
             year: monitor.uptime?.year ?? existingMonitor.uptime?.year ?? 0
           }
         };
+        this.currentMonitors[this.currentMonitors.indexOf(existingMonitor)] =
+          mergedMonitor;
       }
     });
 
@@ -536,5 +573,51 @@ class MonitorStore {
   private currentMonitorObjectSize(): number {
     return JSON.stringify(this.currentMonitors).length;
   }
+
+  // async syncWithDatabase() {
+  //   try {
+  //     // Sync monitors to database
+  //     await databaseService.syncMonitors(this.currentMonitors);
+
+  //     // Sync heartbeats
+  //     for (const monitor of this.currentMonitors) {
+  //       if (monitor.heartBeatList) {
+  //         for (const heartbeat of monitor.heartBeatList) {
+  //           await databaseService.addHeartbeat({
+  //             monitorId: monitor.id,
+  //             status: heartbeat.status,
+  //             time: heartbeat.time,
+  //             msg: heartbeat.msg,
+  //             important: heartbeat.important,
+  //             ping: heartbeat.ping ?? 0,
+  //             duration: heartbeat.duration ?? 0,
+  //             downCount: heartbeat.down_count ?? 0
+  //           });
+  //         }
+  //       }
+  //     }
+  //   } catch (error) {
+  //     console.error('Error syncing with database:', error);
+  //   }
+  // }
+
+  // private async loadFromDatabase() {
+  //   try {
+  //     const dbMonitors = await databaseService.getMonitors();
+  //     // Merge with existing monitors, preferring database data
+  //     this.currentMonitors = dbMonitors.map((monitor) => {
+  //       const existingMonitor = this.currentMonitors.find(
+  //         (m) => m.id === monitor.id
+  //       );
+  //       return {
+  //         ...existingMonitor,
+  //         ...monitor
+  //       };
+  //     });
+  //     this.notifySubscribers();
+  //   } catch (error) {
+  //     console.error('Error loading from database:', error);
+  //   }
+  // }
 }
 export const monitorStore = MonitorStore.getInstance();

@@ -3,7 +3,7 @@ module.exports = function (api) {
   return {
     presets: [
       ['babel-preset-expo', { jsxImportSource: 'nativewind' }],
-      'nativewind/babel',
+      'nativewind/babel'
     ],
     plugins: [
       [
@@ -12,7 +12,7 @@ module.exports = function (api) {
           root: ['./'],
           alias: {
             '@': './src',
-            '@env': './src/lib/env.js',
+            '@env': './src/lib/env.js'
           },
           extensions: [
             '.ios.ts',
@@ -23,11 +23,12 @@ module.exports = function (api) {
             '.tsx',
             '.jsx',
             '.js',
-            '.json',
-          ],
-        },
+            '.json'
+          ]
+        }
       ],
       'react-native-reanimated/plugin',
-    ],
+      ['inline-import', { extensions: ['.sql'] }]
+    ]
   };
 };

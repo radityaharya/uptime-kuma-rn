@@ -1,5 +1,7 @@
+/* eslint-disable unused-imports/no-unused-imports */
 /* eslint-disable unused-imports/no-unused-vars */
 import { Ionicons } from '@expo/vector-icons';
+import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { Redirect, router } from 'expo-router';
 import * as React from 'react';
 import {
@@ -23,7 +25,13 @@ import { SectionHeader } from '@/components/monitors/SectionHeader';
 import { View } from '@/components/ui';
 import { useMonitors } from '@/hooks/use-monitors';
 import { useAuth } from '@/lib';
+import { db } from '@/lib/db';
 import { type Monitor } from '@/schemas/monitor';
+
+import {
+  heartbeats as heartbeatsDbSchema,
+  monitors as monitorDbSchema
+} from '../../../../db/schema';
 
 export interface MonitorSection extends SectionListData<Monitor> {
   title: string;
@@ -101,6 +109,8 @@ export default function Index() {
   const { error, isLoading, refreshMonitors, reconnectClient, monitors } =
     useMonitors();
   const hasMonitors = monitors && monitors.length > 0;
+
+  const { data } = useLiveQuery(db.select().from(heartbeatsDbSchema));
 
   const [sortOrder] = React.useState<SortOrder>('asc');
   const [sortField] = React.useState<SortField>('name');

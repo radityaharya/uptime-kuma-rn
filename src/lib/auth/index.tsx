@@ -13,6 +13,7 @@ interface AuthState {
   credentials: AuthCredentials | null;
   status: 'idle' | 'unauthenticated' | 'authenticated';
   isSigningOut: boolean;
+  serverUrl: string | null;
   signIn: (data: AuthCredentials) => void;
   signOut: () => void;
   hydrate: () => Promise<void>;
@@ -22,10 +23,18 @@ const _useAuth = create<AuthState>((set, get) => ({
   status: 'idle',
   credentials: null,
   isSigningOut: false,
+  serverUrl: null,
 
   signIn: (credentials) => {
+    if (!credentials.host) {
+      throw new Error('Server URL is required');
+    }
     setToken(credentials);
-    set({ status: 'authenticated', credentials });
+    set({
+      status: 'authenticated',
+      credentials,
+      serverUrl: credentials.host
+    });
   },
 
   signOut: () => {
@@ -51,6 +60,7 @@ const _useAuth = create<AuthState>((set, get) => ({
     set({
       status: 'unauthenticated',
       credentials: null,
+      serverUrl: null,
       isSigningOut: false
     });
   },
@@ -60,8 +70,8 @@ const _useAuth = create<AuthState>((set, get) => ({
     if (state.status !== 'idle') return;
 
     try {
-      const userToken = getToken();
-      if (userToken !== null) {
+      const userToken = await getToken();
+      if (userToken !== null && userToken.host) {
         get().signIn(userToken);
       } else {
         get().signOut();

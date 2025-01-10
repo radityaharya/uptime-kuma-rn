@@ -5,7 +5,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@env": ["./src/lib/env.js"]
+      "@env": ["./src/lib/env.js"],
+      "@db": ["./db/*"]
     },
     "esModuleInterop": true,
     "checkJs": true

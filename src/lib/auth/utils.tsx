@@ -10,4 +10,5 @@ export type AuthCredentials = {
 
 export const getToken = () => getItem<AuthCredentials>(TOKEN);
 export const removeToken = () => removeItem(TOKEN);
-export const setToken = (value: AuthCredentials) => setItem<AuthCredentials>(TOKEN, value);
+export const setToken = (value: AuthCredentials) =>
+  setItem<AuthCredentials>(TOKEN, value);

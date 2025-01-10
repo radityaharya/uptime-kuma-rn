@@ -1,8 +1,11 @@
 /* eslint-disable react/no-unstable-nested-components */
+import { useDrizzleStudio } from 'expo-drizzle-studio-plugin';
 import { Redirect, Tabs } from 'expo-router';
+import { useSQLiteContext } from 'expo-sqlite';
 import { RssIcon } from 'lucide-react-native';
 import React from 'react';
 
+import { ActivityIndicator, Text, View } from '@/components/ui';
 import {
   Feed as FeedIcon,
   Settings as SettingsIcon
@@ -15,8 +18,20 @@ export default function TabLayout() {
   const status = useAuth.use.status();
   const { isLoading } = useMonitors();
 
+  const db = useSQLiteContext();
+  // const drizzleDb = drizzle(db);
+  useDrizzleStudio(db);
+
   if (status === 'idle' || isLoading) {
-    return null;
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        {/* <ActivityIndicator size="large" color="#ffffff" /> */}
+        <View>
+          <ActivityIndicator size="large" color="#ffffff" />
+          <Text>Loading Monitors...</Text>
+        </View>
+      </View>
+    );
   }
 
   if (status === 'unauthenticated') {

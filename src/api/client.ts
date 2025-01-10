@@ -202,8 +202,17 @@ export class UptimeKumaClient {
   }
 
   private createMonitorObject(monitor: Monitor): Monitor {
+    // Convert null values to undefined for optional string fields
+    const sanitizedMonitor = Object.entries(monitor).reduce(
+      (acc, [key, value]) => ({
+        ...acc,
+        [key]: value === null ? undefined : value
+      }),
+      {} as Monitor
+    );
+
     return {
-      ...monitor,
+      ...sanitizedMonitor,
       id: Number(monitor.id),
       heartBeatList: [],
       avgPing: 0,
@@ -243,16 +252,9 @@ export class UptimeKumaClient {
 
   private mergeMonitorData(existing: Monitor, update: Monitor): Monitor {
     return {
-      ...existing,
-      ...update,
-      id: Number(update.id),
-      heartBeatList: existing.heartBeatList,
-      avgPing: existing.avgPing,
-      uptime: {
-        day: update.uptime?.day ?? existing.uptime?.day ?? 0,
-        month: update.uptime?.month ?? existing.uptime?.month ?? 0,
-        year: update.uptime?.year ?? existing.uptime?.year ?? 0
-      }
+      ...this.createMonitorObject(update),
+      heartBeatList: existing.heartBeatList || [],
+      avgPing: existing.avgPing
     };
   }
 

@@ -4,11 +4,14 @@ import { useMMKVDevTools } from '@dev-plugins/react-native-mmkv';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { ThemeProvider } from '@react-navigation/native';
 import { PortalHost } from '@rn-primitives/portal';
+import { drizzle } from 'drizzle-orm/expo-sqlite';
+import { useMigrations } from 'drizzle-orm/expo-sqlite/migrator';
 import * as Notifications from 'expo-notifications';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import { openDatabaseSync, SQLiteProvider } from 'expo-sqlite';
 import React, { useEffect, useRef } from 'react';
-import { StyleSheet } from 'react-native';
+import { ActivityIndicator, StyleSheet } from 'react-native';
 import FlashMessage from 'react-native-flash-message';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import {
@@ -18,8 +21,10 @@ import {
 import { Toaster } from 'sonner-native';
 
 import { StatusBar } from '@/components/ui';
+import { Text, View } from '@/components/ui';
 import { loadSelectedTheme, useAuth } from '@/lib';
 import { startBackgroundService } from '@/lib/background-service';
+import { DATABASE_NAME } from '@/lib/db';
 import { log } from '@/lib/log';
 import {
   cancelAllScheduledNotifications,
@@ -30,8 +35,9 @@ import { storage } from '@/lib/storage';
 import { useThemeConfig } from '@/lib/use-theme-config';
 import { clientStore } from '@/store/clientStore';
 
-export { ErrorBoundary } from 'expo-router';
+import migrations from '../../drizzle/migrations';
 
+export { ErrorBoundary } from 'expo-router';
 export const unstable_settings = {
   initialRouteName: '(app)'
 };
@@ -53,6 +59,13 @@ export default function RootLayout() {
   const [isReady, setIsReady] = React.useState(false);
   const hasHydrated = React.useRef(false);
 
+  const expoDb = openDatabaseSync(DATABASE_NAME, { useNewConnection: true });
+  const db = drizzle(expoDb);
+  const { success, error } = useMigrations(db, migrations);
+  if (!success) {
+    log.error('Failed to run migrations:', error);
+  }
+
   useMMKVDevTools({ storage: storage });
 
   useEffect(() => {
@@ -65,7 +78,7 @@ export default function RootLayout() {
 
         log.debug('Auth status:', auth.status);
 
-        if (auth.status === 'authenticated') {
+        if (auth.status === 'authenticated' && auth.serverUrl) {
           await startBackgroundService();
           await new Promise<void>((resolve, reject) => {
             const maxAttempts = 10;
@@ -85,6 +98,9 @@ export default function RootLayout() {
 
             checkClient();
           });
+        } else if (auth.status === 'authenticated') {
+          log.error('No server URL available');
+          auth.signOut();
         }
       } catch (error) {
         log.error('Failed to initialize app:', error);
@@ -95,10 +111,17 @@ export default function RootLayout() {
     };
 
     initializeApp();
-  }, [auth.status]);
+  }, [auth.status, auth.serverUrl]);
 
   if (!isReady) {
-    return null;
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <View>
+          <ActivityIndicator size="large" color="#ffffff" />
+          <Text>Connecting to server...</Text>
+        </View>
+      </View>
+    );
   }
 
   return (
@@ -150,18 +173,24 @@ function Providers({ children }: { children: React.ReactNode }) {
   return (
     <>
       <StatusBar />
-      <GestureHandlerRootView
-        style={styles.container}
-        className={theme.dark ? `dark` : undefined}
+      <SQLiteProvider
+        databaseName={DATABASE_NAME}
+        options={{ enableChangeListener: true }}
+        // useSuspense
       >
-        <ThemeProvider value={theme}>
-          <BottomSheetModalProvider>
-            {children}
-            <FlashMessage position="top" />
-            <Toaster offset={60} />
-          </BottomSheetModalProvider>
-        </ThemeProvider>
-      </GestureHandlerRootView>
+        <GestureHandlerRootView
+          style={styles.container}
+          className={theme.dark ? `dark` : undefined}
+        >
+          <ThemeProvider value={theme}>
+            <BottomSheetModalProvider>
+              {children}
+              <FlashMessage position="top" />
+              <Toaster offset={60} />
+            </BottomSheetModalProvider>
+          </ThemeProvider>
+        </GestureHandlerRootView>
+      </SQLiteProvider>
     </>
   );
 }
